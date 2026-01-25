@@ -81,16 +81,16 @@ const Auth = () => {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="relative z-10 flex flex-col items-center justify-center px-6 pb-10 pt-16"
+          className="relative z-10 flex flex-col items-center justify-center px-4 pb-4 pt-6"
         >
           {/* Logo grande com efeito glow suave */}
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.6, type: "spring" }}
-            className="relative mb-6"
+            className="relative mb-2"
           >
-            <div className="absolute inset-0 blur-3xl bg-primary/10 rounded-full scale-150" />
+            <div className="absolute inset-0 blur-3xl bg-primary/10 rounded-full scale-125" />
             <motion.img
               src={logo}
               alt="Vida em Cristo"
@@ -118,7 +118,7 @@ const Auth = () => {
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="relative z-10 mx-4 -mt-6 rounded-3xl bg-card/95 backdrop-blur-xl p-6 shadow-2xl border border-border/50"
+        className="relative z-10 mx-4 -mt-2 rounded-3xl bg-card/95 backdrop-blur-xl p-6 shadow-2xl border border-border/50"
       >
         {/* Tabs */}
         <div className="mb-6 flex rounded-2xl bg-muted/50 p-1">
