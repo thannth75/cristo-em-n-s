@@ -73,29 +73,29 @@ const Auth = () => {
     <div className="relative min-h-screen bg-background overflow-hidden">
       <ParticlesBackground />
       
-      {/* Hero com Logo destacada */}
+      {/* Hero com Logo destacada - Fundo Pastel */}
       <div className="relative">
-        <div className="absolute inset-0 gradient-hope opacity-90" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.1),transparent_70%)]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[hsl(120,30%,85%)] via-[hsl(120,25%,90%)] to-background" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.6),transparent_70%)]" />
         
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="relative z-10 flex flex-col items-center justify-center px-6 pb-8 pt-12"
+          className="relative z-10 flex flex-col items-center justify-center px-6 pb-10 pt-16"
         >
-          {/* Logo com efeito glow */}
+          {/* Logo grande com efeito glow suave */}
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ duration: 0.6, type: "spring" }}
-            className="relative mb-4"
+            className="relative mb-6"
           >
-            <div className="absolute inset-0 blur-3xl bg-primary-foreground/20 rounded-full scale-150" />
+            <div className="absolute inset-0 blur-3xl bg-primary/10 rounded-full scale-150" />
             <motion.img
               src={logo}
               alt="Vida em Cristo"
-              className="relative h-36 w-auto drop-shadow-2xl"
-              animate={{ y: [0, -6, 0] }}
+              className="relative h-52 w-auto drop-shadow-xl"
+              animate={{ y: [0, -8, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             />
           </motion.div>
@@ -104,7 +104,7 @@ const Auth = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="flex items-center gap-2 text-primary-foreground/90"
+            className="flex items-center gap-2 text-primary"
           >
             <Sparkles className="h-4 w-4" />
             <span className="text-sm font-medium">Ministério Ebenézer</span>
