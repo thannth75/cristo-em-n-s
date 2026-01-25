@@ -41,7 +41,7 @@ const Admin = () => {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showPendingOnly, setShowPendingOnly] = useState(true);
+  const [showPendingOnly, setShowPendingOnly] = useState(false);
   const [lowAttendanceUsers, setLowAttendanceUsers] = useState<UserWithRole[]>([]);
 
   useEffect(() => {
@@ -219,8 +219,11 @@ const Admin = () => {
         </motion.div>
 
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsList className="grid w-full grid-cols-3 mb-4">
             <TabsTrigger value="users">Usuários</TabsTrigger>
+            <TabsTrigger value="permissions" disabled={!isAdmin}>
+              Permissões
+            </TabsTrigger>
             <TabsTrigger value="alerts">
               Alertas
               {lowAttendanceUsers.length > 0 && (
@@ -367,6 +370,79 @@ const Admin = () => {
                     )}
                   </motion.div>
                 ))
+              )}
+            </div>
+          </TabsContent>
+
+          {/* PERMISSIONS TAB - Only for Admins */}
+          <TabsContent value="permissions">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 rounded-2xl bg-primary/10 p-4"
+            >
+              <div className="flex items-center gap-2 mb-2">
+                <Shield className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold text-foreground">Gerenciar Permissões</h3>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Defina os níveis de acesso: <strong>Jovem</strong> (básico), <strong>Líder</strong> (gerencia estudos/eventos) ou <strong>Admin</strong> (acesso total).
+              </p>
+            </motion.div>
+
+            {/* Search for permissions */}
+            <div className="mb-4">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar usuário para alterar permissão..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 rounded-xl"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {approvedUsers
+                .filter(u => 
+                  u.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  u.email.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+                .map((u, index) => (
+                  <motion.div
+                    key={u.id}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.05 * index }}
+                    className="rounded-2xl bg-card p-4 shadow-md"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 font-serif text-lg font-semibold text-primary">
+                        {u.full_name.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold text-foreground truncate">{u.full_name}</h3>
+                        <p className="text-sm text-muted-foreground truncate">{u.email}</p>
+                      </div>
+                      <RoleManager
+                        targetUserId={u.user_id}
+                        currentRole={u.role}
+                        adminUserId={user?.id || ""}
+                        onRoleChange={fetchUsers}
+                      />
+                    </div>
+                  </motion.div>
+                ))}
+              
+              {approvedUsers.filter(u => 
+                u.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                u.email.toLowerCase().includes(searchTerm.toLowerCase())
+              ).length === 0 && (
+                <div className="rounded-2xl bg-card p-8 text-center shadow-md">
+                  <Users className="mx-auto mb-3 h-12 w-12 text-muted-foreground/50" />
+                  <p className="text-muted-foreground">Nenhum usuário aprovado encontrado.</p>
+                </div>
               )}
             </div>
           </TabsContent>
