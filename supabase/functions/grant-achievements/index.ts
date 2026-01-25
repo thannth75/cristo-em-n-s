@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Insert new achievements
+    // Insert new achievements and create notifications
     if (newAchievements.length > 0) {
       const insertData = newAchievements.map((achievementId) => ({
         user_id: userId,
@@ -154,6 +154,22 @@ Deno.serve(async (req) => {
 
       if (insertError) {
         console.error("Error granting achievements:", insertError);
+      } else {
+        // Create notifications for each achievement
+        const achievementNames = newAchievements.map((id) => {
+          const ach = allAchievements.find((a) => a.id === id);
+          return ach?.name || "Nova conquista";
+        });
+
+        const notifications = newAchievements.map((achievementId, index) => ({
+          user_id: userId,
+          title: "🏆 Nova Conquista!",
+          message: `Você desbloqueou: ${achievementNames[index]}`,
+          type: "achievement",
+          action_url: "/conquistas",
+        }));
+
+        await supabase.from("notifications").insert(notifications);
       }
     }
 
