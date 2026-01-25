@@ -94,7 +94,7 @@ const Auth = () => {
             <motion.img
               src={logo}
               alt="Vida em Cristo"
-              className="relative h-52 w-auto drop-shadow-xl"
+              className="relative h-[390px] w-auto drop-shadow-xl"
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             />
