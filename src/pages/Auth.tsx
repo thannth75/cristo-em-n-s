@@ -59,9 +59,28 @@ const Auth = () => {
         navigate("/pending");
       }
     } catch (error: any) {
+      let errorMessage = "Algo deu errado. Tente novamente.";
+      
+      // Translate common Supabase errors to Portuguese
+      if (error.message?.includes("Invalid login credentials")) {
+        errorMessage = "E-mail ou senha incorretos.";
+      } else if (error.message?.includes("Email not confirmed")) {
+        errorMessage = "E-mail não confirmado. Verifique sua caixa de entrada.";
+      } else if (error.message?.includes("User already registered")) {
+        errorMessage = "Este e-mail já está cadastrado.";
+      } else if (error.message?.includes("Password should be at least")) {
+        errorMessage = "A senha deve ter pelo menos 6 caracteres.";
+      } else if (error.message?.includes("Unable to validate email address")) {
+        errorMessage = "E-mail inválido. Verifique o formato.";
+      } else if (error.message?.includes("Network")) {
+        errorMessage = "Erro de conexão. Verifique sua internet.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
         title: "Erro",
-        description: error.message || "Algo deu errado. Tente novamente.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -168,6 +187,7 @@ const Auth = () => {
                     onChange={(e) => setFullName(e.target.value)}
                     placeholder="Seu nome completo"
                     required={!isLogin}
+                    autoComplete="name"
                     className="h-12 rounded-xl pl-10 bg-background/50"
                   />
                 </div>
@@ -187,6 +207,7 @@ const Auth = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="seu@email.com"
                   required
+                  autoComplete="email"
                   className="h-12 rounded-xl pl-10 bg-background/50"
                 />
               </div>
@@ -206,6 +227,7 @@ const Auth = () => {
                   placeholder="••••••••"
                   required
                   minLength={6}
+                  autoComplete={isLogin ? "current-password" : "new-password"}
                   className="h-12 rounded-xl pl-10 pr-10 bg-background/50"
                 />
                 <button

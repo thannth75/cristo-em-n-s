@@ -42,32 +42,38 @@ export function useAuth() {
 
   useEffect(() => {
     const fetchUserData = async (user: User) => {
-      // Buscar profile
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      try {
+        // Buscar profile e roles em paralelo
+        const [profileResult, rolesResult] = await Promise.all([
+          supabase
+            .from("profiles")
+            .select("*")
+            .eq("user_id", user.id)
+            .maybeSingle(),
+          supabase
+            .from("user_roles")
+            .select("role")
+            .eq("user_id", user.id)
+        ]);
 
-      // Buscar roles
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id);
+        const profile = profileResult.data as Profile | null;
+        const userRoles = (rolesResult.data || []) as UserRole[];
+        const isAdmin = userRoles.some((r) => r.role === "admin");
+        const isLeader = userRoles.some((r) => r.role === "lider");
 
-      const userRoles = (roles || []) as UserRole[];
-      const isAdmin = userRoles.some((r) => r.role === "admin");
-      const isLeader = userRoles.some((r) => r.role === "lider");
-
-      setState({
-        user,
-        profile: profile as Profile | null,
-        roles: userRoles,
-        isLoading: false,
-        isApproved: profile?.is_approved ?? false,
-        isAdmin,
-        isLeader,
-      });
+        setState({
+          user,
+          profile,
+          roles: userRoles,
+          isLoading: false,
+          isApproved: profile?.is_approved ?? false,
+          isAdmin,
+          isLeader,
+        });
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        setState((s) => ({ ...s, isLoading: false }));
+      }
     };
 
     // Verificar sessão atual
