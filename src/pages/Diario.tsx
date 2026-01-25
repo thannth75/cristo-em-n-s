@@ -19,6 +19,7 @@ import {
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import { MOOD_VERSES } from "@/data/bibleReadingPlans";
+import { journalEntrySchema, validateInput } from "@/lib/validation";
 
 interface JournalEntry {
   id: string;
@@ -114,20 +115,24 @@ const Diario = () => {
   };
 
   const handleCreateEntry = async () => {
-    if (!newEntry.content) {
+    const validation = validateInput(journalEntrySchema, newEntry);
+    
+    if (!validation.success) {
       toast({
-        title: "Escreva algo",
-        description: "O conteúdo da reflexão é obrigatório.",
+        title: "Erro de validação",
+        description: validation.error,
         variant: "destructive",
       });
       return;
     }
 
+    const validatedData = validation.data;
     const { error } = await supabase.from("journal_entries").insert({
-      ...newEntry,
+      title: validatedData.title || null,
+      content: validatedData.content,
+      mood: validatedData.mood || null,
+      bible_verse: validatedData.bible_verse || moodVerse?.reference || null,
       user_id: user?.id,
-      bible_verse: newEntry.bible_verse || moodVerse?.reference || null,
-      title: newEntry.title || null,
     });
 
     if (error) {

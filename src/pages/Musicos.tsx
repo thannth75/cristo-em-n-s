@@ -27,6 +27,7 @@ import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import CreateScaleDialog from "@/components/musicos/CreateScaleDialog";
 import AddMusicianDialog from "@/components/musicos/AddMusicianDialog";
+import { songSchema, validateInput } from "@/lib/validation";
 
 interface MusicScale {
   id: string;
@@ -109,20 +110,24 @@ const Musicos = () => {
   };
 
   const handleAddSong = async () => {
-    if (!newSong.title) {
+    const validation = validateInput(songSchema, newSong);
+    
+    if (!validation.success) {
       toast({
-        title: "Título obrigatório",
-        description: "Informe o nome da música.",
+        title: "Erro de validação",
+        description: validation.error,
         variant: "destructive",
       });
       return;
     }
 
+    const validatedData = validation.data;
     const { error } = await supabase.from("songs").insert({
-      ...newSong,
+      title: validatedData.title,
+      artist: validatedData.artist || null,
+      key: validatedData.key || null,
+      youtube_url: validatedData.youtube_url || null,
       created_by: user?.id,
-      artist: newSong.artist || null,
-      youtube_url: newSong.youtube_url || null,
     });
 
     if (error) {

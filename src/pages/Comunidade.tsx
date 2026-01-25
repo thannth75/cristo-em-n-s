@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import { communityPostSchema, chatMessageSchema, privateMessageSchema, validateInput } from "@/lib/validation";
 
 interface Post {
   id: string;
@@ -241,11 +242,17 @@ const Comunidade = () => {
   };
 
   const handleCreatePost = async () => {
-    if (!newPostContent.trim()) return;
+    const validation = validateInput(communityPostSchema, { content: newPostContent });
+    
+    if (!validation.success) {
+      toast({ title: "Erro de validação", description: validation.error, variant: "destructive" });
+      return;
+    }
 
+    const validatedData = validation.data;
     const { error } = await supabase.from("community_posts").insert({
       user_id: user?.id,
-      content: newPostContent,
+      content: validatedData.content,
     });
 
     if (error) {
@@ -270,11 +277,17 @@ const Comunidade = () => {
   };
 
   const handleSendChatMessage = async () => {
-    if (!newChatMessage.trim()) return;
+    const validation = validateInput(chatMessageSchema, { content: newChatMessage });
+    
+    if (!validation.success) {
+      toast({ title: "Erro", description: validation.error, variant: "destructive" });
+      return;
+    }
 
+    const validatedData = validation.data;
     const { error } = await supabase.from("chat_messages").insert({
       user_id: user?.id,
-      content: newChatMessage,
+      content: validatedData.content,
     });
 
     if (!error) {
@@ -283,12 +296,20 @@ const Comunidade = () => {
   };
 
   const handleSendPrivateMessage = async () => {
-    if (!newPrivateMessage.trim() || !selectedUser) return;
+    if (!selectedUser) return;
+    
+    const validation = validateInput(privateMessageSchema, { content: newPrivateMessage });
+    
+    if (!validation.success) {
+      toast({ title: "Erro", description: validation.error, variant: "destructive" });
+      return;
+    }
 
+    const validatedData = validation.data;
     const { error } = await supabase.from("private_messages").insert({
       sender_id: user?.id,
       receiver_id: selectedUser.user_id,
-      content: newPrivateMessage,
+      content: validatedData.content,
     });
 
     if (!error) {

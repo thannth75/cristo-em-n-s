@@ -20,6 +20,7 @@ import {
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import StudyDetailDialog from "@/components/estudos/StudyDetailDialog";
+import { bibleStudySchema, validateInput } from "@/lib/validation";
 
 interface BibleStudy {
   id: string;
@@ -94,22 +95,26 @@ const Estudos = () => {
   };
 
   const handleCreateStudy = async () => {
-    if (!newStudy.title || !newStudy.book) {
+    const validation = validateInput(bibleStudySchema, newStudy);
+    
+    if (!validation.success) {
       toast({
-        title: "Campos obrigatórios",
-        description: "Preencha título e livro.",
+        title: "Erro de validação",
+        description: validation.error,
         variant: "destructive",
       });
       return;
     }
 
+    const validatedData = validation.data;
     const { error } = await supabase.from("bible_studies").insert({
-      ...newStudy,
-      created_by: user?.id,
+      title: validatedData.title,
+      description: validatedData.description || null,
+      book: validatedData.book,
+      chapters: validatedData.chapters || null,
+      end_date: validatedData.end_date || null,
       start_date: new Date().toISOString().split("T")[0],
-      end_date: newStudy.end_date || null,
-      description: newStudy.description || null,
-      chapters: newStudy.chapters || null,
+      created_by: user?.id,
     });
 
     if (error) {
