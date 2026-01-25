@@ -17,6 +17,9 @@ import Diario from "./pages/Diario";
 import Conquistas from "./pages/Conquistas";
 import Oracoes from "./pages/Oracoes";
 import Ranking from "./pages/Ranking";
+import Comunidade from "./pages/Comunidade";
+import PlanoLeitura from "./pages/PlanoLeitura";
+import Quiz from "./pages/Quiz";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +45,9 @@ const App = () => (
           <Route path="/conquistas" element={<Conquistas />} />
           <Route path="/oracoes" element={<Oracoes />} />
           <Route path="/ranking" element={<Ranking />} />
+          <Route path="/comunidade" element={<Comunidade />} />
+          <Route path="/plano-leitura" element={<PlanoLeitura />} />
+          <Route path="/quiz" element={<Quiz />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

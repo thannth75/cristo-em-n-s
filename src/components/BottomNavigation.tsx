@@ -1,12 +1,12 @@
-import { Home, BookOpen, Calendar, User, Music } from "lucide-react";
+import { Home, BookOpen, Calendar, User, Users } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
 const navItems = [
   { icon: Home, label: "Início", href: "/dashboard" },
   { icon: BookOpen, label: "Estudos", href: "/estudos" },
+  { icon: Users, label: "Comunidade", href: "/comunidade" },
   { icon: Calendar, label: "Agenda", href: "/agenda" },
-  { icon: Music, label: "Músicos", href: "/musicos" },
   { icon: User, label: "Perfil", href: "/perfil" },
 ];
 
