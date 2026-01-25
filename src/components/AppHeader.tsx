@@ -1,9 +1,10 @@
-import { Bell, Menu, Shield } from "lucide-react";
+import { Shield } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import logo from "@/assets/logo-vida-em-cristo.png";
 import { Badge } from "@/components/ui/badge";
+import NotificationCenter from "@/components/NotificationCenter";
 
 interface AppHeaderProps {
   userName?: string;
@@ -59,14 +60,7 @@ const AppHeader = ({ userName = "Jovem", onMenuClick }: AppHeaderProps) => {
         </div>
 
         <div className="flex items-center gap-2">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="relative flex h-10 w-10 items-center justify-center rounded-full bg-muted transition-colors hover:bg-muted/80"
-          >
-            <Bell className="h-5 w-5 text-muted-foreground" />
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive" />
-          </motion.button>
+          <NotificationCenter />
         </div>
       </div>
     </header>
