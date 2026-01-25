@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Calendar, Clock, MapPin, ChevronRight, Plus, Trash2 } from "lucide-react";
+import { Calendar, Clock, MapPin, Plus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/select";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import EventDetailDialog from "@/components/agenda/EventDetailDialog";
 
 interface Event {
   id: string;
@@ -59,6 +60,8 @@ const Agenda = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [newEvent, setNewEvent] = useState({
     title: "",
     description: "",
@@ -337,12 +340,16 @@ const Agenda = () => {
             </motion.div>
           ) : (
             events.map((evento, index) => (
-              <motion.div
+              <motion.button
                 key={evento.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 + index * 0.05 }}
-                className="flex items-center gap-4 rounded-2xl bg-card p-4 shadow-md"
+                onClick={() => {
+                  setSelectedEvent(evento);
+                  setIsDetailOpen(true);
+                }}
+                className="flex w-full text-left items-center gap-4 rounded-2xl bg-card p-4 shadow-md hover:shadow-lg transition-shadow"
               >
                 <div className={`rounded-xl p-3 ${getTypeColor(evento.event_type)}`}>
                   <Calendar className="h-6 w-6" />
@@ -364,19 +371,20 @@ const Agenda = () => {
                   </div>
                 </div>
 
-                {canManage ? (
+                {canManage && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleDeleteEvent(evento.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteEvent(evento.id);
+                    }}
                     className="text-muted-foreground hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
-                ) : (
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
                 )}
-              </motion.div>
+              </motion.button>
             ))
           )}
         </div>
@@ -394,6 +402,12 @@ const Agenda = () => {
           <p className="mt-2 text-sm font-medium text-primary">— Hebreus 10:25</p>
         </motion.div>
       </main>
+
+      <EventDetailDialog
+        event={selectedEvent}
+        open={isDetailOpen}
+        onOpenChange={setIsDetailOpen}
+      />
 
       <BottomNavigation />
     </div>

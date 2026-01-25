@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { BookOpen, ChevronRight, Clock, Plus, Check } from "lucide-react";
+import { BookOpen, ChevronRight, Clock, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/dialog";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import StudyDetailDialog from "@/components/estudos/StudyDetailDialog";
 
 interface BibleStudy {
   id: string;
@@ -44,6 +45,8 @@ const Estudos = () => {
   const [progress, setProgress] = useState<StudyProgress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedStudy, setSelectedStudy] = useState<BibleStudy | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [newStudy, setNewStudy] = useState({
     title: "",
     description: "",
@@ -308,40 +311,43 @@ const Estudos = () => {
             <div className="space-y-3">
               {studies.map((estudo, index) => {
                 const studyProgress = getStudyProgress(estudo.id, estudo.chapters);
-                return (
-                  <motion.div
-                    key={estudo.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 + index * 0.1 }}
-                    className="rounded-2xl bg-card p-4 shadow-md"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-foreground">{estudo.title}</h3>
-                        <p className="text-sm text-muted-foreground">{estudo.book}</p>
-                        <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          <span>Até {formatDate(estudo.end_date)}</span>
+                   return (
+                      <motion.button
+                        key={estudo.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.2 + index * 0.1 }}
+                        onClick={() => {
+                          setSelectedStudy(estudo);
+                          setIsDetailOpen(true);
+                        }}
+                        className="w-full text-left rounded-2xl bg-card p-4 shadow-md hover:shadow-lg transition-shadow"
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-foreground">{estudo.title}</h3>
+                            <p className="text-sm text-muted-foreground">{estudo.book}</p>
+                            <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                              <Clock className="h-3 w-3" />
+                              <span>Até {formatDate(estudo.end_date)}</span>
+                            </div>
+                          </div>
+                          <ChevronRight className="h-5 w-5 text-muted-foreground" />
                         </div>
-                      </div>
-                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <div className="mb-1 flex justify-between text-xs text-muted-foreground">
-                        <span>{studyProgress.completed} de {studyProgress.total} capítulos</span>
-                        <span>{studyProgress.percent}%</span>
-                      </div>
-                      <Progress value={studyProgress.percent} className="h-2" />
-                    </div>
-                  </motion.div>
-                );
+                        <div>
+                          <div className="mb-1 flex justify-between text-xs text-muted-foreground">
+                            <span>{studyProgress.completed} de {studyProgress.total} capítulos</span>
+                            <span>{studyProgress.percent}%</span>
+                          </div>
+                          <Progress value={studyProgress.percent} className="h-2" />
+                        </div>
+                      </motion.button>
+                    );
               })}
             </div>
           )}
         </div>
 
-        {/* Versículo */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -354,6 +360,14 @@ const Estudos = () => {
           <p className="mt-2 text-sm font-medium text-primary">— Salmos 119:105</p>
         </motion.div>
       </main>
+
+      <StudyDetailDialog
+        study={selectedStudy}
+        open={isDetailOpen}
+        onOpenChange={setIsDetailOpen}
+        userId={user?.id}
+        onProgressUpdate={fetchData}
+      />
 
       <BottomNavigation />
     </div>
