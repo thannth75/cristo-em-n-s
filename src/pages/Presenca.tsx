@@ -96,6 +96,8 @@ const Presenca = () => {
   };
 
   const fetchAttendance = async (eventId: string) => {
+    // Leaders/admins can see all attendance via their RLS policy
+    // Regular users can only see their own attendance (privacy protection)
     const { data } = await supabase
       .from("attendance")
       .select("id, user_id, event_id")
