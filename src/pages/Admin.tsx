@@ -31,7 +31,7 @@ interface PendingUser {
 
 const Admin = () => {
   const navigate = useNavigate();
-  const { user, isAdmin, isLeader, profile } = useAuth();
+  const { user, isAdmin, isLeader, profile, isLoading: authLoading, isApproved } = useAuth();
   const { toast } = useToast();
   const [pendingUsers, setPendingUsers] = useState<PendingUser[]>([]);
   const [allUsers, setAllUsers] = useState<PendingUser[]>([]);
@@ -40,12 +40,25 @@ const Admin = () => {
   const [showPendingOnly, setShowPendingOnly] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return; // Aguardar carregamento
+    
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    
+    if (!isApproved) {
+      navigate("/pending");
+      return;
+    }
+    
     if (!isAdmin && !isLeader) {
       navigate("/dashboard");
       return;
     }
+    
     fetchUsers();
-  }, [isAdmin, isLeader, navigate]);
+  }, [authLoading, user, isApproved, isAdmin, isLeader, navigate]);
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -147,6 +160,14 @@ const Admin = () => {
       u.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       u.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
   const userName = profile?.full_name?.split(" ")[0] || "Admin";
 

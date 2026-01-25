@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Music, Calendar, CheckCircle, Clock, Plus, Users } from "lucide-react";
+import { Music, Calendar, CheckCircle, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +25,8 @@ import {
 } from "@/components/ui/select";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import CreateScaleDialog from "@/components/musicos/CreateScaleDialog";
+import AddMusicianDialog from "@/components/musicos/AddMusicianDialog";
 
 interface MusicScale {
   id: string;
@@ -176,72 +178,91 @@ const Musicos = () => {
           </div>
 
           {canManage && (
-            <Dialog open={isSongDialogOpen} onOpenChange={setIsSongDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="icon" className="rounded-xl shadow-lg">
-                  <Plus className="h-5 w-5" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="mx-4 max-w-md rounded-2xl">
-                <DialogHeader>
-                  <DialogTitle className="font-serif">Nova Música</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label>Título</Label>
-                    <Input
-                      value={newSong.title}
-                      onChange={(e) => setNewSong({ ...newSong, title: e.target.value })}
-                      placeholder="Nome da música"
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div>
-                    <Label>Artista/Ministério</Label>
-                    <Input
-                      value={newSong.artist}
-                      onChange={(e) => setNewSong({ ...newSong, artist: e.target.value })}
-                      placeholder="Ex: Hillsong"
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <div>
-                    <Label>Tom</Label>
-                    <Select
-                      value={newSong.key}
-                      onValueChange={(value) => setNewSong({ ...newSong, key: value })}
-                    >
-                      <SelectTrigger className="rounded-xl">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"].map(
-                          (key) => (
-                            <SelectItem key={key} value={key}>
-                              {key}
-                            </SelectItem>
-                          )
-                        )}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label>Link YouTube (opcional)</Label>
-                    <Input
-                      value={newSong.youtube_url}
-                      onChange={(e) => setNewSong({ ...newSong, youtube_url: e.target.value })}
-                      placeholder="https://youtube.com/..."
-                      className="rounded-xl"
-                    />
-                  </div>
-                  <Button onClick={handleAddSong} className="w-full rounded-xl">
-                    Adicionar Música
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            <div className="flex gap-2">
+              <AddMusicianDialog onMusicianAdded={fetchData} />
+              <CreateScaleDialog onScaleCreated={fetchData} />
+            </div>
           )}
         </motion.div>
+
+        {/* Card Destaque - Novo: Adicionar Música */}
+        {canManage && (
+          <Dialog open={isSongDialogOpen} onOpenChange={setIsSongDialogOpen}>
+            <DialogTrigger asChild>
+              <motion.button
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.05 }}
+                className="w-full mb-4 rounded-2xl bg-card p-4 shadow-md text-left flex items-center gap-3"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                  <Plus className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-medium text-foreground">Adicionar Música</h3>
+                  <p className="text-sm text-muted-foreground">Incluir no repertório</p>
+                </div>
+              </motion.button>
+            </DialogTrigger>
+            <DialogContent className="mx-4 max-w-md rounded-2xl">
+              <DialogHeader>
+                <DialogTitle className="font-serif">Nova Música</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label>Título</Label>
+                  <Input
+                    value={newSong.title}
+                    onChange={(e) => setNewSong({ ...newSong, title: e.target.value })}
+                    placeholder="Nome da música"
+                    className="rounded-xl"
+                  />
+                </div>
+                <div>
+                  <Label>Artista/Ministério</Label>
+                  <Input
+                    value={newSong.artist}
+                    onChange={(e) => setNewSong({ ...newSong, artist: e.target.value })}
+                    placeholder="Ex: Hillsong"
+                    className="rounded-xl"
+                  />
+                </div>
+                <div>
+                  <Label>Tom</Label>
+                  <Select
+                    value={newSong.key}
+                    onValueChange={(value) => setNewSong({ ...newSong, key: value })}
+                  >
+                    <SelectTrigger className="rounded-xl">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"].map(
+                        (key) => (
+                          <SelectItem key={key} value={key}>
+                            {key}
+                          </SelectItem>
+                        )
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Link YouTube (opcional)</Label>
+                  <Input
+                    value={newSong.youtube_url}
+                    onChange={(e) => setNewSong({ ...newSong, youtube_url: e.target.value })}
+                    placeholder="https://youtube.com/..."
+                    className="rounded-xl"
+                  />
+                </div>
+                <Button onClick={handleAddSong} className="w-full rounded-xl">
+                  Adicionar Música
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
 
         {/* Card Destaque */}
         <motion.div

@@ -16,6 +16,7 @@ import Presenca from "./pages/Presenca";
 import Diario from "./pages/Diario";
 import Conquistas from "./pages/Conquistas";
 import Oracoes from "./pages/Oracoes";
+import Ranking from "./pages/Ranking";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +41,7 @@ const App = () => (
           <Route path="/diario" element={<Diario />} />
           <Route path="/conquistas" element={<Conquistas />} />
           <Route path="/oracoes" element={<Oracoes />} />
+          <Route path="/ranking" element={<Ranking />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
