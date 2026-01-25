@@ -283,6 +283,45 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_devotionals: {
+        Row: {
+          bible_reference: string
+          bible_verse: string
+          content: string
+          created_at: string
+          created_by: string
+          devotional_date: string
+          id: string
+          prayer_focus: string | null
+          reflection_questions: string[] | null
+          title: string
+        }
+        Insert: {
+          bible_reference: string
+          bible_verse: string
+          content: string
+          created_at?: string
+          created_by: string
+          devotional_date: string
+          id?: string
+          prayer_focus?: string | null
+          reflection_questions?: string[] | null
+          title: string
+        }
+        Update: {
+          bible_reference?: string
+          bible_verse?: string
+          content?: string
+          created_at?: string
+          created_by?: string
+          devotional_date?: string
+          id?: string
+          prayer_focus?: string | null
+          reflection_questions?: string[] | null
+          title?: string
+        }
+        Relationships: []
+      }
       daily_reading_checkins: {
         Row: {
           completed_at: string
@@ -311,6 +350,38 @@ export type Database = {
             columns: ["plan_day_id"]
             isOneToOne: false
             referencedRelation: "reading_plan_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      devotional_progress: {
+        Row: {
+          completed_at: string
+          devotional_id: string
+          id: string
+          personal_reflection: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          devotional_id: string
+          id?: string
+          personal_reflection?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          devotional_id?: string
+          id?: string
+          personal_reflection?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devotional_progress_devotional_id_fkey"
+            columns: ["devotional_id"]
+            isOneToOne: false
+            referencedRelation: "daily_devotionals"
             referencedColumns: ["id"]
           },
         ]
@@ -610,6 +681,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      prayer_reminders: {
+        Row: {
+          created_at: string
+          id: string
+          is_active: boolean | null
+          reminder_time: string
+          reminder_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          reminder_time: string
+          reminder_type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          reminder_time?: string
+          reminder_type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       prayer_requests: {
         Row: {
@@ -988,6 +1086,74 @@ export type Database = {
             columns: ["study_id"]
             isOneToOne: false
             referencedRelation: "bible_studies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      testimonies: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string
+          id: string
+          is_anonymous: boolean | null
+          is_approved: boolean | null
+          likes_count: number | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_anonymous?: boolean | null
+          is_approved?: boolean | null
+          likes_count?: number | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_anonymous?: boolean | null
+          is_approved?: boolean | null
+          likes_count?: number | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      testimony_likes: {
+        Row: {
+          created_at: string
+          id: string
+          testimony_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          testimony_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          testimony_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "testimony_likes_testimony_id_fkey"
+            columns: ["testimony_id"]
+            isOneToOne: false
+            referencedRelation: "testimonies"
             referencedColumns: ["id"]
           },
         ]
