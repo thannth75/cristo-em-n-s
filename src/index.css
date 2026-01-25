@@ -149,4 +149,13 @@
   .glow-green {
     box-shadow: 0 0 40px -10px hsl(120 35% 35% / 0.3);
   }
+
+  /* Safe area for iOS */
+  .safe-area-inset-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .pb-safe {
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
 }

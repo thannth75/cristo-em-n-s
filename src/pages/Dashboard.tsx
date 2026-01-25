@@ -8,15 +8,17 @@ import {
   Music,
   Heart,
   Award,
-  Image,
   MessageSquare,
+  Shield,
+  ChevronRight,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import VerseCard from "@/components/VerseCard";
 import FeatureCard from "@/components/FeatureCard";
-import type { User } from "@supabase/supabase-js";
+import GlowOrb from "@/components/GlowOrb";
 
 const dailyVerses = [
   { verse: "Buscai primeiro o Reino de Deus e a sua justiça, e todas as coisas vos serão acrescentadas.", reference: "Mateus 6:33" },
@@ -26,52 +28,102 @@ const dailyVerses = [
   { verse: "O Senhor é o meu pastor; nada me faltará.", reference: "Salmos 23:1" },
 ];
 
-const features = [
-  { title: "Estudos Bíblicos", description: "Cronograma de leitura e provas", icon: BookOpen, href: "/estudos" },
-  { title: "Agenda Espiritual", description: "Cultos, ensaios e eventos", icon: Calendar, href: "/agenda" },
-  { title: "Presença", description: "Registro de participação", icon: Users, href: "/presenca" },
-  { title: "Músicos", description: "Escalas e repertório", icon: Music, href: "/musicos" },
-  { title: "Diário Espiritual", description: "Reflexões e orações", icon: Heart, href: "/diario" },
-  { title: "Conquistas", description: "Badges e progresso", icon: Award, href: "/conquistas", badge: "Novo" },
-  { title: "Galeria", description: "Fotos dos eventos", icon: Image, href: "/galeria" },
-  { title: "Pedidos de Oração", description: "Compartilhe com líderes", icon: MessageSquare, href: "/oracoes" },
-];
+interface NextEvent {
+  id: string;
+  title: string;
+  event_date: string;
+  start_time: string;
+  event_type: string;
+}
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(null);
+  const { user, profile, isApproved, isAdmin, isLeader, isLoading } = useAuth();
+  const [nextEvent, setNextEvent] = useState<NextEvent | null>(null);
   const [todayVerse] = useState(() => {
     const dayIndex = new Date().getDate() % dailyVerses.length;
     return dailyVerses[dayIndex];
   });
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setUser(session?.user ?? null);
-        if (!session?.user) {
-          navigate("/auth");
-        }
-      }
-    );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (!session?.user) {
+    if (!isLoading) {
+      if (!user) {
         navigate("/auth");
+      } else if (!isApproved) {
+        navigate("/pending");
       }
+    }
+  }, [user, isApproved, isLoading, navigate]);
+
+  useEffect(() => {
+    const fetchNextEvent = async () => {
+      const today = new Date().toISOString().split("T")[0];
+      const { data } = await supabase
+        .from("events")
+        .select("id, title, event_date, start_time, event_type")
+        .gte("event_date", today)
+        .order("event_date", { ascending: true })
+        .order("start_time", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      setNextEvent(data);
+    };
+
+    if (isApproved) {
+      fetchNextEvent();
+    }
+  }, [isApproved]);
+
+  const features = [
+    { title: "Estudos Bíblicos", description: "Cronograma de leitura", icon: BookOpen, href: "/estudos" },
+    { title: "Agenda", description: "Cultos e eventos", icon: Calendar, href: "/agenda" },
+    { title: "Presença", description: "Registro de participação", icon: Users, href: "/presenca" },
+    { title: "Músicos", description: "Escalas e repertório", icon: Music, href: "/musicos" },
+    { title: "Diário Espiritual", description: "Reflexões pessoais", icon: Heart, href: "/diario" },
+    { title: "Conquistas", description: "Badges e progresso", icon: Award, href: "/conquistas", badge: "Novo" },
+    { title: "Pedidos de Oração", description: "Compartilhe com líderes", icon: MessageSquare, href: "/oracoes" },
+  ];
+
+  // Adicionar admin se for líder ou admin
+  if (isAdmin || isLeader) {
+    features.push({
+      title: "Administração",
+      description: "Gerenciar usuários",
+      icon: Shield,
+      href: "/admin",
     });
+  }
 
-    return () => subscription.unsubscribe();
-  }, [navigate]);
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      </div>
+    );
+  }
 
-  const userName = user?.user_metadata?.full_name?.split(" ")[0] || "Jovem";
+  const userName = profile?.full_name?.split(" ")[0] || "Jovem";
+
+  const formatEventDate = (dateStr: string) => {
+    const date = new Date(dateStr + "T00:00:00");
+    const days = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+    const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+    return {
+      day: date.getDate(),
+      month: months[date.getMonth()].toUpperCase(),
+      weekday: days[date.getDay()],
+    };
+  };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="relative min-h-screen bg-background pb-24 overflow-hidden">
+      {/* Orb decorativo */}
+      <GlowOrb className="absolute -top-20 -right-20 h-64 w-64 opacity-30" />
+      
       <AppHeader userName={userName} />
 
-      <main className="px-4 py-6">
+      <main className="relative z-10 px-4 py-6">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -80,27 +132,48 @@ const Dashboard = () => {
           {/* Versículo do Dia */}
           <VerseCard verse={todayVerse.verse} reference={todayVerse.reference} />
 
-          {/* Próximo evento destaque */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="overflow-hidden rounded-2xl gradient-hope p-5 text-primary-foreground shadow-lg"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium opacity-90">Próximo Culto</p>
-                <h3 className="font-serif text-xl font-semibold">Domingo, 19h</h3>
-                <p className="mt-1 text-sm opacity-80">Culto de Adoração</p>
-              </div>
-              <div className="text-right">
-                <div className="flex h-16 w-16 flex-col items-center justify-center rounded-xl bg-primary-foreground/20">
-                  <span className="text-2xl font-bold">26</span>
-                  <span className="text-xs font-medium">JAN</span>
+          {/* Próximo evento */}
+          {nextEvent ? (
+            <motion.button
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              onClick={() => navigate("/agenda")}
+              className="w-full overflow-hidden rounded-2xl gradient-hope p-5 text-primary-foreground shadow-lg text-left"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex-1">
+                  <p className="text-sm font-medium opacity-90">Próximo Evento</p>
+                  <h3 className="font-serif text-xl font-semibold">{nextEvent.title}</h3>
+                  <p className="mt-1 text-sm opacity-80">
+                    {formatEventDate(nextEvent.event_date).weekday}, {nextEvent.start_time.slice(0, 5)}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-16 w-16 flex-col items-center justify-center rounded-xl bg-primary-foreground/20">
+                    <span className="text-2xl font-bold">{formatEventDate(nextEvent.event_date).day}</span>
+                    <span className="text-xs font-medium">{formatEventDate(nextEvent.event_date).month}</span>
+                  </div>
+                  <ChevronRight className="h-5 w-5 opacity-70" />
                 </div>
               </div>
-            </div>
-          </motion.div>
+            </motion.button>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="overflow-hidden rounded-2xl gradient-hope p-5 text-primary-foreground shadow-lg"
+            >
+              <div className="flex items-center gap-4">
+                <Calendar className="h-8 w-8 opacity-80" />
+                <div>
+                  <p className="text-sm font-medium opacity-90">Agenda</p>
+                  <h3 className="font-serif text-lg font-semibold">Nenhum evento próximo</h3>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
           {/* Funcionalidades */}
           <div>

@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2, User, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import logo from "@/assets/logo-vida-em-cristo.png";
+import ParticlesBackground from "@/components/ParticlesBackground";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -55,6 +56,7 @@ const Auth = () => {
           title: "Cadastro enviado! ✝️",
           description: "Aguarde a aprovação de um líder ou pastor.",
         });
+        navigate("/pending");
       }
     } catch (error: any) {
       toast({
@@ -68,134 +70,184 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header decorativo */}
-      <div className="relative h-72 overflow-hidden gradient-hope">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20100%20100%22%20preserveAspectRatio%3D%22none%22%3E%3Cpath%20d%3D%22M0%20100%20Q%2050%2050%20100%20100%20L%20100%200%20L%200%200%20Z%22%20fill%3D%22rgba(255%2C255%2C255%2C0.05)%22%2F%3E%3C%2Fsvg%3E')] opacity-30" />
+    <div className="relative min-h-screen bg-background overflow-hidden">
+      <ParticlesBackground />
+      
+      {/* Hero com Logo destacada */}
+      <div className="relative">
+        <div className="absolute inset-0 gradient-hope opacity-90" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.1),transparent_70%)]" />
+        
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="absolute inset-0 flex flex-col items-center justify-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="relative z-10 flex flex-col items-center justify-center px-6 pb-8 pt-12"
         >
-          <img src={logo} alt="Vida em Cristo" className="mb-2 h-28 w-auto drop-shadow-lg" />
+          {/* Logo com efeito glow */}
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.6, type: "spring" }}
+            className="relative mb-4"
+          >
+            <div className="absolute inset-0 blur-3xl bg-primary-foreground/20 rounded-full scale-150" />
+            <motion.img
+              src={logo}
+              alt="Vida em Cristo"
+              className="relative h-36 w-auto drop-shadow-2xl"
+              animate={{ y: [0, -6, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            />
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="flex items-center gap-2 text-primary-foreground/90"
+          >
+            <Sparkles className="h-4 w-4" />
+            <span className="text-sm font-medium">Ministério Ebenézer</span>
+            <Sparkles className="h-4 w-4" />
+          </motion.div>
         </motion.div>
       </div>
 
-      {/* Card de Login */}
+      {/* Card de Login com glassmorphism */}
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="relative z-10 mx-4 -mt-16 rounded-3xl bg-card p-6 shadow-xl"
+        className="relative z-10 mx-4 -mt-6 rounded-3xl bg-card/95 backdrop-blur-xl p-6 shadow-2xl border border-border/50"
       >
-        <div className="mb-6 text-center">
-          <h2 className="font-serif text-2xl font-semibold text-foreground">
-            {isLogin ? "Entrar" : "Solicitar Cadastro"}
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {isLogin ? "Acesse sua conta" : "Preencha seus dados"}
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {!isLogin && (
-            <div className="space-y-2">
-              <Label htmlFor="fullName">Nome Completo</Label>
-              <Input
-                id="fullName"
-                type="text"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="Seu nome completo"
-                required={!isLogin}
-                className="h-12 rounded-xl"
-              />
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor="email">E-mail</Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu@email.com"
-                required
-                className="h-12 rounded-xl pl-10"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="password">Senha</Label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                minLength={6}
-                className="h-12 rounded-xl pl-10 pr-10"
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
-              >
-                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-              </button>
-            </div>
-          </div>
-
-          {isLogin && (
-            <button type="button" className="text-sm font-medium text-primary hover:underline">
-              Esqueceu a senha?
-            </button>
-          )}
-
-          <Button
-            type="submit"
-            disabled={isLoading}
-            className="mt-6 h-12 w-full rounded-xl text-base font-semibold"
+        {/* Tabs */}
+        <div className="mb-6 flex rounded-2xl bg-muted/50 p-1">
+          <button
+            onClick={() => setIsLogin(true)}
+            className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition-all ${
+              isLogin
+                ? "bg-card text-foreground shadow-md"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
           >
-            {isLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <>
-                {isLogin ? "Entrar" : "Solicitar Cadastro"}
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </>
-            )}
-          </Button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <p className="text-sm text-muted-foreground">
-            {isLogin ? "Ainda não tem uma conta?" : "Já possui uma conta?"}{" "}
-            <button
-              type="button"
-              onClick={() => setIsLogin(!isLogin)}
-              className="font-semibold text-primary hover:underline"
-            >
-              {isLogin ? "Solicitar acesso" : "Entrar"}
-            </button>
-          </p>
+            Entrar
+          </button>
+          <button
+            onClick={() => setIsLogin(false)}
+            className={`flex-1 rounded-xl py-2.5 text-sm font-medium transition-all ${
+              !isLogin
+                ? "bg-card text-foreground shadow-md"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            Cadastrar
+          </button>
         </div>
+
+        <AnimatePresence mode="wait">
+          <motion.form
+            key={isLogin ? "login" : "register"}
+            initial={{ opacity: 0, x: isLogin ? -20 : 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: isLogin ? 20 : -20 }}
+            transition={{ duration: 0.2 }}
+            onSubmit={handleSubmit}
+            className="space-y-4"
+          >
+            {!isLogin && (
+              <div className="space-y-2">
+                <Label htmlFor="fullName" className="text-sm font-medium">
+                  Nome Completo
+                </Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Seu nome completo"
+                    required={!isLogin}
+                    className="h-12 rounded-xl pl-10 bg-background/50"
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-medium">
+                E-mail
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="seu@email.com"
+                  required
+                  className="h-12 rounded-xl pl-10 bg-background/50"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="password" className="text-sm font-medium">
+                Senha
+              </Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  minLength={6}
+                  className="h-12 rounded-xl pl-10 pr-10 bg-background/50"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
+            </div>
+
+            {isLogin && (
+              <button type="button" className="text-sm font-medium text-primary hover:underline">
+                Esqueceu a senha?
+              </button>
+            )}
+
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="mt-6 h-12 w-full rounded-xl text-base font-semibold shadow-lg shadow-primary/25"
+            >
+              {isLoading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <>
+                  {isLogin ? "Entrar" : "Solicitar Cadastro"}
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </>
+              )}
+            </Button>
+          </motion.form>
+        </AnimatePresence>
       </motion.div>
 
       {/* Versículo de rodapé */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        className="mt-8 px-6 pb-8 text-center"
+        transition={{ delay: 0.6 }}
+        className="relative z-10 mt-8 px-6 pb-8 text-center"
       >
         <p className="font-serif italic text-muted-foreground">
           "Eu sou o caminho, a verdade e a vida."
