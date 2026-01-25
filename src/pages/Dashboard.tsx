@@ -11,9 +11,11 @@ import {
   MessageSquare,
   Shield,
   ChevronRight,
+  Trophy,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAchievements } from "@/hooks/useAchievements";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import VerseCard from "@/components/VerseCard";
@@ -39,6 +41,8 @@ interface NextEvent {
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, profile, isApproved, isAdmin, isLeader, isLoading } = useAuth();
+  useAchievements(); // Verificar conquistas automáticas
+  
   const [nextEvent, setNextEvent] = useState<NextEvent | null>(null);
   const [todayVerse] = useState(() => {
     const dayIndex = new Date().getDate() % dailyVerses.length;
@@ -81,7 +85,8 @@ const Dashboard = () => {
     { title: "Presença", description: "Registro de participação", icon: Users, href: "/presenca" },
     { title: "Músicos", description: "Escalas e repertório", icon: Music, href: "/musicos" },
     { title: "Diário Espiritual", description: "Reflexões pessoais", icon: Heart, href: "/diario" },
-    { title: "Conquistas", description: "Badges e progresso", icon: Award, href: "/conquistas", badge: "Novo" },
+    { title: "Conquistas", description: "Badges e progresso", icon: Award, href: "/conquistas" },
+    { title: "Ranking", description: "Veja sua posição", icon: Trophy, href: "/ranking", badge: "Novo" },
     { title: "Pedidos de Oração", description: "Compartilhe com líderes", icon: MessageSquare, href: "/oracoes" },
   ];
 
