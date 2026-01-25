@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { prayerRequestSchema, validateInput } from "@/lib/validation";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -90,17 +91,22 @@ const Oracoes = () => {
   };
 
   const handleCreatePrayer = async () => {
-    if (!newPrayer.title || !newPrayer.content) {
+    const validation = validateInput(prayerRequestSchema, newPrayer);
+    
+    if (!validation.success) {
       toast({
-        title: "Campos obrigatórios",
-        description: "Preencha o título e o pedido.",
+        title: "Erro de validação",
+        description: validation.error,
         variant: "destructive",
       });
       return;
     }
 
+    const validatedData = validation.data;
     const { error } = await supabase.from("prayer_requests").insert({
-      ...newPrayer,
+      title: validatedData.title,
+      content: validatedData.content,
+      is_private: validatedData.is_private,
       user_id: user?.id,
     });
 

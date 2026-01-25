@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import RoleManager from "@/components/admin/RoleManager";
+import { notificationSchema, validateInput } from "@/lib/validation";
 
 interface UserWithRole {
   id: string;
@@ -151,11 +152,25 @@ const Admin = () => {
   };
 
   const sendLowAttendanceNotification = async (targetUserId: string, userName: string) => {
-    const { error } = await supabase.from("notifications").insert([{
-      user_id: targetUserId,
+    const notificationData = {
       title: "Sentimos sua falta! 🙏",
       message: `Olá ${userName.split(" ")[0]}, percebemos que você não tem participado dos nossos encontros. Sua presença é muito importante! Volte para nossa comunhão.`,
       type: "warning",
+    };
+    
+    const validation = validateInput(notificationSchema, notificationData);
+    
+    if (!validation.success) {
+      toast({ title: "Erro de validação", description: validation.error, variant: "destructive" });
+      return;
+    }
+
+    const validatedData = validation.data;
+    const { error } = await supabase.from("notifications").insert([{
+      user_id: targetUserId,
+      title: validatedData.title,
+      message: validatedData.message,
+      type: validatedData.type || "info",
     }]);
 
     if (!error) {

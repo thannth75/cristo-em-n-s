@@ -26,6 +26,7 @@ import {
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import EventDetailDialog from "@/components/agenda/EventDetailDialog";
+import { eventSchema, validateInput } from "@/lib/validation";
 
 interface Event {
   id: string;
@@ -112,19 +113,27 @@ const Agenda = () => {
   };
 
   const handleCreateEvent = async () => {
-    if (!newEvent.title || !newEvent.event_date || !newEvent.start_time) {
+    const validation = validateInput(eventSchema, newEvent);
+    
+    if (!validation.success) {
       toast({
-        title: "Campos obrigatórios",
-        description: "Preencha título, data e horário.",
+        title: "Erro de validação",
+        description: validation.error,
         variant: "destructive",
       });
       return;
     }
 
+    const validatedData = validation.data;
     const { error } = await supabase.from("events").insert({
-      ...newEvent,
+      title: validatedData.title,
+      description: validatedData.description || null,
+      event_type: validatedData.event_type,
+      event_date: validatedData.event_date,
+      start_time: validatedData.start_time,
+      end_time: validatedData.end_time || null,
+      location: validatedData.location || null,
       created_by: user?.id,
-      end_time: newEvent.end_time || null,
     });
 
     if (error) {
