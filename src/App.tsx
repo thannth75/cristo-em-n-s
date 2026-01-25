@@ -10,6 +10,12 @@ import Estudos from "./pages/Estudos";
 import Agenda from "./pages/Agenda";
 import Musicos from "./pages/Musicos";
 import Perfil from "./pages/Perfil";
+import Admin from "./pages/Admin";
+import PendingApproval from "./pages/PendingApproval";
+import Presenca from "./pages/Presenca";
+import Diario from "./pages/Diario";
+import Conquistas from "./pages/Conquistas";
+import Oracoes from "./pages/Oracoes";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,11 +29,17 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
+          <Route path="/pending" element={<PendingApproval />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/estudos" element={<Estudos />} />
           <Route path="/agenda" element={<Agenda />} />
           <Route path="/musicos" element={<Musicos />} />
           <Route path="/perfil" element={<Perfil />} />
+          <Route path="/admin" element={<Admin />} />
+          <Route path="/presenca" element={<Presenca />} />
+          <Route path="/diario" element={<Diario />} />
+          <Route path="/conquistas" element={<Conquistas />} />
+          <Route path="/oracoes" element={<Oracoes />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
