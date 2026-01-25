@@ -1,9 +1,9 @@
-import { useRef, forwardRef } from "react";
+import { useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Sphere, MeshDistortMaterial } from "@react-three/drei";
 import * as THREE from "three";
 
-const AnimatedOrb = forwardRef<THREE.Mesh>(function AnimatedOrb(_props, _ref) {
+function AnimatedOrb() {
   const meshRef = useRef<THREE.Mesh>(null);
 
   useFrame((state) => {
@@ -27,9 +27,7 @@ const AnimatedOrb = forwardRef<THREE.Mesh>(function AnimatedOrb(_props, _ref) {
       />
     </Sphere>
   );
-});
-
-AnimatedOrb.displayName = "AnimatedOrb";
+}
 
 interface GlowOrbProps {
   className?: string;
