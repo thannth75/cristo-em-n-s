@@ -1135,6 +1135,11 @@ export type Database = {
         Returns: boolean
       }
       is_admin_or_leader: { Args: { _user_id: string }; Returns: boolean }
+      is_approved_admin_or_leader: {
+        Args: { _user_id: string }
+        Returns: boolean
+      }
+      is_user_approved: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "jovem" | "lider" | "admin"
