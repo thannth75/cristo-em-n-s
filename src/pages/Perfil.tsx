@@ -1,21 +1,37 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { User, Mail, LogOut, Shield, ChevronRight, Award, Calendar, BookOpen } from "lucide-react";
+import { User, Mail, LogOut, Shield, ChevronRight, Award, Calendar, BookOpen, Camera, Edit } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import GlowOrb from "@/components/GlowOrb";
+import AvatarUpload from "@/components/perfil/AvatarUpload";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const Perfil = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, profile, roles, isAdmin, isLeader, isApproved, signOut, isLoading } = useAuth();
   const [stats, setStats] = useState({ presencas: 0, estudos: 0, conquistas: 0 });
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    full_name: "",
+    phone: "",
+    birth_date: "",
+  });
 
   useEffect(() => {
     if (!isLoading) {
@@ -26,6 +42,17 @@ const Perfil = () => {
       }
     }
   }, [user, isApproved, isLoading, navigate]);
+
+  useEffect(() => {
+    if (profile) {
+      setAvatarUrl(profile.avatar_url);
+      setEditForm({
+        full_name: profile.full_name || "",
+        phone: profile.phone || "",
+        birth_date: profile.birth_date || "",
+      });
+    }
+  }, [profile]);
 
   useEffect(() => {
     if (user && isApproved) {
@@ -54,6 +81,24 @@ const Perfil = () => {
       description: "Volte sempre. Deus te abençoe!",
     });
     navigate("/auth");
+  };
+
+  const handleUpdateProfile = async () => {
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        full_name: editForm.full_name,
+        phone: editForm.phone || null,
+        birth_date: editForm.birth_date || null,
+      })
+      .eq("user_id", user?.id);
+
+    if (error) {
+      toast({ title: "Erro", description: "Não foi possível atualizar o perfil.", variant: "destructive" });
+    } else {
+      toast({ title: "Perfil atualizado! ✅", description: "Suas informações foram salvas." });
+      setIsEditDialogOpen(false);
+    }
   };
 
   const getRoleLabel = () => {
@@ -108,17 +153,28 @@ const Perfil = () => {
                 className="relative"
               >
                 <div className="absolute inset-0 blur-xl bg-primary/30 rounded-full scale-125" />
-                <div className="relative flex h-24 w-24 items-center justify-center rounded-full border-4 border-card bg-primary text-primary-foreground shadow-xl">
-                  <span className="font-serif text-3xl font-bold">
-                    {userName.charAt(0).toUpperCase()}
-                  </span>
+                <div className="relative">
+                  <AvatarUpload
+                    userId={user?.id || ""}
+                    currentAvatarUrl={avatarUrl}
+                    userName={userName}
+                    onAvatarChange={setAvatarUrl}
+                  />
                 </div>
               </motion.div>
             </div>
           </div>
 
           <div className="px-6 pb-6 pt-16 text-center">
-            <h2 className="font-serif text-xl font-semibold text-foreground">{userName}</h2>
+            <div className="flex items-center justify-center gap-2">
+              <h2 className="font-serif text-xl font-semibold text-foreground">{userName}</h2>
+              <button
+                onClick={() => setIsEditDialogOpen(true)}
+                className="text-muted-foreground hover:text-primary transition-colors"
+              >
+                <Edit className="h-4 w-4" />
+              </button>
+            </div>
             <div className="mt-1 flex items-center justify-center gap-1 text-sm text-muted-foreground">
               <Mail className="h-4 w-4" />
               <span>{userEmail}</span>
@@ -226,6 +282,46 @@ const Perfil = () => {
           <p className="mt-1 text-sm font-medium text-primary">— 1 Coríntios 10:31</p>
         </motion.div>
       </main>
+
+      {/* Edit Profile Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="mx-4 max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-serif">Editar Perfil</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Nome completo</Label>
+              <Input
+                value={editForm.full_name}
+                onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                className="rounded-xl"
+              />
+            </div>
+            <div>
+              <Label>Telefone</Label>
+              <Input
+                value={editForm.phone}
+                onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                placeholder="(00) 00000-0000"
+                className="rounded-xl"
+              />
+            </div>
+            <div>
+              <Label>Data de nascimento</Label>
+              <Input
+                type="date"
+                value={editForm.birth_date}
+                onChange={(e) => setEditForm({ ...editForm, birth_date: e.target.value })}
+                className="rounded-xl"
+              />
+            </div>
+            <Button onClick={handleUpdateProfile} className="w-full rounded-xl">
+              Salvar Alterações
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <BottomNavigation />
     </div>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Heart, Plus, Trash2, Smile, BookOpen } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Heart, Plus, Trash2, Sparkles, BookOpen, Hand } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -16,15 +16,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import { MOOD_VERSES } from "@/data/bibleReadingPlans";
 
 interface JournalEntry {
   id: string;
@@ -35,12 +29,28 @@ interface JournalEntry {
   created_at: string;
 }
 
-const moodEmojis: Record<string, string> = {
-  grato: "🙏",
-  alegre: "😊",
-  reflexivo: "🤔",
-  esperancoso: "✨",
-  triste: "😢",
+interface MoodVerse {
+  mood: string;
+  verse: string;
+  reference: string;
+  encouragement: string;
+  prayerSuggestion: string;
+}
+
+const moods = [
+  { value: "grato", emoji: "🙏", label: "Grato" },
+  { value: "alegre", emoji: "😊", label: "Alegre" },
+  { value: "esperancoso", emoji: "✨", label: "Esperançoso" },
+  { value: "triste", emoji: "😢", label: "Triste" },
+  { value: "ansioso", emoji: "😰", label: "Ansioso" },
+  { value: "preocupado", emoji: "😟", label: "Preocupado" },
+  { value: "medo", emoji: "😨", label: "Com medo" },
+  { value: "desanimado", emoji: "😔", label: "Desanimado" },
+  { value: "confuso", emoji: "🤔", label: "Confuso" },
+];
+
+const getMoodEmoji = (mood: string) => {
+  return moods.find(m => m.value === mood)?.emoji || "📝";
 };
 
 const Diario = () => {
@@ -50,10 +60,13 @@ const Diario = () => {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedMood, setSelectedMood] = useState<string | null>(null);
+  const [moodVerse, setMoodVerse] = useState<MoodVerse | null>(null);
+  const [showMoodSelector, setShowMoodSelector] = useState(false);
   const [newEntry, setNewEntry] = useState({
     title: "",
     content: "",
-    mood: "grato",
+    mood: "",
     bible_verse: "",
   });
 
@@ -81,16 +94,23 @@ const Diario = () => {
       .eq("user_id", user?.id)
       .order("created_at", { ascending: false });
 
-    if (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar o diário.",
-        variant: "destructive",
-      });
-    } else {
+    if (!error) {
       setEntries(data || []);
     }
     setIsLoading(false);
+  };
+
+  const handleSelectMood = (mood: string) => {
+    setSelectedMood(mood);
+    setNewEntry({ ...newEntry, mood });
+    
+    // Get random verse for this mood
+    const versesForMood = MOOD_VERSES.filter(v => v.mood === mood);
+    if (versesForMood.length > 0) {
+      const randomVerse = versesForMood[Math.floor(Math.random() * versesForMood.length)];
+      setMoodVerse(randomVerse);
+    }
+    setShowMoodSelector(false);
   };
 
   const handleCreateEntry = async () => {
@@ -106,7 +126,7 @@ const Diario = () => {
     const { error } = await supabase.from("journal_entries").insert({
       ...newEntry,
       user_id: user?.id,
-      bible_verse: newEntry.bible_verse || null,
+      bible_verse: newEntry.bible_verse || moodVerse?.reference || null,
       title: newEntry.title || null,
     });
 
@@ -122,7 +142,9 @@ const Diario = () => {
         description: "Continue firme na sua jornada espiritual.",
       });
       setIsDialogOpen(false);
-      setNewEntry({ title: "", content: "", mood: "grato", bible_verse: "" });
+      setNewEntry({ title: "", content: "", mood: "", bible_verse: "" });
+      setSelectedMood(null);
+      setMoodVerse(null);
       fetchEntries();
     }
   };
@@ -130,13 +152,7 @@ const Diario = () => {
   const handleDeleteEntry = async (entryId: string) => {
     const { error } = await supabase.from("journal_entries").delete().eq("id", entryId);
 
-    if (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível excluir a reflexão.",
-        variant: "destructive",
-      });
-    } else {
+    if (!error) {
       toast({ title: "Reflexão excluída" });
       fetchEntries();
     }
@@ -191,60 +207,124 @@ const Diario = () => {
                 <Plus className="h-5 w-5" />
               </Button>
             </DialogTrigger>
-            <DialogContent className="mx-4 max-w-md rounded-2xl">
+            <DialogContent className="mx-4 max-w-md rounded-2xl max-h-[85vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="font-serif">Nova Reflexão</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
-                <div>
-                  <Label>Título (opcional)</Label>
-                  <Input
-                    value={newEntry.title}
-                    onChange={(e) => setNewEntry({ ...newEntry, title: e.target.value })}
-                    placeholder="Título da reflexão"
-                    className="rounded-xl"
-                  />
-                </div>
-                <div>
-                  <Label>Como você está se sentindo?</Label>
-                  <Select
-                    value={newEntry.mood}
-                    onValueChange={(value) => setNewEntry({ ...newEntry, mood: value })}
+              
+              <AnimatePresence mode="wait">
+                {!selectedMood ? (
+                  <motion.div
+                    key="mood-selector"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="space-y-4"
                   >
-                    <SelectTrigger className="rounded-xl">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="grato">🙏 Grato</SelectItem>
-                      <SelectItem value="alegre">😊 Alegre</SelectItem>
-                      <SelectItem value="reflexivo">🤔 Reflexivo</SelectItem>
-                      <SelectItem value="esperancoso">✨ Esperançoso</SelectItem>
-                      <SelectItem value="triste">😢 Triste</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Sua reflexão</Label>
-                  <Textarea
-                    value={newEntry.content}
-                    onChange={(e) => setNewEntry({ ...newEntry, content: e.target.value })}
-                    placeholder="Escreva seus pensamentos, orações ou gratidão..."
-                    className="rounded-xl min-h-[120px]"
-                  />
-                </div>
-                <div>
-                  <Label>Versículo do dia (opcional)</Label>
-                  <Input
-                    value={newEntry.bible_verse}
-                    onChange={(e) => setNewEntry({ ...newEntry, bible_verse: e.target.value })}
-                    placeholder="Ex: João 3:16"
-                    className="rounded-xl"
-                  />
-                </div>
-                <Button onClick={handleCreateEntry} className="w-full rounded-xl">
-                  Salvar Reflexão
-                </Button>
-              </div>
+                    <div className="text-center py-4">
+                      <Sparkles className="mx-auto h-10 w-10 text-primary mb-3" />
+                      <h3 className="font-semibold text-foreground">Como você está se sentindo?</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Vou te dar um versículo especial
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      {moods.map((mood) => (
+                        <motion.button
+                          key={mood.value}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => handleSelectMood(mood.value)}
+                          className="flex flex-col items-center gap-1 p-3 rounded-xl bg-muted hover:bg-primary/10 transition-colors"
+                        >
+                          <span className="text-2xl">{mood.emoji}</span>
+                          <span className="text-xs text-muted-foreground">{mood.label}</span>
+                        </motion.button>
+                      ))}
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="entry-form"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="space-y-4"
+                  >
+                    {/* Selected mood & verse */}
+                    <div className="rounded-xl bg-primary/10 p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-2xl">{getMoodEmoji(selectedMood)}</span>
+                        <span className="font-medium text-foreground">
+                          {moods.find(m => m.value === selectedMood)?.label}
+                        </span>
+                        <button
+                          onClick={() => {
+                            setSelectedMood(null);
+                            setMoodVerse(null);
+                          }}
+                          className="ml-auto text-xs text-primary hover:underline"
+                        >
+                          Trocar
+                        </button>
+                      </div>
+                      
+                      {moodVerse && (
+                        <div className="space-y-3">
+                          <div className="rounded-lg bg-card p-3">
+                            <p className="font-serif italic text-foreground">"{moodVerse.verse}"</p>
+                            <p className="mt-1 text-sm font-medium text-primary">— {moodVerse.reference}</p>
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            <p className="flex items-start gap-2">
+                              <Sparkles className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                              {moodVerse.encouragement}
+                            </p>
+                          </div>
+                          <div className="rounded-lg bg-card p-3 border-l-4 border-primary">
+                            <p className="text-xs font-medium text-muted-foreground mb-1">
+                              <Hand className="inline h-3 w-3 mr-1" />
+                              Sugestão de oração:
+                            </p>
+                            <p className="text-sm italic text-foreground">{moodVerse.prayerSuggestion}</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label>Título (opcional)</Label>
+                      <Input
+                        value={newEntry.title}
+                        onChange={(e) => setNewEntry({ ...newEntry, title: e.target.value })}
+                        placeholder="Título da reflexão"
+                        className="rounded-xl"
+                      />
+                    </div>
+                    <div>
+                      <Label>Sua reflexão</Label>
+                      <Textarea
+                        value={newEntry.content}
+                        onChange={(e) => setNewEntry({ ...newEntry, content: e.target.value })}
+                        placeholder="Escreva seus pensamentos, orações ou gratidão..."
+                        className="rounded-xl min-h-[120px]"
+                      />
+                    </div>
+                    <div>
+                      <Label>Versículo adicional (opcional)</Label>
+                      <Input
+                        value={newEntry.bible_verse}
+                        onChange={(e) => setNewEntry({ ...newEntry, bible_verse: e.target.value })}
+                        placeholder={moodVerse?.reference || "Ex: João 3:16"}
+                        className="rounded-xl"
+                      />
+                    </div>
+                    <Button onClick={handleCreateEntry} className="w-full rounded-xl">
+                      Salvar Reflexão
+                    </Button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </DialogContent>
           </Dialog>
         </motion.div>
@@ -298,9 +378,7 @@ const Diario = () => {
               >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl">
-                      {entry.mood ? moodEmojis[entry.mood] || "📝" : "📝"}
-                    </span>
+                    <span className="text-2xl">{getMoodEmoji(entry.mood || "")}</span>
                     <div>
                       <h3 className="font-semibold text-foreground">
                         {entry.title || "Reflexão"}

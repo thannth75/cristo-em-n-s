@@ -76,6 +76,93 @@ export type Database = {
           },
         ]
       }
+      bible_book_content: {
+        Row: {
+          application: string | null
+          approximate_date: string | null
+          author: string | null
+          book_name: string
+          book_order: number
+          category: string | null
+          chapters_count: number
+          created_at: string
+          historical_context: string | null
+          id: string
+          key_themes: string[] | null
+          key_verses: string[] | null
+          summary: string
+          testament: string
+        }
+        Insert: {
+          application?: string | null
+          approximate_date?: string | null
+          author?: string | null
+          book_name: string
+          book_order: number
+          category?: string | null
+          chapters_count: number
+          created_at?: string
+          historical_context?: string | null
+          id?: string
+          key_themes?: string[] | null
+          key_verses?: string[] | null
+          summary: string
+          testament: string
+        }
+        Update: {
+          application?: string | null
+          approximate_date?: string | null
+          author?: string | null
+          book_name?: string
+          book_order?: number
+          category?: string | null
+          chapters_count?: number
+          created_at?: string
+          historical_context?: string | null
+          id?: string
+          key_themes?: string[] | null
+          key_verses?: string[] | null
+          summary?: string
+          testament?: string
+        }
+        Relationships: []
+      }
+      bible_quizzes: {
+        Row: {
+          book: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          difficulty: string | null
+          id: string
+          is_active: boolean | null
+          points_reward: number | null
+          title: string
+        }
+        Insert: {
+          book?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          difficulty?: string | null
+          id?: string
+          is_active?: boolean | null
+          points_reward?: number | null
+          title: string
+        }
+        Update: {
+          book?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          difficulty?: string | null
+          id?: string
+          is_active?: boolean | null
+          points_reward?: number | null
+          title?: string
+        }
+        Relationships: []
+      }
       bible_studies: {
         Row: {
           book: string
@@ -114,6 +201,98 @@ export type Database = {
           title?: string
         }
         Relationships: []
+      }
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          message_type: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          message_type?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          message_type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      community_posts: {
+        Row: {
+          comments_count: number | null
+          content: string
+          created_at: string
+          id: string
+          image_url: string | null
+          is_pinned: boolean | null
+          likes_count: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comments_count?: number | null
+          content: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_pinned?: boolean | null
+          likes_count?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comments_count?: number | null
+          content?: string
+          created_at?: string
+          id?: string
+          image_url?: string | null
+          is_pinned?: boolean | null
+          likes_count?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      daily_reading_checkins: {
+        Row: {
+          completed_at: string
+          id: string
+          notes: string | null
+          plan_day_id: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          notes?: string | null
+          plan_day_id: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          notes?: string | null
+          plan_day_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_reading_checkins_plan_day_id_fkey"
+            columns: ["plan_day_id"]
+            isOneToOne: false
+            referencedRelation: "reading_plan_days"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       events: {
         Row: {
@@ -187,6 +366,36 @@ export type Database = {
           title?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      mood_verses: {
+        Row: {
+          created_at: string
+          encouragement: string | null
+          id: string
+          mood: string
+          prayer_suggestion: string | null
+          verse_reference: string
+          verse_text: string
+        }
+        Insert: {
+          created_at?: string
+          encouragement?: string | null
+          id?: string
+          mood: string
+          prayer_suggestion?: string | null
+          verse_reference: string
+          verse_text: string
+        }
+        Update: {
+          created_at?: string
+          encouragement?: string | null
+          id?: string
+          mood?: string
+          prayer_suggestion?: string | null
+          verse_reference?: string
+          verse_text?: string
         }
         Relationships: []
       }
@@ -288,6 +497,67 @@ export type Database = {
         }
         Relationships: []
       }
+      post_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_likes: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prayer_comments: {
         Row: {
           content: string
@@ -356,6 +626,33 @@ export type Database = {
         }
         Relationships: []
       }
+      private_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_read: boolean | null
+          receiver_id: string
+          sender_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          receiver_id: string
+          sender_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          receiver_id?: string
+          sender_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           approved_at: string | null
@@ -398,6 +695,124 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      quiz_questions: {
+        Row: {
+          correct_answer: number
+          created_at: string
+          explanation: string | null
+          id: string
+          options: string[]
+          order_position: number | null
+          points: number | null
+          question: string
+          quiz_id: string
+        }
+        Insert: {
+          correct_answer: number
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          options: string[]
+          order_position?: number | null
+          points?: number | null
+          question: string
+          quiz_id: string
+        }
+        Update: {
+          correct_answer?: number
+          created_at?: string
+          explanation?: string | null
+          id?: string
+          options?: string[]
+          order_position?: number | null
+          points?: number | null
+          question?: string
+          quiz_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "bible_quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reading_plan_days: {
+        Row: {
+          book: string | null
+          chapter_end: number | null
+          chapter_start: number | null
+          created_at: string
+          day_number: number
+          id: string
+          plan_id: string
+          readings: string[]
+          title: string
+        }
+        Insert: {
+          book?: string | null
+          chapter_end?: number | null
+          chapter_start?: number | null
+          created_at?: string
+          day_number: number
+          id?: string
+          plan_id: string
+          readings: string[]
+          title: string
+        }
+        Update: {
+          book?: string | null
+          chapter_end?: number | null
+          chapter_start?: number | null
+          created_at?: string
+          day_number?: number
+          id?: string
+          plan_id?: string
+          readings?: string[]
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reading_plan_days_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "reading_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reading_plans: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          plan_type: string
+          total_days: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          plan_type?: string
+          total_days?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          plan_type?: string
+          total_days?: number
         }
         Relationships: []
       }
@@ -581,6 +996,82 @@ export type Database = {
             columns: ["achievement_id"]
             isOneToOne: false
             referencedRelation: "achievements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_quiz_attempts: {
+        Row: {
+          completed_at: string
+          correct_answers: number
+          id: string
+          quiz_id: string
+          score: number
+          total_questions: number
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          correct_answers?: number
+          id?: string
+          quiz_id: string
+          score?: number
+          total_questions: number
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          correct_answers?: number
+          id?: string
+          quiz_id?: string
+          score?: number
+          total_questions?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_quiz_attempts_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "bible_quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_reading_progress: {
+        Row: {
+          completed_at: string | null
+          current_day: number
+          id: string
+          is_active: boolean | null
+          plan_id: string
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          current_day?: number
+          id?: string
+          is_active?: boolean | null
+          plan_id: string
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          current_day?: number
+          id?: string
+          is_active?: boolean | null
+          plan_id?: string
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_reading_progress_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "reading_plans"
             referencedColumns: ["id"]
           },
         ]

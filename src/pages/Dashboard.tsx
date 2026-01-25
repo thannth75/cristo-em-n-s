@@ -12,6 +12,9 @@ import {
   Shield,
   ChevronRight,
   Trophy,
+  Brain,
+  Target,
+  MessageCircle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -81,12 +84,15 @@ const Dashboard = () => {
 
   const features = [
     { title: "Estudos Bíblicos", description: "Cronograma de leitura", icon: BookOpen, href: "/estudos" },
+    { title: "Plano de Leitura", description: "Leia a Bíblia em 1 ano", icon: Target, href: "/plano-leitura", badge: "Novo" },
+    { title: "Quiz Bíblico", description: "Teste seu conhecimento", icon: Brain, href: "/quiz", badge: "Novo" },
     { title: "Agenda", description: "Cultos e eventos", icon: Calendar, href: "/agenda" },
     { title: "Presença", description: "Registro de participação", icon: Users, href: "/presenca" },
     { title: "Músicos", description: "Escalas e repertório", icon: Music, href: "/musicos" },
     { title: "Diário Espiritual", description: "Reflexões pessoais", icon: Heart, href: "/diario" },
     { title: "Conquistas", description: "Badges e progresso", icon: Award, href: "/conquistas" },
-    { title: "Ranking", description: "Veja sua posição", icon: Trophy, href: "/ranking", badge: "Novo" },
+    { title: "Ranking", description: "Veja sua posição", icon: Trophy, href: "/ranking" },
+    { title: "Comunidade", description: "Chat e posts", icon: MessageCircle, href: "/comunidade", badge: "Novo" },
     { title: "Pedidos de Oração", description: "Compartilhe com líderes", icon: MessageSquare, href: "/oracoes" },
   ];
 
