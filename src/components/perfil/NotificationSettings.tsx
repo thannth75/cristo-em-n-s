@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Bell, Calendar, Heart, BookOpen, Award, Users, Settings } from "lucide-react";
+import { Bell, Calendar, Heart, BookOpen, Award, Users, Settings, BellOff, BellRing, Smartphone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
@@ -22,7 +22,7 @@ interface NotificationPreferences {
 
 const NotificationSettings = ({ userId }: NotificationSettingsProps) => {
   const { toast } = useToast();
-  const { isSupported, permission, isEnabled, requestPermission } = usePushNotifications();
+  const { isSupported, permission, isEnabled, requestPermission, swRegistration } = usePushNotifications();
   const [preferences, setPreferences] = useState<NotificationPreferences>({
     events_enabled: true,
     prayers_enabled: true,
@@ -32,6 +32,7 @@ const NotificationSettings = ({ userId }: NotificationSettingsProps) => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const hasServiceWorker = !!swRegistration;
 
   useEffect(() => {
     fetchPreferences();
@@ -139,8 +140,29 @@ const NotificationSettings = ({ userId }: NotificationSettingsProps) => {
 
   return (
     <div className="space-y-4">
-      {/* Push Permission Banner */}
-      {isSupported && !isEnabled && (
+      {/* Push Permission Banner - Denied */}
+      {isSupported && permission === "denied" && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl bg-destructive/10 border border-destructive/20 p-4"
+        >
+          <div className="flex items-start gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-destructive/20">
+              <BellOff className="h-5 w-5 text-destructive" />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-semibold text-foreground">Notificações Bloqueadas</h4>
+              <p className="text-sm text-muted-foreground mt-1">
+                Você bloqueou as notificações. Para ativá-las, acesse as configurações do navegador.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Push Permission Banner - Not Granted Yet */}
+      {isSupported && permission !== "denied" && !isEnabled && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -160,6 +182,7 @@ const NotificationSettings = ({ userId }: NotificationSettingsProps) => {
                 size="sm"
                 className="mt-3 rounded-xl"
               >
+                <BellRing className="h-4 w-4 mr-2" />
                 Ativar Agora
               </Button>
             </div>
@@ -167,17 +190,33 @@ const NotificationSettings = ({ userId }: NotificationSettingsProps) => {
         </motion.div>
       )}
 
-      {/* Status */}
+      {/* Status - Enabled */}
       {isEnabled && (
-        <div className="rounded-2xl bg-primary/10 p-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20">
-            <Bell className="h-5 w-5 text-primary" />
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl bg-primary/10 p-4"
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20">
+              <Bell className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-foreground">Notificações Ativas ✓</p>
+              <p className="text-sm text-muted-foreground">Você receberá alertas importantes</p>
+            </div>
           </div>
-          <div>
-            <p className="font-semibold text-foreground">Notificações Ativas</p>
-            <p className="text-sm text-muted-foreground">Você receberá alertas importantes</p>
+          
+          {/* Background notification support indicator */}
+          <div className="flex items-center gap-2 mt-3 p-2 rounded-lg bg-background/50">
+            <Smartphone className="h-4 w-4 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">
+              {hasServiceWorker 
+                ? "✓ Notificações em segundo plano ativas" 
+                : "Notificações apenas com app aberto"}
+            </span>
           </div>
-        </div>
+        </motion.div>
       )}
 
       {/* Preferences */}
