@@ -32,6 +32,7 @@ import DashboardLider from "./pages/DashboardLider";
 import Mensagens from "./pages/Mensagens";
 import Discipulado from "./pages/Discipulado";
 import Onboarding from "./pages/Onboarding";
+import Provas from "./pages/Provas";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -72,6 +73,7 @@ const App = () => (
           <Route path="/dashboard-lider" element={<DashboardLider />} />
           <Route path="/mensagens" element={<Mensagens />} />
           <Route path="/discipulado" element={<Discipulado />} />
+          <Route path="/provas" element={<Provas />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
