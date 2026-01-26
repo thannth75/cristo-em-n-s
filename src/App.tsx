@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import NotificationPermissionBanner from "@/components/NotificationPermissionBanner";
+import PresenceTracker from "@/components/PresenceTracker";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -41,6 +42,7 @@ const App = () => (
       <Toaster />
       <Sonner />
       <NotificationPermissionBanner />
+      <PresenceTracker />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />

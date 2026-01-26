@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Bell, Calendar, Heart, BookOpen, Award, Users, Settings, BellOff, BellRing, Smartphone } from "lucide-react";
+import { Bell, Calendar, Heart, BookOpen, Award, Users, Settings, BellOff, BellRing, Smartphone, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useWebPush } from "@/hooks/useWebPush";
 
 interface NotificationSettingsProps {
   userId: string;
@@ -22,7 +22,7 @@ interface NotificationPreferences {
 
 const NotificationSettings = ({ userId }: NotificationSettingsProps) => {
   const { toast } = useToast();
-  const { isSupported, permission, isEnabled, requestPermission, swRegistration } = usePushNotifications();
+  const { isSupported, permission, isSubscribed, isLoading: pushLoading, subscribe, unsubscribe } = useWebPush(userId);
   const [preferences, setPreferences] = useState<NotificationPreferences>({
     events_enabled: true,
     prayers_enabled: true,
@@ -32,7 +32,6 @@ const NotificationSettings = ({ userId }: NotificationSettingsProps) => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const hasServiceWorker = !!swRegistration;
 
   useEffect(() => {
     fetchPreferences();
@@ -90,11 +89,18 @@ const NotificationSettings = ({ userId }: NotificationSettingsProps) => {
   };
 
   const handleEnableNotifications = async () => {
-    const granted = await requestPermission();
-    if (granted) {
-      // Save that notifications are enabled
+    const success = await subscribe();
+    if (success) {
+      toast({
+        title: "Notificações ativadas! 🔔",
+        description: "Você receberá alertas mesmo com o app fechado.",
+      });
       savePreferences(preferences);
     }
+  };
+
+  const handleDisableNotifications = async () => {
+    await unsubscribe();
   };
 
   const notificationOptions = [
@@ -162,7 +168,7 @@ const NotificationSettings = ({ userId }: NotificationSettingsProps) => {
       )}
 
       {/* Push Permission Banner - Not Granted Yet */}
-      {isSupported && permission !== "denied" && !isEnabled && (
+      {isSupported && permission !== "denied" && !isSubscribed && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -181,9 +187,14 @@ const NotificationSettings = ({ userId }: NotificationSettingsProps) => {
                 onClick={handleEnableNotifications}
                 size="sm"
                 className="mt-3 rounded-xl"
+                disabled={pushLoading}
               >
-                <BellRing className="h-4 w-4 mr-2" />
-                Ativar Agora
+                {pushLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <BellRing className="h-4 w-4 mr-2" />
+                )}
+                {pushLoading ? "Ativando..." : "Ativar Agora"}
               </Button>
             </div>
           </div>
@@ -191,7 +202,7 @@ const NotificationSettings = ({ userId }: NotificationSettingsProps) => {
       )}
 
       {/* Status - Enabled */}
-      {isEnabled && (
+      {isSubscribed && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -202,19 +213,26 @@ const NotificationSettings = ({ userId }: NotificationSettingsProps) => {
               <Bell className="h-5 w-5 text-primary" />
             </div>
             <div className="flex-1">
-              <p className="font-semibold text-foreground">Notificações Ativas ✓</p>
-              <p className="text-sm text-muted-foreground">Você receberá alertas importantes</p>
+              <p className="font-semibold text-foreground">Notificações Push Ativas ✓</p>
+              <p className="text-sm text-muted-foreground">Você receberá alertas mesmo com o app fechado</p>
             </div>
           </div>
           
           {/* Background notification support indicator */}
-          <div className="flex items-center gap-2 mt-3 p-2 rounded-lg bg-background/50">
-            <Smartphone className="h-4 w-4 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">
-              {hasServiceWorker 
-                ? "✓ Notificações em segundo plano ativas" 
-                : "Notificações apenas com app aberto"}
-            </span>
+          <div className="flex items-center justify-between mt-3 p-3 rounded-lg bg-background/50">
+            <div className="flex items-center gap-2">
+              <Smartphone className="h-4 w-4 text-primary" />
+              <span className="text-sm text-foreground">✓ Notificações em segundo plano ativas</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDisableNotifications}
+              disabled={pushLoading}
+              className="text-destructive hover:text-destructive"
+            >
+              {pushLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Desativar"}
+            </Button>
           </div>
         </motion.div>
       )}

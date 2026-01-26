@@ -1200,6 +1200,7 @@ export type Database = {
           full_name: string
           id: string
           is_approved: boolean | null
+          last_seen: string | null
           phone: string | null
           state: string | null
           total_xp: number | null
@@ -1218,6 +1219,7 @@ export type Database = {
           full_name: string
           id?: string
           is_approved?: boolean | null
+          last_seen?: string | null
           phone?: string | null
           state?: string | null
           total_xp?: number | null
@@ -1236,6 +1238,7 @@ export type Database = {
           full_name?: string
           id?: string
           is_approved?: boolean | null
+          last_seen?: string | null
           phone?: string | null
           state?: string | null
           total_xp?: number | null
