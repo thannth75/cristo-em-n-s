@@ -266,10 +266,10 @@ const Comunidade = () => {
   const uploadImage = async (file: File): Promise<string | null> => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
-    const filePath = `posts/${fileName}`;
+    const filePath = `${user?.id}/${fileName}`;
 
     const { error } = await supabase.storage
-      .from("avatars")
+      .from("posts")
       .upload(filePath, file);
 
     if (error) {
@@ -278,7 +278,7 @@ const Comunidade = () => {
     }
 
     const { data: urlData } = supabase.storage
-      .from("avatars")
+      .from("posts")
       .getPublicUrl(filePath);
 
     return urlData.publicUrl;
