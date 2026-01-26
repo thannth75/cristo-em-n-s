@@ -697,6 +697,45 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_preferences: {
+        Row: {
+          achievements_enabled: boolean | null
+          community_enabled: boolean | null
+          created_at: string
+          devotionals_enabled: boolean | null
+          events_enabled: boolean | null
+          id: string
+          prayers_enabled: boolean | null
+          push_token: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          achievements_enabled?: boolean | null
+          community_enabled?: boolean | null
+          created_at?: string
+          devotionals_enabled?: boolean | null
+          events_enabled?: boolean | null
+          id?: string
+          prayers_enabled?: boolean | null
+          push_token?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          achievements_enabled?: boolean | null
+          community_enabled?: boolean | null
+          created_at?: string
+          devotionals_enabled?: boolean | null
+          events_enabled?: boolean | null
+          id?: string
+          prayers_enabled?: boolean | null
+          push_token?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           action_url: string | null
@@ -919,12 +958,14 @@ export type Database = {
           approved_by: string | null
           avatar_url: string | null
           birth_date: string | null
+          city: string | null
           created_at: string
           email: string
           full_name: string
           id: string
           is_approved: boolean | null
           phone: string | null
+          state: string | null
           updated_at: string
           user_id: string
         }
@@ -933,12 +974,14 @@ export type Database = {
           approved_by?: string | null
           avatar_url?: string | null
           birth_date?: string | null
+          city?: string | null
           created_at?: string
           email: string
           full_name: string
           id?: string
           is_approved?: boolean | null
           phone?: string | null
+          state?: string | null
           updated_at?: string
           user_id: string
         }
@@ -947,12 +990,14 @@ export type Database = {
           approved_by?: string | null
           avatar_url?: string | null
           birth_date?: string | null
+          city?: string | null
           created_at?: string
           email?: string
           full_name?: string
           id?: string
           is_approved?: boolean | null
           phone?: string | null
+          state?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1430,7 +1475,35 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      attendance_summary: {
+        Row: {
+          city: string | null
+          events_attended: number | null
+          full_name: string | null
+          last_attendance: string | null
+          month: string | null
+          state: string | null
+          total_attendances: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
+      engagement_metrics: {
+        Row: {
+          city: string | null
+          devotionals_completed: number | null
+          full_name: string | null
+          is_approved: boolean | null
+          posts_count: number | null
+          prayers_count: number | null
+          quizzes_completed: number | null
+          state: string | null
+          study_chapters_completed: number | null
+          testimonies_count: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_user_email: { Args: { _user_id: string }; Returns: string }
