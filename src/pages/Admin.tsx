@@ -41,8 +41,9 @@ const Admin = () => {
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showPendingOnly, setShowPendingOnly] = useState(false);
+  const [showPendingOnly, setShowPendingOnly] = useState(true); // Default to pending
   const [lowAttendanceUsers, setLowAttendanceUsers] = useState<UserWithRole[]>([]);
+  const [activeTab, setActiveTab] = useState("users");
 
   useEffect(() => {
     if (authLoading) return;
@@ -124,7 +125,7 @@ const Admin = () => {
     setIsLoading(false);
   };
 
-  const approveUser = async (userId: string, profileId: string) => {
+  const approveUser = async (userId: string, profileId: string, userName: string) => {
     const { error } = await supabase
       .from("profiles")
       .update({
@@ -137,16 +138,32 @@ const Admin = () => {
     if (error) {
       toast({ title: "Erro", description: "Não foi possível aprovar.", variant: "destructive" });
     } else {
-      toast({ title: "Usuário aprovado! ✅" });
+      toast({ title: "Usuário aprovado! ✅", description: `${userName} agora tem acesso ao app.` });
+      
+      // Send welcome notification via edge function
+      try {
+        await supabase.functions.invoke("send-push-notification", {
+          body: {
+            user_id: userId,
+            title: "Bem-vindo ao Vida em Cristo! 🎉",
+            body: `Olá ${userName.split(" ")[0]}! Seu cadastro foi aprovado. Explore o app e cresça conosco na fé!`,
+            url: "/dashboard",
+            type: "success",
+          },
+        });
+      } catch (e) {
+        console.error("Error sending welcome notification:", e);
+      }
+      
       fetchUsers();
     }
   };
 
-  const rejectUser = async (profileId: string) => {
+  const rejectUser = async (profileId: string, userName: string) => {
     const { error } = await supabase.from("profiles").delete().eq("id", profileId);
 
     if (!error) {
-      toast({ title: "Cadastro rejeitado" });
+      toast({ title: "Cadastro rejeitado", description: `${userName} foi removido.` });
       fetchUsers();
     }
   };
@@ -218,16 +235,23 @@ const Admin = () => {
           </div>
         </motion.div>
 
-        <Tabs defaultValue="users" className="w-full">
+        <Tabs defaultValue="users" className="w-full" onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3 mb-4">
-            <TabsTrigger value="users">Usuários</TabsTrigger>
+            <TabsTrigger value="users" className="relative">
+              Usuários
+              {pendingUsers.length > 0 && (
+                <Badge variant="destructive" className="ml-1.5 h-5 min-w-5 p-0 flex items-center justify-center text-xs">
+                  {pendingUsers.length}
+                </Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="permissions" disabled={!isAdmin}>
               Permissões
             </TabsTrigger>
             <TabsTrigger value="alerts">
               Alertas
               {lowAttendanceUsers.length > 0 && (
-                <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center">
+                <Badge variant="secondary" className="ml-1.5 h-5 min-w-5 p-0 flex items-center justify-center text-xs bg-gold/20 text-gold">
                   {lowAttendanceUsers.length}
                 </Badge>
               )}
@@ -351,7 +375,7 @@ const Admin = () => {
                     {!u.is_approved && (
                       <div className="mt-4 flex gap-2">
                         <Button
-                          onClick={() => approveUser(u.user_id, u.id)}
+                          onClick={() => approveUser(u.user_id, u.id, u.full_name)}
                           className="flex-1 rounded-xl"
                           size="sm"
                         >
@@ -360,7 +384,7 @@ const Admin = () => {
                         </Button>
                         <Button
                           variant="outline"
-                          onClick={() => rejectUser(u.id)}
+                          onClick={() => rejectUser(u.id, u.full_name)}
                           className="rounded-xl border-destructive/50 text-destructive hover:bg-destructive/10"
                           size="sm"
                         >
