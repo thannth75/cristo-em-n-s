@@ -108,7 +108,7 @@ export default function Provas() {
 
       <main className="container mx-auto px-4 py-6 space-y-6">
         {/* Banner de anúncio sutil no topo */}
-        <AdBanner position="top" />
+        <AdBanner position="inline" />
 
         <Tabs defaultValue="minhas-notas" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
@@ -200,7 +200,7 @@ export default function Provas() {
         </Tabs>
 
         {/* Banner de anúncio sutil no final */}
-        <AdBanner position="bottom" />
+        <AdBanner position="footer" />
       </main>
 
       <CreateExamDialog
