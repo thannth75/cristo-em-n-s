@@ -74,7 +74,7 @@ export default function AdBanner({ position = "inline", className = "" }: AdBann
             maxHeight: "100px",
           }}
           data-ad-client="ca-pub-4958300981866920"
-          data-ad-slot="XXXXXXXXXX" // Aguardando seu Ad Slot ID
+          data-ad-slot="7093451870"
           data-ad-format="horizontal"
           data-full-width-responsive="true"
         />
