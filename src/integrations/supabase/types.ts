@@ -729,6 +729,78 @@ export type Database = {
         }
         Relationships: []
       }
+      level_definitions: {
+        Row: {
+          created_at: string
+          description: string | null
+          icon: string
+          id: string
+          level_number: number
+          rewards: string[] | null
+          title: string
+          xp_required: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          icon?: string
+          id?: string
+          level_number: number
+          rewards?: string[] | null
+          title: string
+          xp_required: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          icon?: string
+          id?: string
+          level_number?: number
+          rewards?: string[] | null
+          title?: string
+          xp_required?: number
+        }
+        Relationships: []
+      }
+      milestones: {
+        Row: {
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          is_active: boolean | null
+          name: string
+          requirement_activity: string | null
+          requirement_type: string
+          requirement_value: number
+          xp_reward: number
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          icon: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          requirement_activity?: string | null
+          requirement_type: string
+          requirement_value: number
+          xp_reward?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          requirement_activity?: string | null
+          requirement_type?: string
+          requirement_value?: number
+          xp_reward?: number
+        }
+        Relationships: []
+      }
       mood_verses: {
         Row: {
           created_at: string
@@ -1123,12 +1195,14 @@ export type Database = {
           birth_date: string | null
           city: string | null
           created_at: string
+          current_level: number | null
           email: string
           full_name: string
           id: string
           is_approved: boolean | null
           phone: string | null
           state: string | null
+          total_xp: number | null
           updated_at: string
           user_id: string
         }
@@ -1139,12 +1213,14 @@ export type Database = {
           birth_date?: string | null
           city?: string | null
           created_at?: string
+          current_level?: number | null
           email: string
           full_name: string
           id?: string
           is_approved?: boolean | null
           phone?: string | null
           state?: string | null
+          total_xp?: number | null
           updated_at?: string
           user_id: string
         }
@@ -1155,12 +1231,14 @@ export type Database = {
           birth_date?: string | null
           city?: string | null
           created_at?: string
+          current_level?: number | null
           email?: string
           full_name?: string
           id?: string
           is_approved?: boolean | null
           phone?: string | null
           state?: string | null
+          total_xp?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -1536,6 +1614,35 @@ export type Database = {
           },
         ]
       }
+      user_milestones: {
+        Row: {
+          id: string
+          milestone_id: string
+          unlocked_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          milestone_id: string
+          unlocked_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          milestone_id?: string
+          unlocked_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_milestones_milestone_id_fkey"
+            columns: ["milestone_id"]
+            isOneToOne: false
+            referencedRelation: "milestones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_quiz_attempts: {
         Row: {
           completed_at: string
@@ -1636,6 +1743,72 @@ export type Database = {
         }
         Relationships: []
       }
+      xp_activities: {
+        Row: {
+          activity_key: string
+          created_at: string
+          daily_limit: number | null
+          description: string | null
+          icon: string
+          id: string
+          is_active: boolean | null
+          name: string
+          xp_value: number
+        }
+        Insert: {
+          activity_key: string
+          created_at?: string
+          daily_limit?: number | null
+          description?: string | null
+          icon?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          xp_value: number
+        }
+        Update: {
+          activity_key?: string
+          created_at?: string
+          daily_limit?: number | null
+          description?: string | null
+          icon?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          xp_value?: number
+        }
+        Relationships: []
+      }
+      xp_transactions: {
+        Row: {
+          activity_id: string | null
+          activity_type: string
+          created_at: string
+          description: string | null
+          id: string
+          user_id: string
+          xp_amount: number
+        }
+        Insert: {
+          activity_id?: string | null
+          activity_type: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          user_id: string
+          xp_amount: number
+        }
+        Update: {
+          activity_id?: string | null
+          activity_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          user_id?: string
+          xp_amount?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       attendance_summary: {
@@ -1669,6 +1842,21 @@ export type Database = {
       }
     }
     Functions: {
+      add_user_xp: {
+        Args: {
+          p_activity_id?: string
+          p_activity_type: string
+          p_description?: string
+          p_user_id: string
+          p_xp_amount: number
+        }
+        Returns: {
+          level_up: boolean
+          new_level: number
+          new_total_xp: number
+        }[]
+      }
+      calculate_level_from_xp: { Args: { xp_total: number }; Returns: number }
       get_user_email: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
