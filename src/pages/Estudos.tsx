@@ -175,20 +175,20 @@ const Estudos = () => {
   const activeProgress = activeStudy ? getStudyProgress(activeStudy.id, activeStudy.chapters) : null;
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-20 sm:pb-24">
       <AppHeader userName={userName} />
 
-      <main className="px-4 py-6">
+      <main className="px-3 sm:px-4 py-4 sm:py-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 flex items-center justify-between"
+          className="mb-4 sm:mb-6 flex items-center justify-between"
         >
           <div>
-            <h1 className="font-serif text-2xl font-semibold text-foreground">
+            <h1 className="font-serif text-xl sm:text-2xl font-semibold text-foreground">
               Estudos Bíblicos
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-muted-foreground">
               Seu progresso na Palavra
             </p>
           </div>

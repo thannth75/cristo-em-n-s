@@ -417,31 +417,31 @@ const Comunidade = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-20 sm:pb-24">
       <AppHeader userName={userName} />
 
-      <main className="px-4 py-6">
+      <main className="px-3 sm:px-4 py-4 sm:py-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 flex items-center justify-between"
+          className="mb-4 sm:mb-6 flex items-center justify-between"
         >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-              <Users className="h-5 w-5 text-primary" />
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl bg-primary/10">
+              <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
             </div>
             <div>
-              <h1 className="font-serif text-xl sm:text-2xl font-semibold text-foreground">Comunidade</h1>
-              <p className="text-xs sm:text-sm text-muted-foreground">Conecte-se com os jovens</p>
+              <h1 className="font-serif text-lg sm:text-2xl font-semibold text-foreground">Comunidade</h1>
+              <p className="text-[10px] sm:text-sm text-muted-foreground">Conecte-se com os jovens</p>
             </div>
           </div>
         </motion.div>
 
         <Tabs defaultValue="feed" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-4">
-            <TabsTrigger value="feed" className="text-xs sm:text-sm">Mural</TabsTrigger>
-            <TabsTrigger value="chat" className="text-xs sm:text-sm">Chat</TabsTrigger>
-            <TabsTrigger value="messages" className="text-xs sm:text-sm">Mensagens</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 mb-3 sm:mb-4">
+            <TabsTrigger value="feed" className="text-[10px] sm:text-sm">Mural</TabsTrigger>
+            <TabsTrigger value="chat" className="text-[10px] sm:text-sm">Chat</TabsTrigger>
+            <TabsTrigger value="messages" className="text-[10px] sm:text-sm">Mensagens</TabsTrigger>
           </TabsList>
 
           {/* MURAL DE POSTS */}

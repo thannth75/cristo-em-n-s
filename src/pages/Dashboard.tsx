@@ -142,17 +142,17 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-background pb-24 overflow-hidden">
+    <div className="relative min-h-screen bg-background pb-20 sm:pb-24 overflow-hidden">
       {/* Orb decorativo */}
-      <GlowOrb className="absolute -top-20 -right-20 h-64 w-64 opacity-30" />
+      <GlowOrb className="absolute -top-20 -right-20 h-48 sm:h-64 w-48 sm:w-64 opacity-30" />
       
       <AppHeader userName={userName} />
 
-      <main className="relative z-10 px-4 py-6">
+      <main className="relative z-10 px-3 sm:px-4 py-4 sm:py-6">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="space-y-6"
+          className="space-y-4 sm:space-y-6"
         >
           {/* Versículo do Dia */}
           <VerseCard verse={todayVerse.verse} reference={todayVerse.reference} />
@@ -164,30 +164,30 @@ const Dashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
               onClick={() => navigate("/conquistas")}
-              className="w-full rounded-2xl bg-gradient-to-r from-primary/15 via-primary/10 to-background p-4 shadow-md border border-primary/20 text-left"
+              className="w-full rounded-xl sm:rounded-2xl bg-gradient-to-r from-primary/15 via-primary/10 to-background p-3 sm:p-4 shadow-md border border-primary/20 text-left touch-feedback"
             >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 text-xl">
+              <div className="flex items-center justify-between mb-2 sm:mb-3">
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl bg-primary/20 text-lg sm:text-xl">
                     {gamification.currentLevelDef.icon}
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">Nível {gamification.currentLevel}</p>
-                    <h3 className="font-semibold text-foreground">{gamification.currentLevelDef.title}</h3>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">Nível {gamification.currentLevel}</p>
+                    <h3 className="font-semibold text-sm sm:text-base text-foreground">{gamification.currentLevelDef.title}</h3>
                   </div>
                 </div>
                 <div className="flex items-center gap-1 text-primary">
-                  <Sparkles className="h-4 w-4" />
-                  <span className="font-bold">{gamification.totalXp}</span>
-                  <span className="text-xs text-muted-foreground">XP</span>
+                  <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="font-bold text-sm sm:text-base">{gamification.totalXp}</span>
+                  <span className="text-[10px] sm:text-xs text-muted-foreground">XP</span>
                 </div>
               </div>
               <div className="space-y-1">
-                <div className="flex justify-between text-xs">
+                <div className="flex justify-between text-[10px] sm:text-xs">
                   <span className="text-muted-foreground">Próximo nível</span>
                   <span className="text-primary">{gamification.progressPercent}%</span>
                 </div>
-                <Progress value={gamification.progressPercent} className="h-2" />
+                <Progress value={gamification.progressPercent} className="h-1.5 sm:h-2" />
               </div>
             </motion.button>
           )}
@@ -199,22 +199,22 @@ const Dashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
               onClick={() => navigate("/agenda")}
-              className="w-full overflow-hidden rounded-2xl gradient-hope p-5 text-primary-foreground shadow-lg text-left"
+              className="w-full overflow-hidden rounded-xl sm:rounded-2xl gradient-hope p-4 sm:p-5 text-primary-foreground shadow-lg text-left touch-feedback"
             >
               <div className="flex items-center justify-between">
-                <div className="flex-1">
-                  <p className="text-sm font-medium opacity-90">Próximo Evento</p>
-                  <h3 className="font-serif text-xl font-semibold">{nextEvent.title}</h3>
-                  <p className="mt-1 text-sm opacity-80">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-sm font-medium opacity-90">Próximo Evento</p>
+                  <h3 className="font-serif text-lg sm:text-xl font-semibold truncate">{nextEvent.title}</h3>
+                  <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm opacity-80">
                     {formatEventDate(nextEvent.event_date).weekday}, {nextEvent.start_time.slice(0, 5)}
                   </p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="flex h-16 w-16 flex-col items-center justify-center rounded-xl bg-primary-foreground/20">
-                    <span className="text-2xl font-bold">{formatEventDate(nextEvent.event_date).day}</span>
-                    <span className="text-xs font-medium">{formatEventDate(nextEvent.event_date).month}</span>
+                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+                  <div className="flex h-12 w-12 sm:h-16 sm:w-16 flex-col items-center justify-center rounded-lg sm:rounded-xl bg-primary-foreground/20">
+                    <span className="text-lg sm:text-2xl font-bold">{formatEventDate(nextEvent.event_date).day}</span>
+                    <span className="text-[10px] sm:text-xs font-medium">{formatEventDate(nextEvent.event_date).month}</span>
                   </div>
-                  <ChevronRight className="h-5 w-5 opacity-70" />
+                  <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 opacity-70" />
                 </div>
               </div>
             </motion.button>
@@ -223,13 +223,13 @@ const Dashboard = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="overflow-hidden rounded-2xl gradient-hope p-5 text-primary-foreground shadow-lg"
+              className="overflow-hidden rounded-xl sm:rounded-2xl gradient-hope p-4 sm:p-5 text-primary-foreground shadow-lg"
             >
-              <div className="flex items-center gap-4">
-                <Calendar className="h-8 w-8 opacity-80" />
+              <div className="flex items-center gap-3 sm:gap-4">
+                <Calendar className="h-6 w-6 sm:h-8 sm:w-8 opacity-80" />
                 <div>
-                  <p className="text-sm font-medium opacity-90">Agenda</p>
-                  <h3 className="font-serif text-lg font-semibold">Nenhum evento próximo</h3>
+                  <p className="text-xs sm:text-sm font-medium opacity-90">Agenda</p>
+                  <h3 className="font-serif text-base sm:text-lg font-semibold">Nenhum evento próximo</h3>
                 </div>
               </div>
             </motion.div>
@@ -242,10 +242,10 @@ const Dashboard = () => {
           <AdFeed />
 
           <div>
-            <h2 className="mb-4 font-serif text-lg font-semibold text-foreground">
+            <h2 className="mb-3 sm:mb-4 font-serif text-base sm:text-lg font-semibold text-foreground">
               Minha Jornada
             </h2>
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {features.map((feature, index) => (
                 <FeatureCard
                   key={feature.title}
@@ -261,12 +261,12 @@ const Dashboard = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="rounded-2xl bg-accent/50 p-5 text-center"
+            className="rounded-xl sm:rounded-2xl bg-accent/50 p-4 sm:p-5 text-center"
           >
-            <p className="font-serif text-muted-foreground">
+            <p className="font-serif text-sm sm:text-base text-muted-foreground">
               "Cada dia é uma nova oportunidade de servir a Deus e crescer em fé."
             </p>
-            <p className="mt-2 text-sm font-medium text-primary">
+            <p className="mt-2 text-xs sm:text-sm font-medium text-primary">
               Continue firme na caminhada! 🙏
             </p>
           </motion.div>

@@ -15,8 +15,11 @@ const BottomNavigation = () => {
   const navigate = useNavigate();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-xl safe-area-inset-bottom">
-      <div className="mx-auto flex max-w-lg items-center justify-around px-1 sm:px-2 py-1.5 sm:py-2 pb-safe">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-xl">
+      <div 
+        className="mx-auto flex max-w-lg items-center justify-around px-1 sm:px-2 py-2 sm:py-2.5"
+        style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+      >
         {navItems.map((item) => {
           const isActive = location.pathname === item.href;
           const Icon = item.icon;
@@ -26,12 +29,12 @@ const BottomNavigation = () => {
               key={item.href}
               onClick={() => navigate(item.href)}
               whileTap={{ scale: 0.9 }}
-              className="relative flex flex-1 flex-col items-center gap-0.5 sm:gap-1 py-1.5 sm:py-2"
+              className="relative flex flex-1 flex-col items-center gap-0.5 sm:gap-1 py-1 sm:py-1.5 touch-feedback no-select"
             >
               {isActive && (
                 <motion.div
                   layoutId="activeTab"
-                  className="absolute inset-x-2 sm:inset-x-3 -top-1.5 sm:-top-2 h-0.5 sm:h-1 rounded-full bg-primary"
+                  className="absolute inset-x-2 sm:inset-x-3 -top-1.5 h-0.5 sm:h-1 rounded-full bg-primary"
                   transition={{ type: "spring", stiffness: 500, damping: 30 }}
                 />
               )}
@@ -46,7 +49,7 @@ const BottomNavigation = () => {
                 />
               </motion.div>
               <span
-                className={`text-[10px] sm:text-xs transition-colors ${
+                className={`text-[10px] sm:text-xs transition-colors leading-tight ${
                   isActive ? "font-semibold text-primary" : "text-muted-foreground"
                 }`}
               >

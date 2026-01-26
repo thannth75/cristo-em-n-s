@@ -137,12 +137,12 @@ const Perfil = () => {
   ];
 
   return (
-    <div className="relative min-h-screen bg-background pb-24 overflow-hidden">
-      <GlowOrb className="absolute -top-32 -right-32 h-80 w-80 opacity-20" />
+    <div className="relative min-h-screen bg-background pb-20 sm:pb-24 overflow-hidden">
+      <GlowOrb className="absolute -top-24 sm:-top-32 -right-24 sm:-right-32 h-56 sm:h-80 w-56 sm:w-80 opacity-20" />
       
       <AppHeader userName={userName.split(" ")[0]} />
 
-      <main className="relative z-10 px-3 sm:px-4 py-4 sm:py-6 max-w-2xl mx-auto">
+      <main className="relative z-10 px-3 sm:px-4 py-3 sm:py-6 max-w-2xl mx-auto">
         {/* Perfil Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
