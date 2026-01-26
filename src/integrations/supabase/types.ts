@@ -1959,6 +1959,36 @@ export type Database = {
         }
         Relationships: []
       }
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          current_level: number | null
+          full_name: string | null
+          is_approved: boolean | null
+          last_seen: string | null
+          total_xp: number | null
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          current_level?: number | null
+          full_name?: string | null
+          is_approved?: boolean | null
+          last_seen?: string | null
+          total_xp?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          current_level?: number | null
+          full_name?: string | null
+          is_approved?: boolean | null
+          last_seen?: string | null
+          total_xp?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_user_xp: {
