@@ -16,6 +16,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useXpAward } from "@/hooks/useXpAward";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,6 +30,7 @@ import {
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import PostComments from "@/components/comunidade/PostComments";
+import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
 import { communityPostSchema, chatMessageSchema, privateMessageSchema, validateInput } from "@/lib/validation";
 
 interface Post {
@@ -72,6 +74,7 @@ const Comunidade = () => {
   const navigate = useNavigate();
   const { user, profile, isApproved, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { awardXp, showLevelUp, levelUpData, closeLevelUp } = useXpAward(user?.id);
   
   const [posts, setPosts] = useState<Post[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
@@ -310,17 +313,19 @@ const Comunidade = () => {
     }
 
     const validatedData = validation.data;
-    const { error } = await supabase.from("community_posts").insert({
+    const { data: insertedData, error } = await supabase.from("community_posts").insert({
       user_id: user?.id,
       content: validatedData.content,
       image_url: imageUrl,
-    });
+    }).select().single();
 
     setIsUploading(false);
 
     if (error) {
       toast({ title: "Erro", description: "Não foi possível criar o post.", variant: "destructive" });
     } else {
+      // Award XP for community post
+      await awardXp("community_post", insertedData?.id, "Post na comunidade");
       toast({ title: "Post criado! 🎉", description: "Seu post foi publicado." });
       setNewPostContent("");
       removeSelectedImage();
@@ -722,6 +727,17 @@ const Comunidade = () => {
       </main>
 
       <BottomNavigation />
+
+      {levelUpData && (
+        <LevelUpCelebration
+          open={showLevelUp}
+          onClose={closeLevelUp}
+          newLevel={levelUpData.newLevel}
+          levelTitle={levelUpData.levelTitle}
+          levelIcon={levelUpData.levelIcon}
+          rewards={levelUpData.rewards}
+        />
+      )}
     </div>
   );
 };

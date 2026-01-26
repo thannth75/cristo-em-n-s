@@ -5,6 +5,7 @@ import { Heart, Plus, Trash2, Sparkles, BookOpen, Hand, MessageCircle, RefreshCw
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useXpAward } from "@/hooks/useXpAward";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -23,6 +24,7 @@ import {
 } from "@/components/ui/collapsible";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
 import { MOOD_VERSES } from "@/data/bibleReadingPlans";
 import { journalEntrySchema, validateInput } from "@/lib/validation";
 
@@ -78,6 +80,7 @@ const Diario = () => {
   const navigate = useNavigate();
   const { user, profile, isApproved, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { awardXp, showLevelUp, levelUpData, closeLevelUp } = useXpAward(user?.id);
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -166,13 +169,13 @@ const Diario = () => {
     }
 
     const validatedData = validation.data;
-    const { error } = await supabase.from("journal_entries").insert({
+    const { data: insertedData, error } = await supabase.from("journal_entries").insert({
       title: validatedData.title || null,
       content: validatedData.content,
       mood: validatedData.mood || null,
       bible_verse: validatedData.bible_verse || moodVerse?.reference || null,
       user_id: user?.id,
-    });
+    }).select().single();
 
     if (error) {
       toast({
@@ -181,6 +184,8 @@ const Diario = () => {
         variant: "destructive",
       });
     } else {
+      // Award XP for journal entry
+      await awardXp("journal_entry", insertedData?.id, "Reflexão no diário");
       toast({
         title: "Reflexão salva! ✍️",
         description: "Continue firme na sua jornada espiritual.",
@@ -520,6 +525,17 @@ const Diario = () => {
       </main>
 
       <BottomNavigation />
+
+      {levelUpData && (
+        <LevelUpCelebration
+          open={showLevelUp}
+          onClose={closeLevelUp}
+          newLevel={levelUpData.newLevel}
+          levelTitle={levelUpData.levelTitle}
+          levelIcon={levelUpData.levelIcon}
+          rewards={levelUpData.rewards}
+        />
+      )}
     </div>
   );
 };
