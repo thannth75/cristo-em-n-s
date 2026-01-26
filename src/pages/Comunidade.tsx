@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Users, 
-  MessageCircle, 
   Heart, 
   Send, 
   Plus, 
@@ -11,7 +10,8 @@ import {
   MessageSquare,
   ChevronLeft,
   X,
-  Loader2
+  Loader2,
+  Repeat2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -30,6 +30,11 @@ import {
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import PostComments from "@/components/comunidade/PostComments";
+import { StoryCircle, StoryViewer } from "@/components/comunidade/StoryCircle";
+import { CreateStoryDialog } from "@/components/comunidade/CreateStoryDialog";
+import { GroupList, GroupChat } from "@/components/comunidade/GroupList";
+import { RepostButton } from "@/components/comunidade/RepostButton";
+import { MentionInput, renderMentions } from "@/components/comunidade/MentionInput";
 import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
 import { communityPostSchema, chatMessageSchema, privateMessageSchema, validateInput } from "@/lib/validation";
 import { AdFeed, shouldShowAdAtIndex } from "@/components/ads/AdBanner";
@@ -41,9 +46,24 @@ interface Post {
   image_url: string | null;
   likes_count: number;
   comments_count: number;
+  reposts_count: number;
   created_at: string;
   profiles?: { full_name: string; avatar_url: string | null };
   user_liked?: boolean;
+  user_reposted?: boolean;
+}
+
+interface Story {
+  id: string;
+  user_id: string;
+  content: string | null;
+  image_url: string | null;
+  background_color: string;
+  text_color: string;
+  expires_at: string;
+  created_at: string;
+  views_count: number;
+  profile?: { full_name: string; avatar_url: string | null };
 }
 
 interface ChatMessage {
@@ -62,13 +82,24 @@ interface PrivateMessage {
   content: string;
   is_read: boolean;
   created_at: string;
-  sender_profile?: { full_name: string; avatar_url: string | null };
 }
 
 interface UserProfile {
   user_id: string;
   full_name: string;
   avatar_url: string | null;
+}
+
+interface Group {
+  id: string;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+  is_public: boolean;
+  member_count: number;
+  created_by: string;
+  created_at: string;
+  is_member?: boolean;
 }
 
 const Comunidade = () => {
@@ -78,22 +109,37 @@ const Comunidade = () => {
   const { awardXp, showLevelUp, levelUpData, closeLevelUp } = useXpAward(user?.id);
   
   const [posts, setPosts] = useState<Post[]>([]);
+  const [stories, setStories] = useState<Story[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
+  // Stories
+  const [userHasStory, setUserHasStory] = useState(false);
+  const [createStoryOpen, setCreateStoryOpen] = useState(false);
+  const [viewingStories, setViewingStories] = useState<Story[] | null>(null);
+  const [storyInitialIndex, setStoryInitialIndex] = useState(0);
+  
+  // Posts
   const [newPostContent, setNewPostContent] = useState("");
+  const [postMentions, setPostMentions] = useState<string[]>([]);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
-  const [newChatMessage, setNewChatMessage] = useState("");
   
+  // Chat
+  const [newChatMessage, setNewChatMessage] = useState("");
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  
+  // Private messages
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [newPrivateMessage, setNewPrivateMessage] = useState("");
   const [userConversations, setUserConversations] = useState<PrivateMessage[]>([]);
   
-  const chatContainerRef = useRef<HTMLDivElement>(null);
+  // Groups
+  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -142,12 +188,42 @@ const Comunidade = () => {
         }
       })
       .subscribe();
+
+    supabase
+      .channel('stories_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_stories' }, () => {
+        fetchStories();
+      })
+      .subscribe();
   };
 
   const fetchData = async () => {
     setIsLoading(true);
-    await Promise.all([fetchPosts(), fetchChatMessages(), fetchUsers()]);
+    await Promise.all([fetchPosts(), fetchStories(), fetchChatMessages(), fetchUsers()]);
     setIsLoading(false);
+  };
+
+  const fetchStories = async () => {
+    const { data: storiesData } = await supabase
+      .from("user_stories")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (storiesData) {
+      const userIds = [...new Set(storiesData.map(s => s.user_id))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, avatar_url")
+        .in("user_id", userIds);
+
+      const storiesWithProfiles = storiesData.map(story => ({
+        ...story,
+        profile: profiles?.find(p => p.user_id === story.user_id),
+      }));
+
+      setStories(storiesWithProfiles);
+      setUserHasStory(storiesWithProfiles.some(s => s.user_id === user?.id));
+    }
   };
 
   const fetchPosts = async () => {
@@ -168,12 +244,20 @@ const Comunidade = () => {
         .select("post_id")
         .eq("user_id", user?.id);
 
+      const { data: userReposts } = await supabase
+        .from("post_reposts")
+        .select("original_post_id")
+        .eq("user_id", user?.id);
+
       const likedPostIds = new Set(userLikes?.map(l => l.post_id) || []);
+      const repostedPostIds = new Set(userReposts?.map(r => r.original_post_id) || []);
 
       const postsWithProfiles = postsData.map(post => ({
         ...post,
+        reposts_count: post.reposts_count || 0,
         profiles: profiles?.find(p => p.user_id === post.user_id),
         user_liked: likedPostIds.has(post.id),
+        user_reposted: repostedPostIds.has(post.id),
       }));
 
       setPosts(postsWithProfiles);
@@ -248,11 +332,7 @@ const Comunidade = () => {
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        toast({ 
-          title: "Imagem muito grande", 
-          description: "O tamanho máximo é 5MB.",
-          variant: "destructive" 
-        });
+        toast({ title: "Imagem muito grande", description: "O tamanho máximo é 5MB.", variant: "destructive" });
         return;
       }
       setSelectedImage(file);
@@ -263,9 +343,7 @@ const Comunidade = () => {
   const removeSelectedImage = () => {
     setSelectedImage(null);
     setImagePreview(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const uploadImage = async (file: File): Promise<string | null> => {
@@ -273,25 +351,20 @@ const Comunidade = () => {
     const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
     const filePath = `${user?.id}/${fileName}`;
 
-    const { error } = await supabase.storage
-      .from("posts")
-      .upload(filePath, file);
+    const { error } = await supabase.storage.from("posts").upload(filePath, file);
+    if (error) return null;
 
-    if (error) {
-      console.error("Upload error:", error);
-      return null;
-    }
-
-    const { data: urlData } = supabase.storage
-      .from("posts")
-      .getPublicUrl(filePath);
-
+    const { data: urlData } = supabase.storage.from("posts").getPublicUrl(filePath);
     return urlData.publicUrl;
   };
 
   const handleCreatePost = async () => {
-    const validation = validateInput(communityPostSchema, { content: newPostContent });
-    
+    const cleanContent = newPostContent.replace(/@\[[^\]]+\]\([^)]+\)/g, (match) => {
+      const nameMatch = match.match(/@\[([^\]]+)\]/);
+      return nameMatch ? `@${nameMatch[1]}` : match;
+    });
+
+    const validation = validateInput(communityPostSchema, { content: cleanContent });
     if (!validation.success) {
       toast({ title: "Erro de validação", description: validation.error, variant: "destructive" });
       return;
@@ -303,20 +376,15 @@ const Comunidade = () => {
     if (selectedImage) {
       imageUrl = await uploadImage(selectedImage);
       if (!imageUrl) {
-        toast({ 
-          title: "Erro no upload", 
-          description: "Não foi possível enviar a imagem.",
-          variant: "destructive" 
-        });
+        toast({ title: "Erro no upload", description: "Não foi possível enviar a imagem.", variant: "destructive" });
         setIsUploading(false);
         return;
       }
     }
 
-    const validatedData = validation.data;
     const { data: insertedData, error } = await supabase.from("community_posts").insert({
       user_id: user?.id,
-      content: validatedData.content,
+      content: cleanContent,
       image_url: imageUrl,
     }).select().single();
 
@@ -325,10 +393,20 @@ const Comunidade = () => {
     if (error) {
       toast({ title: "Erro", description: "Não foi possível criar o post.", variant: "destructive" });
     } else {
-      // Award XP for community post
+      // Save mentions
+      if (postMentions.length > 0 && insertedData) {
+        await supabase.from("post_mentions").insert(
+          postMentions.map(userId => ({
+            post_id: insertedData.id,
+            mentioned_user_id: userId,
+          }))
+        );
+      }
+
       await awardXp("community_post", insertedData?.id, "Post na comunidade");
-      toast({ title: "Post criado! 🎉", description: "Seu post foi publicado." });
+      toast({ title: "Post criado! 🎉" });
       setNewPostContent("");
+      setPostMentions([]);
       removeSelectedImage();
       setIsPostDialogOpen(false);
       fetchPosts();
@@ -348,38 +426,32 @@ const Comunidade = () => {
 
   const handleSendChatMessage = async () => {
     const validation = validateInput(chatMessageSchema, { content: newChatMessage });
-    
     if (!validation.success) {
       toast({ title: "Erro", description: validation.error, variant: "destructive" });
       return;
     }
 
-    const validatedData = validation.data;
     const { error } = await supabase.from("chat_messages").insert({
       user_id: user?.id,
-      content: validatedData.content,
+      content: validation.data.content,
     });
 
-    if (!error) {
-      setNewChatMessage("");
-    }
+    if (!error) setNewChatMessage("");
   };
 
   const handleSendPrivateMessage = async () => {
     if (!selectedUser) return;
     
     const validation = validateInput(privateMessageSchema, { content: newPrivateMessage });
-    
     if (!validation.success) {
       toast({ title: "Erro", description: validation.error, variant: "destructive" });
       return;
     }
 
-    const validatedData = validation.data;
     const { error } = await supabase.from("private_messages").insert({
       sender_id: user?.id,
       receiver_id: selectedUser.user_id,
-      content: validatedData.content,
+      content: validation.data.content,
     });
 
     if (!error) {
@@ -388,9 +460,24 @@ const Comunidade = () => {
     }
   };
 
+  const handleMarkStoryViewed = async (storyId: string) => {
+    await supabase.from("story_views").upsert({
+      story_id: storyId,
+      viewer_id: user?.id,
+    }, { onConflict: 'story_id,viewer_id' });
+  };
+
+  const openStories = (userId: string) => {
+    const userStories = stories.filter(s => s.user_id === userId);
+    if (userStories.length > 0) {
+      setViewingStories(userStories);
+      setStoryInitialIndex(0);
+      handleMarkStoryViewed(userStories[0].id);
+    }
+  };
+
   const formatTime = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+    return new Date(dateStr).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
   };
 
   const formatDate = (dateStr: string) => {
@@ -405,6 +492,17 @@ const Comunidade = () => {
     if (days < 7) return `${days}d atrás`;
     return date.toLocaleDateString("pt-BR");
   };
+
+  // Group stories by user
+  const groupedStories = stories.reduce((acc, story) => {
+    if (!acc[story.user_id]) {
+      acc[story.user_id] = [];
+    }
+    acc[story.user_id].push(story);
+    return acc;
+  }, {} as Record<string, Story[]>);
+
+  const uniqueStoryUsers = Object.keys(groupedStories);
 
   const userName = profile?.full_name?.split(" ")[0] || "Jovem";
 
@@ -437,26 +535,50 @@ const Comunidade = () => {
           </div>
         </motion.div>
 
+        {/* Stories row */}
+        <div className="mb-4 overflow-x-auto pb-2 -mx-3 px-3">
+          <div className="flex gap-3">
+            {/* Own story */}
+            <StoryCircle
+              isOwn
+              hasStory={userHasStory}
+              onAdd={() => setCreateStoryOpen(true)}
+              onClick={() => userHasStory && openStories(user?.id!)}
+              userName={profile?.full_name}
+            />
+            
+            {/* Other users' stories */}
+            {uniqueStoryUsers
+              .filter(uid => uid !== user?.id)
+              .map((userId) => (
+                <StoryCircle
+                  key={userId}
+                  story={groupedStories[userId][0]}
+                  hasStory={true}
+                  onClick={() => openStories(userId)}
+                />
+              ))}
+          </div>
+        </div>
+
         <Tabs defaultValue="feed" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-3 sm:mb-4">
+          <TabsList className="grid w-full grid-cols-4 mb-3 sm:mb-4">
             <TabsTrigger value="feed" className="text-[10px] sm:text-sm">Mural</TabsTrigger>
+            <TabsTrigger value="groups" className="text-[10px] sm:text-sm">Grupos</TabsTrigger>
             <TabsTrigger value="chat" className="text-[10px] sm:text-sm">Chat</TabsTrigger>
-            <TabsTrigger value="messages" className="text-[10px] sm:text-sm">Mensagens</TabsTrigger>
+            <TabsTrigger value="messages" className="text-[10px] sm:text-sm">DM</TabsTrigger>
           </TabsList>
 
           {/* MURAL DE POSTS */}
           <TabsContent value="feed" className="space-y-4">
-            <Button
-              onClick={() => setIsPostDialogOpen(true)}
-              className="w-full rounded-xl"
-            >
+            <Button onClick={() => setIsPostDialogOpen(true)} className="w-full rounded-xl">
               <Plus className="mr-2 h-4 w-4" />
               Criar Post
             </Button>
 
             {isLoading ? (
               <div className="flex justify-center py-8">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
             ) : posts.length === 0 ? (
               <div className="rounded-2xl bg-card p-8 text-center">
@@ -481,17 +603,11 @@ const Comunidade = () => {
                       </div>
                     </div>
                     
-                    <p className="text-foreground mb-3 break-words">{post.content}</p>
+                    <p className="text-foreground mb-3 break-words">{renderMentions(post.content)}</p>
                     
-                    {/* Post Image */}
                     {post.image_url && (
                       <div className="mb-3 -mx-4 sm:mx-0 sm:rounded-xl overflow-hidden">
-                        <img 
-                          src={post.image_url} 
-                          alt="Imagem do post" 
-                          className="w-full max-h-80 object-cover"
-                          loading="lazy"
-                        />
+                        <img src={post.image_url} alt="Post" className="w-full max-h-80 object-cover" loading="lazy" />
                       </div>
                     )}
                     
@@ -503,6 +619,7 @@ const Comunidade = () => {
                         <Heart className={`h-4 w-4 ${post.user_liked ? "fill-current" : ""}`} />
                         {post.likes_count}
                       </button>
+                      
                       <PostComments 
                         postId={post.id} 
                         commentsCount={post.comments_count}
@@ -512,22 +629,33 @@ const Comunidade = () => {
                           ));
                         }}
                       />
+                      
+                      <RepostButton
+                        postId={post.id}
+                        postContent={post.content}
+                        postUserName={post.profiles?.full_name || "Anônimo"}
+                        repostsCount={post.reposts_count}
+                        userId={user?.id || ""}
+                        hasReposted={post.user_reposted}
+                        onRepostSuccess={fetchPosts}
+                      />
                     </div>
                   </motion.div>
                   
-                  {/* Anúncio integrado ao feed - aparece após cada 6 posts */}
                   {shouldShowAdAtIndex(index, 6) && <AdFeed />}
                 </div>
               ))
             )}
           </TabsContent>
 
+          {/* GRUPOS */}
+          <TabsContent value="groups">
+            <GroupList onGroupSelect={setSelectedGroup} />
+          </TabsContent>
+
           {/* CHAT EM GRUPO */}
           <TabsContent value="chat" className="space-y-4">
-            <div
-              ref={chatContainerRef}
-              className="h-[50vh] overflow-y-auto rounded-2xl bg-card p-4 space-y-3"
-            >
+            <div ref={chatContainerRef} className="h-[50vh] overflow-y-auto rounded-2xl bg-card p-4 space-y-3">
               {chatMessages.length === 0 ? (
                 <div className="flex h-full items-center justify-center">
                   <p className="text-muted-foreground">Comece uma conversa!</p>
@@ -536,26 +664,11 @@ const Comunidade = () => {
                 chatMessages.map((msg) => {
                   const isOwn = msg.user_id === user?.id;
                   return (
-                    <div
-                      key={msg.id}
-                      className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
-                    >
-                      <div
-                        className={`max-w-[85%] sm:max-w-[70%] rounded-2xl px-4 py-2 ${
-                          isOwn
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-muted"
-                        }`}
-                      >
-                        {!isOwn && (
-                          <p className="text-xs font-semibold mb-1">
-                            {msg.profiles?.full_name || "Anônimo"}
-                          </p>
-                        )}
+                    <div key={msg.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
+                      <div className={`max-w-[85%] sm:max-w-[70%] rounded-2xl px-4 py-2 ${isOwn ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                        {!isOwn && <p className="text-xs font-semibold mb-1">{msg.profiles?.full_name || "Anônimo"}</p>}
                         <p className="text-sm break-words">{msg.content}</p>
-                        <p className={`text-xs mt-1 ${isOwn ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                          {formatTime(msg.created_at)}
-                        </p>
+                        <p className={`text-xs mt-1 ${isOwn ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{formatTime(msg.created_at)}</p>
                       </div>
                     </div>
                   );
@@ -580,11 +693,7 @@ const Comunidade = () => {
           <TabsContent value="messages" className="space-y-4">
             {selectedUser ? (
               <div className="space-y-4">
-                <Button
-                  variant="ghost"
-                  onClick={() => setSelectedUser(null)}
-                  className="mb-2"
-                >
+                <Button variant="ghost" onClick={() => setSelectedUser(null)} className="mb-2">
                   <ChevronLeft className="mr-2 h-4 w-4" />
                   Voltar
                 </Button>
@@ -595,21 +704,10 @@ const Comunidade = () => {
                   {userConversations.map((msg) => {
                     const isOwn = msg.sender_id === user?.id;
                     return (
-                      <div
-                        key={msg.id}
-                        className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
-                      >
-                        <div
-                          className={`max-w-[85%] sm:max-w-[70%] rounded-2xl px-4 py-2 ${
-                            isOwn
-                              ? "bg-primary text-primary-foreground"
-                              : "bg-card"
-                          }`}
-                        >
+                      <div key={msg.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
+                        <div className={`max-w-[85%] sm:max-w-[70%] rounded-2xl px-4 py-2 ${isOwn ? "bg-primary text-primary-foreground" : "bg-card"}`}>
                           <p className="text-sm break-words">{msg.content}</p>
-                          <p className={`text-xs mt-1 ${isOwn ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
-                            {formatTime(msg.created_at)}
-                          </p>
+                          <p className={`text-xs mt-1 ${isOwn ? "text-primary-foreground/70" : "text-muted-foreground"}`}>{formatTime(msg.created_at)}</p>
                         </div>
                       </div>
                     );
@@ -630,16 +728,11 @@ const Comunidade = () => {
               </div>
             ) : (
               <div className="space-y-3">
-                <p className="text-sm text-muted-foreground mb-4">
-                  Selecione um jovem para conversar
-                </p>
+                <p className="text-sm text-muted-foreground mb-4">Selecione um jovem para conversar</p>
                 {users.map((u) => (
                   <button
                     key={u.user_id}
-                    onClick={() => {
-                      setSelectedUser(u);
-                      fetchConversation(u.user_id);
-                    }}
+                    onClick={() => { setSelectedUser(u); fetchConversation(u.user_id); }}
                     className="w-full flex items-center gap-3 p-3 rounded-xl bg-card hover:bg-muted transition-colors"
                   >
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
@@ -653,21 +746,22 @@ const Comunidade = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Dialog para criar post */}
+        {/* Dialog para criar post com menções */}
         <Dialog open={isPostDialogOpen} onOpenChange={setIsPostDialogOpen}>
           <DialogContent className="mx-4 max-w-md rounded-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="font-serif">Novo Post</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
-              <Textarea
+              <MentionInput
                 value={newPostContent}
-                onChange={(e) => setNewPostContent(e.target.value)}
-                placeholder="O que você quer compartilhar?"
-                className="min-h-[100px] rounded-xl"
+                onChange={(value, mentions) => {
+                  setNewPostContent(value);
+                  setPostMentions(mentions);
+                }}
+                placeholder="O que você quer compartilhar? Use @ para mencionar alguém"
               />
               
-              {/* Image Preview */}
               <AnimatePresence>
                 {imagePreview && (
                   <motion.div
@@ -676,11 +770,7 @@ const Comunidade = () => {
                     exit={{ opacity: 0, scale: 0.95 }}
                     className="relative rounded-xl overflow-hidden"
                   >
-                    <img 
-                      src={imagePreview} 
-                      alt="Preview" 
-                      className="w-full max-h-48 object-cover rounded-xl"
-                    />
+                    <img src={imagePreview} alt="Preview" className="w-full max-h-48 object-cover rounded-xl" />
                     <button
                       onClick={removeSelectedImage}
                       className="absolute top-2 right-2 p-1 rounded-full bg-black/60 text-white hover:bg-black/80"
@@ -691,15 +781,8 @@ const Comunidade = () => {
                 )}
               </AnimatePresence>
               
-              {/* Image Upload */}
               <div className="flex gap-2">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageSelect}
-                  className="hidden"
-                />
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
                 <Button
                   type="button"
                   variant="outline"
@@ -712,11 +795,7 @@ const Comunidade = () => {
                 </Button>
               </div>
               
-              <Button 
-                onClick={handleCreatePost} 
-                className="w-full rounded-xl"
-                disabled={isUploading || !newPostContent.trim()}
-              >
+              <Button onClick={handleCreatePost} className="w-full rounded-xl" disabled={isUploading || !newPostContent.trim()}>
                 {isUploading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -729,6 +808,29 @@ const Comunidade = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Create Story Dialog */}
+        <CreateStoryDialog
+          open={createStoryOpen}
+          onOpenChange={setCreateStoryOpen}
+          userId={user?.id || ""}
+          onSuccess={fetchStories}
+        />
+
+        {/* Story Viewer */}
+        {viewingStories && (
+          <StoryViewer
+            stories={viewingStories}
+            initialIndex={storyInitialIndex}
+            onClose={() => setViewingStories(null)}
+            onMarkViewed={handleMarkStoryViewed}
+          />
+        )}
+
+        {/* Group Chat */}
+        {selectedGroup && (
+          <GroupChat group={selectedGroup} onClose={() => setSelectedGroup(null)} />
+        )}
       </main>
 
       <BottomNavigation />

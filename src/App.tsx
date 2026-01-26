@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import NotificationPermissionBanner from "@/components/NotificationPermissionBanner";
 import PresenceTracker from "@/components/PresenceTracker";
 import { useNativePushNotifications } from "@/hooks/useNativePushNotifications";
+import { useAutoWebPush } from "@/hooks/useAutoWebPush";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -39,9 +39,10 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Component to initialize native push notifications
-const NativePushInitializer = () => {
+// Component to initialize push notifications
+const PushInitializer = () => {
   useNativePushNotifications();
+  useAutoWebPush();
   return null;
 };
 
@@ -52,7 +53,7 @@ const App = () => (
       <Sonner />
       <NotificationPermissionBanner />
       <PresenceTracker />
-      <NativePushInitializer />
+      <PushInitializer />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />

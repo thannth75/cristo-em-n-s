@@ -388,6 +388,45 @@ export type Database = {
         }
         Relationships: []
       }
+      community_groups: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          is_public: boolean
+          member_count: number | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_public?: boolean
+          member_count?: number | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          is_public?: boolean
+          member_count?: number | null
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       community_posts: {
         Row: {
           comments_count: number | null
@@ -397,6 +436,7 @@ export type Database = {
           image_url: string | null
           is_pinned: boolean | null
           likes_count: number | null
+          reposts_count: number | null
           updated_at: string
           user_id: string
         }
@@ -408,6 +448,7 @@ export type Database = {
           image_url?: string | null
           is_pinned?: boolean | null
           likes_count?: number | null
+          reposts_count?: number | null
           updated_at?: string
           user_id: string
         }
@@ -419,6 +460,7 @@ export type Database = {
           image_url?: string | null
           is_pinned?: boolean | null
           likes_count?: number | null
+          reposts_count?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -769,6 +811,83 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      group_members: {
+        Row: {
+          group_id: string
+          id: string
+          joined_at: string
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          joined_at?: string
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          joined_at?: string
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_members_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "community_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_messages: {
+        Row: {
+          content: string
+          created_at: string
+          group_id: string
+          id: string
+          image_url: string | null
+          reply_to_id: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          group_id: string
+          id?: string
+          image_url?: string | null
+          reply_to_id?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          group_id?: string
+          id?: string
+          image_url?: string | null
+          reply_to_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_messages_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "community_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_messages_reply_to_id_fkey"
+            columns: ["reply_to_id"]
+            isOneToOne: false
+            referencedRelation: "group_messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       journal_entries: {
         Row: {
@@ -1133,6 +1252,67 @@ export type Database = {
           {
             foreignKeyName: "post_likes_post_id_fkey"
             columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_mentions: {
+        Row: {
+          created_at: string
+          id: string
+          mentioned_user_id: string
+          post_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          mentioned_user_id: string
+          post_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          mentioned_user_id?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_mentions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_reposts: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          original_post_id: string
+          user_id: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          original_post_id: string
+          user_id: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          original_post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_reposts_original_post_id_fkey"
+            columns: ["original_post_id"]
             isOneToOne: false
             referencedRelation: "community_posts"
             referencedColumns: ["id"]
@@ -1589,6 +1769,35 @@ export type Database = {
         }
         Relationships: []
       }
+      story_views: {
+        Row: {
+          id: string
+          story_id: string
+          viewed_at: string
+          viewer_id: string
+        }
+        Insert: {
+          id?: string
+          story_id: string
+          viewed_at?: string
+          viewer_id: string
+        }
+        Update: {
+          id?: string
+          story_id?: string
+          viewed_at?: string
+          viewer_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_views_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "user_stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       study_progress: {
         Row: {
           chapters_completed: string[] | null
@@ -1847,6 +2056,42 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      user_stories: {
+        Row: {
+          background_color: string | null
+          content: string | null
+          created_at: string
+          expires_at: string
+          id: string
+          image_url: string | null
+          text_color: string | null
+          user_id: string
+          views_count: number | null
+        }
+        Insert: {
+          background_color?: string | null
+          content?: string | null
+          created_at?: string
+          expires_at: string
+          id?: string
+          image_url?: string | null
+          text_color?: string | null
+          user_id: string
+          views_count?: number | null
+        }
+        Update: {
+          background_color?: string | null
+          content?: string | null
+          created_at?: string
+          expires_at?: string
+          id?: string
+          image_url?: string | null
+          text_color?: string | null
+          user_id?: string
+          views_count?: number | null
         }
         Relationships: []
       }
