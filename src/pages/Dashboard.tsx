@@ -84,10 +84,11 @@ const Dashboard = () => {
 
   const features = [
     { title: "Devocional Diário", description: "Comece o dia com Deus", icon: BookOpen, href: "/devocional", badge: "Novo" },
+    { title: "Versículos por Humor", description: "Palavra para seu momento", icon: Heart, href: "/versiculos", badge: "Novo" },
     { title: "Plano de Leitura", description: "Leia a Bíblia em 1 ano", icon: Target, href: "/plano-leitura" },
     { title: "Quiz Bíblico", description: "Teste seu conhecimento", icon: Brain, href: "/quiz" },
-    { title: "Testemunhos", description: "Histórias de fé", icon: Heart, href: "/testemunhos", badge: "Novo" },
-    { title: "Lembretes de Oração", description: "Momentos com Deus", icon: MessageSquare, href: "/lembretes-oracao", badge: "Novo" },
+    { title: "Testemunhos", description: "Histórias de fé", icon: Heart, href: "/testemunhos" },
+    { title: "Lembretes de Oração", description: "Momentos com Deus", icon: MessageSquare, href: "/lembretes-oracao" },
     { title: "Diário Espiritual", description: "Reflexões pessoais", icon: Heart, href: "/diario" },
     { title: "Agenda", description: "Cultos e eventos", icon: Calendar, href: "/agenda" },
     { title: "Presença", description: "Registro de participação", icon: Users, href: "/presenca" },

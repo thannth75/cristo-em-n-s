@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, ChangeEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
@@ -7,9 +7,11 @@ import {
   Heart, 
   Send, 
   Plus, 
-  Image,
+  Image as ImageIcon,
   MessageSquare,
-  ChevronLeft
+  ChevronLeft,
+  X,
+  Loader2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -72,11 +74,13 @@ const Comunidade = () => {
   
   const [posts, setPosts] = useState<Post[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
-  const [privateMessages, setPrivateMessages] = useState<PrivateMessage[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   const [newPostContent, setNewPostContent] = useState("");
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
   const [newChatMessage, setNewChatMessage] = useState("");
   
@@ -85,6 +89,7 @@ const Comunidade = () => {
   const [userConversations, setUserConversations] = useState<PrivateMessage[]>([]);
   
   const chatContainerRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!authLoading) {
@@ -108,7 +113,6 @@ const Comunidade = () => {
   }, [isApproved, user]);
 
   const setupRealtimeSubscriptions = () => {
-    // Posts realtime
     supabase
       .channel('community_posts_changes')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts' }, () => {
@@ -116,7 +120,6 @@ const Comunidade = () => {
       })
       .subscribe();
 
-    // Chat realtime
     supabase
       .channel('chat_messages_changes')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages' }, (payload) => {
@@ -126,7 +129,6 @@ const Comunidade = () => {
       })
       .subscribe();
 
-    // Private messages realtime
     supabase
       .channel('private_messages_changes')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'private_messages' }, () => {
@@ -150,14 +152,12 @@ const Comunidade = () => {
       .order("created_at", { ascending: false });
 
     if (postsData) {
-      // Fetch profiles for posts
       const userIds = [...new Set(postsData.map(p => p.user_id))];
       const { data: profiles } = await supabase
         .from("profiles")
         .select("user_id, full_name, avatar_url")
         .in("user_id", userIds);
 
-      // Check which posts user has liked
       const { data: userLikes } = await supabase
         .from("post_likes")
         .select("post_id")
@@ -217,7 +217,6 @@ const Comunidade = () => {
       .or(`sender_id.eq.${otherUserId},receiver_id.eq.${otherUserId}`)
       .order("created_at", { ascending: true });
 
-    // Filter for this specific conversation
     const conversation = data?.filter(
       m => (m.sender_id === user?.id && m.receiver_id === otherUserId) ||
            (m.sender_id === otherUserId && m.receiver_id === user?.id)
@@ -225,7 +224,6 @@ const Comunidade = () => {
 
     setUserConversations(conversation);
 
-    // Mark as read
     await supabase
       .from("private_messages")
       .update({ is_read: true })
@@ -241,6 +239,51 @@ const Comunidade = () => {
     }, 100);
   };
 
+  const handleImageSelect = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({ 
+          title: "Imagem muito grande", 
+          description: "O tamanho máximo é 5MB.",
+          variant: "destructive" 
+        });
+        return;
+      }
+      setSelectedImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
+
+  const removeSelectedImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const uploadImage = async (file: File): Promise<string | null> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
+    const filePath = `posts/${fileName}`;
+
+    const { error } = await supabase.storage
+      .from("avatars")
+      .upload(filePath, file);
+
+    if (error) {
+      console.error("Upload error:", error);
+      return null;
+    }
+
+    const { data: urlData } = supabase.storage
+      .from("avatars")
+      .getPublicUrl(filePath);
+
+    return urlData.publicUrl;
+  };
+
   const handleCreatePost = async () => {
     const validation = validateInput(communityPostSchema, { content: newPostContent });
     
@@ -249,17 +292,37 @@ const Comunidade = () => {
       return;
     }
 
+    setIsUploading(true);
+    let imageUrl: string | null = null;
+
+    if (selectedImage) {
+      imageUrl = await uploadImage(selectedImage);
+      if (!imageUrl) {
+        toast({ 
+          title: "Erro no upload", 
+          description: "Não foi possível enviar a imagem.",
+          variant: "destructive" 
+        });
+        setIsUploading(false);
+        return;
+      }
+    }
+
     const validatedData = validation.data;
     const { error } = await supabase.from("community_posts").insert({
       user_id: user?.id,
       content: validatedData.content,
+      image_url: imageUrl,
     });
+
+    setIsUploading(false);
 
     if (error) {
       toast({ title: "Erro", description: "Não foi possível criar o post.", variant: "destructive" });
     } else {
       toast({ title: "Post criado! 🎉", description: "Seu post foi publicado." });
       setNewPostContent("");
+      removeSelectedImage();
       setIsPostDialogOpen(false);
       fetchPosts();
     }
@@ -361,17 +424,17 @@ const Comunidade = () => {
               <Users className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="font-serif text-2xl font-semibold text-foreground">Comunidade</h1>
-              <p className="text-sm text-muted-foreground">Conecte-se com os jovens</p>
+              <h1 className="font-serif text-xl sm:text-2xl font-semibold text-foreground">Comunidade</h1>
+              <p className="text-xs sm:text-sm text-muted-foreground">Conecte-se com os jovens</p>
             </div>
           </div>
         </motion.div>
 
         <Tabs defaultValue="feed" className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-4">
-            <TabsTrigger value="feed">Mural</TabsTrigger>
-            <TabsTrigger value="chat">Chat</TabsTrigger>
-            <TabsTrigger value="messages">Mensagens</TabsTrigger>
+            <TabsTrigger value="feed" className="text-xs sm:text-sm">Mural</TabsTrigger>
+            <TabsTrigger value="chat" className="text-xs sm:text-sm">Chat</TabsTrigger>
+            <TabsTrigger value="messages" className="text-xs sm:text-sm">Mensagens</TabsTrigger>
           </TabsList>
 
           {/* MURAL DE POSTS */}
@@ -399,18 +462,32 @@ const Comunidade = () => {
                   key={post.id}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="rounded-2xl bg-card p-4 shadow-md"
+                  className="rounded-2xl bg-card p-4 shadow-md overflow-hidden"
                 >
                   <div className="flex items-center gap-3 mb-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
                       {post.profiles?.full_name?.charAt(0) || "?"}
                     </div>
-                    <div>
-                      <p className="font-semibold text-foreground">{post.profiles?.full_name || "Anônimo"}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-foreground truncate">{post.profiles?.full_name || "Anônimo"}</p>
                       <p className="text-xs text-muted-foreground">{formatDate(post.created_at)}</p>
                     </div>
                   </div>
-                  <p className="text-foreground mb-3">{post.content}</p>
+                  
+                  <p className="text-foreground mb-3 break-words">{post.content}</p>
+                  
+                  {/* Post Image */}
+                  {post.image_url && (
+                    <div className="mb-3 -mx-4 sm:mx-0 sm:rounded-xl overflow-hidden">
+                      <img 
+                        src={post.image_url} 
+                        alt="Imagem do post" 
+                        className="w-full max-h-80 object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                  )}
+                  
                   <div className="flex items-center gap-4 pt-2 border-t border-border">
                     <button
                       onClick={() => handleLikePost(post.id, post.user_liked || false)}
@@ -448,7 +525,7 @@ const Comunidade = () => {
                       className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
                     >
                       <div
-                        className={`max-w-[80%] rounded-2xl px-4 py-2 ${
+                        className={`max-w-[85%] sm:max-w-[70%] rounded-2xl px-4 py-2 ${
                           isOwn
                             ? "bg-primary text-primary-foreground"
                             : "bg-muted"
@@ -459,7 +536,7 @@ const Comunidade = () => {
                             {msg.profiles?.full_name || "Anônimo"}
                           </p>
                         )}
-                        <p className="text-sm">{msg.content}</p>
+                        <p className="text-sm break-words">{msg.content}</p>
                         <p className={`text-xs mt-1 ${isOwn ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
                           {formatTime(msg.created_at)}
                         </p>
@@ -474,10 +551,10 @@ const Comunidade = () => {
                 value={newChatMessage}
                 onChange={(e) => setNewChatMessage(e.target.value)}
                 placeholder="Digite sua mensagem..."
-                className="rounded-xl"
+                className="rounded-xl flex-1"
                 onKeyPress={(e) => e.key === "Enter" && handleSendChatMessage()}
               />
-              <Button onClick={handleSendChatMessage} size="icon" className="rounded-xl">
+              <Button onClick={handleSendChatMessage} size="icon" className="rounded-xl shrink-0">
                 <Send className="h-4 w-4" />
               </Button>
             </div>
@@ -496,7 +573,7 @@ const Comunidade = () => {
                   Voltar
                 </Button>
                 <div className="rounded-2xl bg-card p-4 mb-4">
-                  <p className="font-semibold">{selectedUser.full_name}</p>
+                  <p className="font-semibold truncate">{selectedUser.full_name}</p>
                 </div>
                 <div className="h-[40vh] overflow-y-auto rounded-2xl bg-muted/50 p-4 space-y-3">
                   {userConversations.map((msg) => {
@@ -507,13 +584,13 @@ const Comunidade = () => {
                         className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
                       >
                         <div
-                          className={`max-w-[80%] rounded-2xl px-4 py-2 ${
+                          className={`max-w-[85%] sm:max-w-[70%] rounded-2xl px-4 py-2 ${
                             isOwn
                               ? "bg-primary text-primary-foreground"
                               : "bg-card"
                           }`}
                         >
-                          <p className="text-sm">{msg.content}</p>
+                          <p className="text-sm break-words">{msg.content}</p>
                           <p className={`text-xs mt-1 ${isOwn ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
                             {formatTime(msg.created_at)}
                           </p>
@@ -527,10 +604,10 @@ const Comunidade = () => {
                     value={newPrivateMessage}
                     onChange={(e) => setNewPrivateMessage(e.target.value)}
                     placeholder="Mensagem privada..."
-                    className="rounded-xl"
+                    className="rounded-xl flex-1"
                     onKeyPress={(e) => e.key === "Enter" && handleSendPrivateMessage()}
                   />
-                  <Button onClick={handleSendPrivateMessage} size="icon" className="rounded-xl">
+                  <Button onClick={handleSendPrivateMessage} size="icon" className="rounded-xl shrink-0">
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>
@@ -549,10 +626,10 @@ const Comunidade = () => {
                     }}
                     className="w-full flex items-center gap-3 p-3 rounded-xl bg-card hover:bg-muted transition-colors"
                   >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
                       {u.full_name.charAt(0)}
                     </div>
-                    <span className="font-medium text-foreground">{u.full_name}</span>
+                    <span className="font-medium text-foreground truncate">{u.full_name}</span>
                   </button>
                 ))}
               </div>
@@ -562,7 +639,7 @@ const Comunidade = () => {
 
         {/* Dialog para criar post */}
         <Dialog open={isPostDialogOpen} onOpenChange={setIsPostDialogOpen}>
-          <DialogContent className="mx-4 max-w-md rounded-2xl">
+          <DialogContent className="mx-4 max-w-md rounded-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="font-serif">Novo Post</DialogTitle>
             </DialogHeader>
@@ -571,10 +648,67 @@ const Comunidade = () => {
                 value={newPostContent}
                 onChange={(e) => setNewPostContent(e.target.value)}
                 placeholder="O que você quer compartilhar?"
-                className="min-h-[120px] rounded-xl"
+                className="min-h-[100px] rounded-xl"
               />
-              <Button onClick={handleCreatePost} className="w-full rounded-xl">
-                Publicar
+              
+              {/* Image Preview */}
+              <AnimatePresence>
+                {imagePreview && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="relative rounded-xl overflow-hidden"
+                  >
+                    <img 
+                      src={imagePreview} 
+                      alt="Preview" 
+                      className="w-full max-h-48 object-cover rounded-xl"
+                    />
+                    <button
+                      onClick={removeSelectedImage}
+                      className="absolute top-2 right-2 p-1 rounded-full bg-black/60 text-white hover:bg-black/80"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              
+              {/* Image Upload */}
+              <div className="flex gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageSelect}
+                  className="hidden"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="rounded-xl gap-2 flex-1"
+                  disabled={isUploading}
+                >
+                  <ImageIcon className="h-4 w-4" />
+                  {selectedImage ? "Trocar foto" : "Adicionar foto"}
+                </Button>
+              </div>
+              
+              <Button 
+                onClick={handleCreatePost} 
+                className="w-full rounded-xl"
+                disabled={isUploading || !newPostContent.trim()}
+              >
+                {isUploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Publicando...
+                  </>
+                ) : (
+                  "Publicar"
+                )}
               </Button>
             </div>
           </DialogContent>
