@@ -14,16 +14,19 @@ import {
   Trophy,
   Brain,
   Target,
-  MessageCircle
+  MessageCircle,
+  Sparkles,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAchievements } from "@/hooks/useAchievements";
+import { useGamification } from "@/hooks/useGamification";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import VerseCard from "@/components/VerseCard";
 import FeatureCard from "@/components/FeatureCard";
 import GlowOrb from "@/components/GlowOrb";
+import { Progress } from "@/components/ui/progress";
 
 const dailyVerses = [
   { verse: "Buscai primeiro o Reino de Deus e a sua justiça, e todas as coisas vos serão acrescentadas.", reference: "Mateus 6:33" },
@@ -45,6 +48,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user, profile, isApproved, isAdmin, isLeader, isLoading } = useAuth();
   useAchievements(); // Verificar conquistas automáticas
+  const gamification = useGamification(user?.id);
   
   const [nextEvent, setNextEvent] = useState<NextEvent | null>(null);
   const [todayVerse] = useState(() => {
@@ -148,6 +152,41 @@ const Dashboard = () => {
         >
           {/* Versículo do Dia */}
           <VerseCard verse={todayVerse.verse} reference={todayVerse.reference} />
+
+          {/* XP Progress Mini Card */}
+          {gamification.currentLevelDef && (
+            <motion.button
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+              onClick={() => navigate("/conquistas")}
+              className="w-full rounded-2xl bg-gradient-to-r from-primary/15 via-primary/10 to-background p-4 shadow-md border border-primary/20 text-left"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20 text-xl">
+                    {gamification.currentLevelDef.icon}
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Nível {gamification.currentLevel}</p>
+                    <h3 className="font-semibold text-foreground">{gamification.currentLevelDef.title}</h3>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 text-primary">
+                  <Sparkles className="h-4 w-4" />
+                  <span className="font-bold">{gamification.totalXp}</span>
+                  <span className="text-xs text-muted-foreground">XP</span>
+                </div>
+              </div>
+              <div className="space-y-1">
+                <div className="flex justify-between text-xs">
+                  <span className="text-muted-foreground">Próximo nível</span>
+                  <span className="text-primary">{gamification.progressPercent}%</span>
+                </div>
+                <Progress value={gamification.progressPercent} className="h-2" />
+              </div>
+            </motion.button>
+          )}
 
           {/* Próximo evento */}
           {nextEvent ? (
