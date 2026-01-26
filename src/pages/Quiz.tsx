@@ -13,10 +13,12 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useXpAward } from "@/hooks/useXpAward";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
 
 interface Quiz {
   id: string;
@@ -49,6 +51,7 @@ const Quiz = () => {
   const navigate = useNavigate();
   const { user, profile, isApproved, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { awardXp, showLevelUp, levelUpData, closeLevelUp } = useXpAward(user?.id);
   
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [userAttempts, setUserAttempts] = useState<QuizAttempt[]>([]);
@@ -143,18 +146,29 @@ const Quiz = () => {
       // Quiz completed
       setQuizCompleted(true);
       
+      // Calculate final values
+      const finalCorrect = correctAnswers + (selectedAnswer === questions[currentQuestionIndex].correct_answer ? 1 : 0);
+      const percentage = Math.round((finalCorrect / questions.length) * 100);
+      
       // Save attempt
       await supabase.from("user_quiz_attempts").insert({
         user_id: user?.id,
         quiz_id: activeQuiz?.id,
         score: score,
         total_questions: questions.length,
-        correct_answers: correctAnswers,
+        correct_answers: finalCorrect,
       });
+
+      // Award XP based on performance
+      if (percentage >= 80) {
+        await awardXp("quiz_complete_perfect", activeQuiz?.id, `Quiz perfeito: ${activeQuiz?.title}`);
+      } else {
+        await awardXp("quiz_complete", activeQuiz?.id, `Quiz: ${activeQuiz?.title}`);
+      }
 
       toast({
         title: "Quiz concluído! 🎉",
-        description: `Você acertou ${correctAnswers} de ${questions.length} questões!`,
+        description: `Você acertou ${finalCorrect} de ${questions.length} questões!`,
       });
     }
   };
@@ -467,6 +481,17 @@ const Quiz = () => {
       </main>
 
       <BottomNavigation />
+
+      {levelUpData && (
+        <LevelUpCelebration
+          open={showLevelUp}
+          onClose={closeLevelUp}
+          newLevel={levelUpData.newLevel}
+          levelTitle={levelUpData.levelTitle}
+          levelIcon={levelUpData.levelIcon}
+          rewards={levelUpData.rewards}
+        />
+      )}
     </div>
   );
 };

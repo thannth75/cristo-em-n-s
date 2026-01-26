@@ -13,6 +13,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useXpAward } from "@/hooks/useXpAward";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
 import { BIBLE_BOOKS } from "@/data/bibleReadingPlans";
 
 interface ReadingPlan {
@@ -58,6 +60,7 @@ const PlanoLeitura = () => {
   const navigate = useNavigate();
   const { user, profile, isApproved, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { awardXp, showLevelUp, levelUpData, closeLevelUp } = useXpAward(user?.id);
   
   const [plans, setPlans] = useState<ReadingPlan[]>([]);
   const [userProgress, setUserProgress] = useState<UserProgress | null>(null);
@@ -160,15 +163,18 @@ const PlanoLeitura = () => {
     if (!todayReading || !userProgress) return;
 
     // Save check-in
-    const { error } = await supabase.from("daily_reading_checkins").insert({
+    const { data: checkinData, error } = await supabase.from("daily_reading_checkins").insert({
       user_id: user?.id,
       plan_day_id: todayReading.id,
-    });
+    }).select().single();
 
     if (error) {
       toast({ title: "Erro", description: "Não foi possível registrar a leitura.", variant: "destructive" });
       return;
     }
+
+    // Award XP for daily reading
+    await awardXp("bible_reading", checkinData?.id, "Leitura bíblica do dia");
 
     // Advance to next day
     const nextDay = userProgress.current_day + 1;
@@ -183,6 +189,9 @@ const PlanoLeitura = () => {
           is_active: false,
         })
         .eq("id", userProgress.id);
+
+      // Award bonus XP for completing the plan
+      await awardXp("reading_plan_complete", userProgress.plan_id, "Plano de leitura completo!");
 
       toast({
         title: "🎉 Parabéns!",
@@ -443,6 +452,17 @@ const PlanoLeitura = () => {
       </main>
 
       <BottomNavigation />
+
+      {levelUpData && (
+        <LevelUpCelebration
+          open={showLevelUp}
+          onClose={closeLevelUp}
+          newLevel={levelUpData.newLevel}
+          levelTitle={levelUpData.levelTitle}
+          levelIcon={levelUpData.levelIcon}
+          rewards={levelUpData.rewards}
+        />
+      )}
     </div>
   );
 };

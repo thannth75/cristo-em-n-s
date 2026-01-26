@@ -5,6 +5,7 @@ import { Users, Calendar, Check, UserCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useXpAward } from "@/hooks/useXpAward";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/select";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
 
 interface Event {
   id: string;
@@ -40,6 +42,7 @@ const Presenca = () => {
   const navigate = useNavigate();
   const { user, profile, isApproved, isAdmin, isLeader, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { awardXp, showLevelUp, levelUpData, closeLevelUp } = useXpAward(user?.id);
   const [events, setEvents] = useState<Event[]>([]);
   const [selectedEvent, setSelectedEvent] = useState<string>("");
   const [members, setMembers] = useState<Profile[]>([]);
@@ -115,11 +118,17 @@ const Presenca = () => {
       await supabase.from("attendance").delete().eq("id", existing.id);
       toast({ title: "Presença removida" });
     } else {
-      await supabase.from("attendance").insert({
+      const { data: insertedData } = await supabase.from("attendance").insert({
         event_id: selectedEvent,
         user_id: memberId,
         checked_by: user?.id,
-      });
+      }).select().single();
+      
+      // Award XP for attendance (only for the member being checked in)
+      if (insertedData && memberId === user?.id) {
+        await awardXp("attendance", insertedData.id, "Presença registrada");
+      }
+      
       toast({ title: "Presença registrada! ✅" });
     }
     fetchAttendance(selectedEvent);
@@ -266,6 +275,17 @@ const Presenca = () => {
       </main>
 
       <BottomNavigation />
+
+      {levelUpData && (
+        <LevelUpCelebration
+          open={showLevelUp}
+          onClose={closeLevelUp}
+          newLevel={levelUpData.newLevel}
+          levelTitle={levelUpData.levelTitle}
+          levelIcon={levelUpData.levelIcon}
+          rewards={levelUpData.rewards}
+        />
+      )}
     </div>
   );
 };

@@ -14,6 +14,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useXpAward } from "@/hooks/useXpAward";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
 
 interface Devotional {
   id: string;
@@ -47,6 +49,7 @@ const Devocional = () => {
   const navigate = useNavigate();
   const { user, profile, isApproved, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { awardXp, showLevelUp, levelUpData, closeLevelUp } = useXpAward(user?.id);
   
   const [todayDevotional, setTodayDevotional] = useState<Devotional | null>(null);
   const [recentDevotionals, setRecentDevotionals] = useState<Devotional[]>([]);
@@ -121,6 +124,8 @@ const Devocional = () => {
     
     setIsCompleting(true);
     
+    const isAlreadyCompleted = isDevotionalCompleted(selectedDevotional.id);
+    
     const { error } = await supabase
       .from("devotional_progress")
       .upsert({
@@ -136,6 +141,10 @@ const Devocional = () => {
         variant: "destructive",
       });
     } else {
+      // Award XP only for new completions
+      if (!isAlreadyCompleted) {
+        await awardXp("devotional_complete", selectedDevotional.id, "Devocional concluído");
+      }
       toast({
         title: "Devocional concluído! 🙏",
         description: "Continue firme na sua caminhada com Deus.",
@@ -449,6 +458,17 @@ const Devocional = () => {
       </main>
 
       <BottomNavigation />
+
+      {levelUpData && (
+        <LevelUpCelebration
+          open={showLevelUp}
+          onClose={closeLevelUp}
+          newLevel={levelUpData.newLevel}
+          levelTitle={levelUpData.levelTitle}
+          levelIcon={levelUpData.levelIcon}
+          rewards={levelUpData.rewards}
+        />
+      )}
     </div>
   );
 };
