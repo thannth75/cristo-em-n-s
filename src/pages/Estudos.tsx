@@ -21,6 +21,7 @@ import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import StudyDetailDialog from "@/components/estudos/StudyDetailDialog";
 import { bibleStudySchema, validateInput } from "@/lib/validation";
+import { AdFeed } from "@/components/ads/AdBanner";
 
 interface BibleStudy {
   id: string;
@@ -352,6 +353,9 @@ const Estudos = () => {
             </div>
           )}
         </div>
+
+        {/* Anúncio integrado - estilo profissional */}
+        <AdFeed />
 
         <motion.div
           initial={{ opacity: 0 }}

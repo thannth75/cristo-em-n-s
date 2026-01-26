@@ -32,6 +32,7 @@ import BottomNavigation from "@/components/BottomNavigation";
 import PostComments from "@/components/comunidade/PostComments";
 import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
 import { communityPostSchema, chatMessageSchema, privateMessageSchema, validateInput } from "@/lib/validation";
+import { AdFeed, shouldShowAdAtIndex } from "@/components/ads/AdBanner";
 
 interface Post {
   id: string;
@@ -463,56 +464,60 @@ const Comunidade = () => {
                 <p className="text-muted-foreground">Nenhum post ainda. Seja o primeiro!</p>
               </div>
             ) : (
-              posts.map((post) => (
-                <motion.div
-                  key={post.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="rounded-2xl bg-card p-4 shadow-md overflow-hidden"
-                >
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
-                      {post.profiles?.full_name?.charAt(0) || "?"}
+              posts.map((post, index) => (
+                <div key={post.id}>
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-2xl bg-card p-4 shadow-md overflow-hidden"
+                  >
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">
+                        {post.profiles?.full_name?.charAt(0) || "?"}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-foreground truncate">{post.profiles?.full_name || "Anônimo"}</p>
+                        <p className="text-xs text-muted-foreground">{formatDate(post.created_at)}</p>
+                      </div>
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-foreground truncate">{post.profiles?.full_name || "Anônimo"}</p>
-                      <p className="text-xs text-muted-foreground">{formatDate(post.created_at)}</p>
-                    </div>
-                  </div>
-                  
-                  <p className="text-foreground mb-3 break-words">{post.content}</p>
-                  
-                  {/* Post Image */}
-                  {post.image_url && (
-                    <div className="mb-3 -mx-4 sm:mx-0 sm:rounded-xl overflow-hidden">
-                      <img 
-                        src={post.image_url} 
-                        alt="Imagem do post" 
-                        className="w-full max-h-80 object-cover"
-                        loading="lazy"
+                    
+                    <p className="text-foreground mb-3 break-words">{post.content}</p>
+                    
+                    {/* Post Image */}
+                    {post.image_url && (
+                      <div className="mb-3 -mx-4 sm:mx-0 sm:rounded-xl overflow-hidden">
+                        <img 
+                          src={post.image_url} 
+                          alt="Imagem do post" 
+                          className="w-full max-h-80 object-cover"
+                          loading="lazy"
+                        />
+                      </div>
+                    )}
+                    
+                    <div className="flex items-center gap-4 pt-2 border-t border-border">
+                      <button
+                        onClick={() => handleLikePost(post.id, post.user_liked || false)}
+                        className={`flex items-center gap-1 text-sm ${post.user_liked ? "text-destructive" : "text-muted-foreground"} hover:text-destructive transition-colors`}
+                      >
+                        <Heart className={`h-4 w-4 ${post.user_liked ? "fill-current" : ""}`} />
+                        {post.likes_count}
+                      </button>
+                      <PostComments 
+                        postId={post.id} 
+                        commentsCount={post.comments_count}
+                        onCommentsChange={(count) => {
+                          setPosts(prev => prev.map(p => 
+                            p.id === post.id ? { ...p, comments_count: count } : p
+                          ));
+                        }}
                       />
                     </div>
-                  )}
+                  </motion.div>
                   
-                  <div className="flex items-center gap-4 pt-2 border-t border-border">
-                    <button
-                      onClick={() => handleLikePost(post.id, post.user_liked || false)}
-                      className={`flex items-center gap-1 text-sm ${post.user_liked ? "text-destructive" : "text-muted-foreground"} hover:text-destructive transition-colors`}
-                    >
-                      <Heart className={`h-4 w-4 ${post.user_liked ? "fill-current" : ""}`} />
-                      {post.likes_count}
-                    </button>
-                    <PostComments 
-                      postId={post.id} 
-                      commentsCount={post.comments_count}
-                      onCommentsChange={(count) => {
-                        setPosts(prev => prev.map(p => 
-                          p.id === post.id ? { ...p, comments_count: count } : p
-                        ));
-                      }}
-                    />
-                  </div>
-                </motion.div>
+                  {/* Anúncio integrado ao feed - aparece após cada 6 posts */}
+                  {shouldShowAdAtIndex(index, 6) && <AdFeed />}
+                </div>
               ))
             )}
           </TabsContent>
