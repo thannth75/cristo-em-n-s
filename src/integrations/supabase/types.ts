@@ -696,6 +696,80 @@ export type Database = {
         }
         Relationships: []
       }
+      exam_grades: {
+        Row: {
+          exam_id: string
+          graded_at: string
+          graded_by: string
+          id: string
+          notes: string | null
+          score: number | null
+          user_id: string
+        }
+        Insert: {
+          exam_id: string
+          graded_at?: string
+          graded_by: string
+          id?: string
+          notes?: string | null
+          score?: number | null
+          user_id: string
+        }
+        Update: {
+          exam_id?: string
+          graded_at?: string
+          graded_by?: string
+          id?: string
+          notes?: string | null
+          score?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_grades_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exams: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          exam_date: string
+          exam_type: string
+          id: string
+          max_score: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          exam_date?: string
+          exam_type?: string
+          id?: string
+          max_score?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          exam_date?: string
+          exam_type?: string
+          id?: string
+          max_score?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       journal_entries: {
         Row: {
           bible_verse: string | null
@@ -1844,6 +1918,18 @@ export type Database = {
       }
     }
     Views: {
+      attendance_scores: {
+        Row: {
+          attendance_percentage: number | null
+          avatar_url: string | null
+          events_attended: number | null
+          full_name: string | null
+          status: string | null
+          total_events: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       attendance_summary: {
         Row: {
           city: string | null
