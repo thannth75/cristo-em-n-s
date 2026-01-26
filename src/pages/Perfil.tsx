@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { User, Mail, LogOut, Shield, ChevronRight, Award, Calendar, BookOpen, Camera, Edit } from "lucide-react";
+import { User, Mail, LogOut, Shield, ChevronRight, Award, Calendar, BookOpen, Camera, Edit, Bell, MapPin, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import AppHeader from "@/components/AppHeader";
@@ -13,12 +13,15 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import GlowOrb from "@/components/GlowOrb";
 import AvatarUpload from "@/components/perfil/AvatarUpload";
+import NotificationSettings from "@/components/perfil/NotificationSettings";
+import LocationSettings from "@/components/perfil/LocationSettings";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const Perfil = () => {
   const navigate = useNavigate();
@@ -126,7 +129,10 @@ const Perfil = () => {
 
   const menuItems = [
     ...(isAdmin || isLeader
-      ? [{ icon: Shield, label: "Administração", action: () => navigate("/admin") }]
+      ? [
+          { icon: BarChart3, label: "Dashboard de Líderes", action: () => navigate("/dashboard-lider") },
+          { icon: Shield, label: "Administração", action: () => navigate("/admin") },
+        ]
       : []),
   ];
 
@@ -285,41 +291,65 @@ const Perfil = () => {
 
       {/* Edit Profile Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="mx-4 max-w-md rounded-2xl">
+        <DialogContent className="mx-4 max-w-md rounded-2xl max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle className="font-serif">Editar Perfil</DialogTitle>
+            <DialogTitle className="font-serif">Configurações</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Nome completo</Label>
-              <Input
-                value={editForm.full_name}
-                onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
-                className="rounded-xl"
-              />
+          
+          <Tabs defaultValue="profile" className="flex-1 overflow-hidden flex flex-col">
+            <TabsList className="grid w-full grid-cols-3 mb-4">
+              <TabsTrigger value="profile">Perfil</TabsTrigger>
+              <TabsTrigger value="location">Local</TabsTrigger>
+              <TabsTrigger value="notifications">Alertas</TabsTrigger>
+            </TabsList>
+
+            <div className="flex-1 overflow-y-auto">
+              <TabsContent value="profile" className="mt-0 space-y-4">
+                <div>
+                  <Label>Nome completo</Label>
+                  <Input
+                    value={editForm.full_name}
+                    onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                    className="rounded-xl"
+                  />
+                </div>
+                <div>
+                  <Label>Telefone</Label>
+                  <Input
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    placeholder="(00) 00000-0000"
+                    className="rounded-xl"
+                  />
+                </div>
+                <div>
+                  <Label>Data de nascimento</Label>
+                  <Input
+                    type="date"
+                    value={editForm.birth_date}
+                    onChange={(e) => setEditForm({ ...editForm, birth_date: e.target.value })}
+                    className="rounded-xl"
+                  />
+                </div>
+                <Button onClick={handleUpdateProfile} className="w-full rounded-xl">
+                  Salvar Alterações
+                </Button>
+              </TabsContent>
+
+              <TabsContent value="location" className="mt-0">
+                <LocationSettings
+                  userId={user?.id || ""}
+                  currentState={(profile as any)?.state || null}
+                  currentCity={(profile as any)?.city || null}
+                  onUpdate={() => {}}
+                />
+              </TabsContent>
+
+              <TabsContent value="notifications" className="mt-0">
+                <NotificationSettings userId={user?.id || ""} />
+              </TabsContent>
             </div>
-            <div>
-              <Label>Telefone</Label>
-              <Input
-                value={editForm.phone}
-                onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                placeholder="(00) 00000-0000"
-                className="rounded-xl"
-              />
-            </div>
-            <div>
-              <Label>Data de nascimento</Label>
-              <Input
-                type="date"
-                value={editForm.birth_date}
-                onChange={(e) => setEditForm({ ...editForm, birth_date: e.target.value })}
-                className="rounded-xl"
-              />
-            </div>
-            <Button onClick={handleUpdateProfile} className="w-full rounded-xl">
-              Salvar Alterações
-            </Button>
-          </div>
+          </Tabs>
         </DialogContent>
       </Dialog>
 
