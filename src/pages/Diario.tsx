@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Plus, Trash2, Sparkles, BookOpen, Hand } from "lucide-react";
+import { Heart, Plus, Trash2, Sparkles, BookOpen, Hand, MessageCircle, RefreshCw, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -16,6 +16,11 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import { MOOD_VERSES } from "@/data/bibleReadingPlans";
@@ -39,20 +44,35 @@ interface MoodVerse {
 }
 
 const moods = [
-  { value: "grato", emoji: "🙏", label: "Grato" },
-  { value: "alegre", emoji: "😊", label: "Alegre" },
-  { value: "esperancoso", emoji: "✨", label: "Esperançoso" },
-  { value: "triste", emoji: "😢", label: "Triste" },
-  { value: "ansioso", emoji: "😰", label: "Ansioso" },
-  { value: "preocupado", emoji: "😟", label: "Preocupado" },
-  { value: "medo", emoji: "😨", label: "Com medo" },
-  { value: "desanimado", emoji: "😔", label: "Desanimado" },
-  { value: "confuso", emoji: "🤔", label: "Confuso" },
+  { value: "grato", emoji: "🙏", label: "Grato", color: "bg-primary/20 border-primary" },
+  { value: "alegre", emoji: "😊", label: "Alegre", color: "bg-amber-500/20 border-amber-500" },
+  { value: "esperancoso", emoji: "✨", label: "Esperançoso", color: "bg-blue-500/20 border-blue-500" },
+  { value: "triste", emoji: "😢", label: "Triste", color: "bg-indigo-500/20 border-indigo-500" },
+  { value: "ansioso", emoji: "😰", label: "Ansioso", color: "bg-orange-500/20 border-orange-500" },
+  { value: "preocupado", emoji: "😟", label: "Preocupado", color: "bg-yellow-500/20 border-yellow-500" },
+  { value: "medo", emoji: "😨", label: "Com medo", color: "bg-purple-500/20 border-purple-500" },
+  { value: "desanimado", emoji: "😔", label: "Desanimado", color: "bg-gray-500/20 border-gray-500" },
+  { value: "confuso", emoji: "🤔", label: "Confuso", color: "bg-teal-500/20 border-teal-500" },
 ];
 
 const getMoodEmoji = (mood: string) => {
   return moods.find(m => m.value === mood)?.emoji || "📝";
 };
+
+const getMoodColor = (mood: string) => {
+  return moods.find(m => m.value === mood)?.color || "bg-muted";
+};
+
+const interactivePrompts = [
+  "O que Deus te ensinou hoje?",
+  "Pelo que você é grato neste momento?",
+  "O que você quer entregar a Deus?",
+  "Qual versículo tocou seu coração?",
+  "Como você viu Deus agindo na sua vida?",
+  "O que você aprendeu nas dificuldades?",
+  "Qual foi sua maior vitória esta semana?",
+  "Como você pode ser luz para alguém hoje?",
+];
 
 const Diario = () => {
   const navigate = useNavigate();
@@ -63,7 +83,8 @@ const Diario = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [moodVerse, setMoodVerse] = useState<MoodVerse | null>(null);
-  const [showMoodSelector, setShowMoodSelector] = useState(false);
+  const [currentPrompt, setCurrentPrompt] = useState("");
+  const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
   const [newEntry, setNewEntry] = useState({
     title: "",
     content: "",
@@ -86,6 +107,11 @@ const Diario = () => {
       fetchEntries();
     }
   }, [isApproved, user]);
+
+  useEffect(() => {
+    // Set random prompt on load
+    setCurrentPrompt(interactivePrompts[Math.floor(Math.random() * interactivePrompts.length)]);
+  }, []);
 
   const fetchEntries = async () => {
     setIsLoading(true);
@@ -111,7 +137,20 @@ const Diario = () => {
       const randomVerse = versesForMood[Math.floor(Math.random() * versesForMood.length)];
       setMoodVerse(randomVerse);
     }
-    setShowMoodSelector(false);
+  };
+
+  const handleRefreshPrompt = () => {
+    const newPrompt = interactivePrompts[Math.floor(Math.random() * interactivePrompts.length)];
+    setCurrentPrompt(newPrompt);
+  };
+
+  const handleRefreshVerse = () => {
+    if (!selectedMood) return;
+    const versesForMood = MOOD_VERSES.filter(v => v.mood === selectedMood);
+    if (versesForMood.length > 0) {
+      const randomVerse = versesForMood[Math.floor(Math.random() * versesForMood.length)];
+      setMoodVerse(randomVerse);
+    }
   };
 
   const handleCreateEntry = async () => {
@@ -172,6 +211,18 @@ const Diario = () => {
     });
   };
 
+  const formatRelativeDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    if (days === 0) return "Hoje";
+    if (days === 1) return "Ontem";
+    if (days < 7) return `${days} dias atrás`;
+    return formatDate(dateStr);
+  };
+
   const userName = profile?.full_name?.split(" ")[0] || "Jovem";
 
   if (authLoading) {
@@ -190,14 +241,14 @@ const Diario = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 flex items-center justify-between"
+          className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
         >
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0">
               <Heart className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="font-serif text-2xl font-semibold text-foreground">
+              <h1 className="font-serif text-xl sm:text-2xl font-semibold text-foreground">
                 Diário Espiritual
               </h1>
               <p className="text-sm text-muted-foreground">
@@ -208,8 +259,9 @@ const Diario = () => {
 
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="icon" className="rounded-xl shadow-lg">
-                <Plus className="h-5 w-5" />
+              <Button className="rounded-xl shadow-lg w-full sm:w-auto">
+                <Plus className="h-5 w-5 mr-2" />
+                Nova Reflexão
               </Button>
             </DialogTrigger>
             <DialogContent className="mx-4 max-w-md rounded-2xl max-h-[85vh] overflow-y-auto">
@@ -233,17 +285,17 @@ const Diario = () => {
                         Vou te dar um versículo especial
                       </p>
                     </div>
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-3 gap-2 sm:gap-3">
                       {moods.map((mood) => (
                         <motion.button
                           key={mood.value}
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
                           onClick={() => handleSelectMood(mood.value)}
-                          className="flex flex-col items-center gap-1 p-3 rounded-xl bg-muted hover:bg-primary/10 transition-colors"
+                          className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 ${mood.color} hover:opacity-80 transition-all`}
                         >
-                          <span className="text-2xl">{mood.emoji}</span>
-                          <span className="text-xs text-muted-foreground">{mood.label}</span>
+                          <span className="text-xl sm:text-2xl">{mood.emoji}</span>
+                          <span className="text-xs text-foreground font-medium">{mood.label}</span>
                         </motion.button>
                       ))}
                     </div>
@@ -257,18 +309,20 @@ const Diario = () => {
                     className="space-y-4"
                   >
                     {/* Selected mood & verse */}
-                    <div className="rounded-xl bg-primary/10 p-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <span className="text-2xl">{getMoodEmoji(selectedMood)}</span>
-                        <span className="font-medium text-foreground">
-                          {moods.find(m => m.value === selectedMood)?.label}
-                        </span>
+                    <div className={`rounded-xl p-4 border-2 ${getMoodColor(selectedMood)}`}>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl">{getMoodEmoji(selectedMood)}</span>
+                          <span className="font-medium text-foreground">
+                            {moods.find(m => m.value === selectedMood)?.label}
+                          </span>
+                        </div>
                         <button
                           onClick={() => {
                             setSelectedMood(null);
                             setMoodVerse(null);
                           }}
-                          className="ml-auto text-xs text-primary hover:underline"
+                          className="text-xs text-primary hover:underline"
                         >
                           Trocar
                         </button>
@@ -276,8 +330,15 @@ const Diario = () => {
                       
                       {moodVerse && (
                         <div className="space-y-3">
-                          <div className="rounded-lg bg-card p-3">
-                            <p className="font-serif italic text-foreground">"{moodVerse.verse}"</p>
+                          <div className="rounded-lg bg-card p-3 relative">
+                            <button
+                              onClick={handleRefreshVerse}
+                              className="absolute top-2 right-2 p-1 rounded-full hover:bg-muted transition-colors"
+                              title="Outro versículo"
+                            >
+                              <RefreshCw className="h-4 w-4 text-muted-foreground" />
+                            </button>
+                            <p className="font-serif italic text-foreground pr-8">"{moodVerse.verse}"</p>
                             <p className="mt-1 text-sm font-medium text-primary">— {moodVerse.reference}</p>
                           </div>
                           <div className="text-sm text-muted-foreground">
@@ -295,6 +356,24 @@ const Diario = () => {
                           </div>
                         </div>
                       )}
+                    </div>
+
+                    {/* Interactive prompt */}
+                    <div className="rounded-xl bg-muted/50 p-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <MessageCircle className="h-4 w-4 text-primary" />
+                          <span className="text-sm font-medium text-foreground">Dica para reflexão:</span>
+                        </div>
+                        <button
+                          onClick={handleRefreshPrompt}
+                          className="p-1 rounded-full hover:bg-muted transition-colors"
+                          title="Outra dica"
+                        >
+                          <RefreshCw className="h-4 w-4 text-muted-foreground" />
+                        </button>
+                      </div>
+                      <p className="text-sm text-muted-foreground italic">{currentPrompt}</p>
                     </div>
 
                     <div>
@@ -339,17 +418,17 @@ const Diario = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="mb-6 rounded-2xl gradient-hope p-5 text-primary-foreground"
+          className="mb-6 rounded-2xl gradient-hope p-4 sm:p-5 text-primary-foreground"
         >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm opacity-80">Sua jornada</p>
-              <h3 className="font-serif text-xl font-semibold">
+              <h3 className="font-serif text-lg sm:text-xl font-semibold">
                 {entries.length} reflexão{entries.length !== 1 && "ões"}
               </h3>
             </div>
-            <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-primary-foreground/20">
-              <BookOpen className="h-7 w-7" />
+            <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-xl bg-primary-foreground/20">
+              <BookOpen className="h-6 w-6 sm:h-7 sm:w-7" />
             </div>
           </div>
         </motion.div>
@@ -364,12 +443,12 @@ const Diario = () => {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="rounded-2xl bg-card p-8 text-center shadow-md"
+              className="rounded-2xl bg-card p-6 sm:p-8 text-center shadow-md"
             >
               <Heart className="mx-auto mb-3 h-12 w-12 text-primary/50" />
               <p className="text-muted-foreground">Nenhuma reflexão ainda.</p>
               <p className="mt-2 text-sm text-muted-foreground">
-                Clique no + para escrever sua primeira reflexão.
+                Clique em "Nova Reflexão" para começar.
               </p>
             </motion.div>
           ) : (
@@ -379,37 +458,61 @@ const Diario = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 + index * 0.05 }}
-                className="rounded-2xl bg-card p-4 shadow-md"
+                className="rounded-2xl bg-card shadow-md overflow-hidden"
               >
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <span className="text-2xl">{getMoodEmoji(entry.mood || "")}</span>
-                    <div>
-                      <h3 className="font-semibold text-foreground">
-                        {entry.title || "Reflexão"}
-                      </h3>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDate(entry.created_at)}
-                      </p>
+                <Collapsible
+                  open={expandedEntry === entry.id}
+                  onOpenChange={(open) => setExpandedEntry(open ? entry.id : null)}
+                >
+                  <CollapsibleTrigger className="w-full">
+                    <div className="flex items-start justify-between p-4">
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        <div className={`rounded-full p-2 shrink-0 ${getMoodColor(entry.mood || "")}`}>
+                          <span className="text-lg">{getMoodEmoji(entry.mood || "")}</span>
+                        </div>
+                        <div className="text-left min-w-0 flex-1">
+                          <h3 className="font-semibold text-foreground truncate">
+                            {entry.title || "Reflexão"}
+                          </h3>
+                          <p className="text-xs text-muted-foreground">
+                            {formatRelativeDate(entry.created_at)}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                            {entry.content}
+                          </p>
+                        </div>
+                      </div>
+                      <ChevronDown className={`h-5 w-5 text-muted-foreground shrink-0 ml-2 transition-transform ${expandedEntry === entry.id ? "rotate-180" : ""}`} />
                     </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDeleteEntry(entry.id)}
-                    className="text-muted-foreground hover:text-destructive h-8 w-8"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-                <p className="text-sm text-muted-foreground line-clamp-3">
-                  {entry.content}
-                </p>
-                {entry.bible_verse && (
-                  <p className="mt-2 text-xs font-medium text-primary">
-                    📖 {entry.bible_verse}
-                  </p>
-                )}
+                  </CollapsibleTrigger>
+                  
+                  <CollapsibleContent>
+                    <div className="px-4 pb-4 pt-0 border-t border-border">
+                      <p className="text-sm text-foreground whitespace-pre-wrap mt-4">
+                        {entry.content}
+                      </p>
+                      {entry.bible_verse && (
+                        <p className="mt-3 text-sm font-medium text-primary">
+                          📖 {entry.bible_verse}
+                        </p>
+                      )}
+                      <div className="flex justify-between items-center mt-4 pt-4 border-t border-border">
+                        <span className="text-xs text-muted-foreground">
+                          {formatDate(entry.created_at)}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteEntry(entry.id)}
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Excluir
+                        </Button>
+                      </div>
+                    </div>
+                  </CollapsibleContent>
+                </Collapsible>
               </motion.div>
             ))
           )}

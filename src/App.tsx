@@ -28,6 +28,9 @@ import LembretesOracao from "./pages/LembretesOracao";
 import Versiculos from "./pages/Versiculos";
 import Celulas from "./pages/Celulas";
 import DashboardLider from "./pages/DashboardLider";
+import Mensagens from "./pages/Mensagens";
+import Discipulado from "./pages/Discipulado";
+import Onboarding from "./pages/Onboarding";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -43,6 +46,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/pending" element={<PendingApproval />} />
+          <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/estudos" element={<Estudos />} />
           <Route path="/agenda" element={<Agenda />} />
@@ -64,6 +68,8 @@ const App = () => (
           <Route path="/versiculos" element={<Versiculos />} />
           <Route path="/celulas" element={<Celulas />} />
           <Route path="/dashboard-lider" element={<DashboardLider />} />
+          <Route path="/mensagens" element={<Mensagens />} />
+          <Route path="/discipulado" element={<Discipulado />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
