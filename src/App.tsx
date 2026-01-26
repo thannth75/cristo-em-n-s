@@ -26,6 +26,7 @@ import Devocional from "./pages/Devocional";
 import Testemunhos from "./pages/Testemunhos";
 import LembretesOracao from "./pages/LembretesOracao";
 import Versiculos from "./pages/Versiculos";
+import Celulas from "./pages/Celulas";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -60,6 +61,7 @@ const App = () => (
           <Route path="/testemunhos" element={<Testemunhos />} />
           <Route path="/lembretes-oracao" element={<LembretesOracao />} />
           <Route path="/versiculos" element={<Versiculos />} />
+          <Route path="/celulas" element={<Celulas />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

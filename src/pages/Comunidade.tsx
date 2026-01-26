@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import PostComments from "@/components/comunidade/PostComments";
 import { communityPostSchema, chatMessageSchema, privateMessageSchema, validateInput } from "@/lib/validation";
 
 interface Post {
@@ -491,15 +492,20 @@ const Comunidade = () => {
                   <div className="flex items-center gap-4 pt-2 border-t border-border">
                     <button
                       onClick={() => handleLikePost(post.id, post.user_liked || false)}
-                      className={`flex items-center gap-1 text-sm ${post.user_liked ? "text-red-500" : "text-muted-foreground"}`}
+                      className={`flex items-center gap-1 text-sm ${post.user_liked ? "text-destructive" : "text-muted-foreground"} hover:text-destructive transition-colors`}
                     >
                       <Heart className={`h-4 w-4 ${post.user_liked ? "fill-current" : ""}`} />
                       {post.likes_count}
                     </button>
-                    <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                      <MessageCircle className="h-4 w-4" />
-                      {post.comments_count}
-                    </span>
+                    <PostComments 
+                      postId={post.id} 
+                      commentsCount={post.comments_count}
+                      onCommentsChange={(count) => {
+                        setPosts(prev => prev.map(p => 
+                          p.id === post.id ? { ...p, comments_count: count } : p
+                        ));
+                      }}
+                    />
                   </div>
                 </motion.div>
               ))
