@@ -1,1 +1,7 @@
 project_id = "ackbxokwnkagolepezmp"
+
+[functions.grant-achievements]
+verify_jwt = false
+
+[functions.send-prayer-reminders]
+verify_jwt = false

@@ -9,14 +9,15 @@ import {
   Sunset,
   Moon,
   Clock,
-  ToggleLeft,
-  ToggleRight
+  Pencil,
+  BellRing,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { usePrayerReminderScheduler } from "@/hooks/usePrayerReminderScheduler";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -35,6 +36,8 @@ import {
 } from "@/components/ui/select";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import TimePickerCustom from "@/components/lembretes/TimePickerCustom";
+import EditReminderDialog from "@/components/lembretes/EditReminderDialog";
 
 interface PrayerReminder {
   id: string;
@@ -55,10 +58,16 @@ const LembretesOracao = () => {
   const navigate = useNavigate();
   const { user, profile, isApproved, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
+  const { isEnabled: notificationsEnabled, permission, requestPermission } = usePushNotifications();
+  
+  // Initialize scheduler for local notifications
+  usePrayerReminderScheduler(user?.id);
   
   const [reminders, setReminders] = useState<PrayerReminder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingReminder, setEditingReminder] = useState<PrayerReminder | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   
   const [newReminder, setNewReminder] = useState({
     reminder_type: "manha",
@@ -98,7 +107,7 @@ const LembretesOracao = () => {
   const handleCreateReminder = async () => {
     // Check for duplicates
     const exists = reminders.some(
-      r => r.reminder_time === newReminder.reminder_time
+      r => r.reminder_time === newReminder.reminder_time + ":00"
     );
     
     if (exists) {
@@ -113,7 +122,7 @@ const LembretesOracao = () => {
     const { error } = await supabase.from("prayer_reminders").insert({
       user_id: user?.id,
       reminder_type: newReminder.reminder_type,
-      reminder_time: newReminder.reminder_time,
+      reminder_time: newReminder.reminder_time + ":00",
     });
 
     if (error) {
@@ -129,6 +138,30 @@ const LembretesOracao = () => {
       });
       setIsDialogOpen(false);
       setNewReminder({ reminder_type: "manha", reminder_time: "06:00" });
+      fetchReminders();
+    }
+  };
+
+  const handleUpdateReminder = async (id: string, data: { reminder_type: string; reminder_time: string }) => {
+    const { error } = await supabase
+      .from("prayer_reminders")
+      .update({
+        reminder_type: data.reminder_type,
+        reminder_time: data.reminder_time + ":00",
+      })
+      .eq("id", id);
+
+    if (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o lembrete.",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Lembrete atualizado! ✓",
+        description: `Novo horário: ${data.reminder_time}`,
+      });
       fetchReminders();
     }
   };
@@ -161,12 +194,59 @@ const LembretesOracao = () => {
     }
   };
 
+  const handleQuickAdd = async (type: typeof reminderTypes[number]) => {
+    const exists = reminders.some(r => r.reminder_type === type.value);
+    if (exists) {
+      toast({
+        title: "Já existe",
+        description: `Você já tem um lembrete de ${type.label.toLowerCase()}.`,
+      });
+      return;
+    }
+
+    const { error } = await supabase.from("prayer_reminders").insert({
+      user_id: user?.id,
+      reminder_type: type.value,
+      reminder_time: type.defaultTime + ":00",
+    });
+
+    if (!error) {
+      toast({
+        title: "Lembrete criado! 🔔",
+        description: `${type.label} às ${type.defaultTime}.`,
+      });
+      fetchReminders();
+    }
+  };
+
   const getReminderTypeInfo = (type: string) => {
     return reminderTypes.find(t => t.value === type) || reminderTypes[3];
   };
 
   const formatTime = (time: string) => {
     return time.slice(0, 5);
+  };
+
+  const getNextReminder = () => {
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+    
+    const activeReminders = reminders
+      .filter(r => r.is_active)
+      .map(r => {
+        const [h, m] = r.reminder_time.split(":").map(Number);
+        return { ...r, totalMinutes: h * 60 + m };
+      })
+      .sort((a, b) => a.totalMinutes - b.totalMinutes);
+
+    const nextToday = activeReminders.find(r => r.totalMinutes > currentMinutes);
+    if (nextToday) return { reminder: nextToday, isToday: true };
+    
+    if (activeReminders.length > 0) {
+      return { reminder: activeReminders[0], isToday: false };
+    }
+    
+    return null;
   };
 
   const userName = profile?.full_name?.split(" ")[0] || "Jovem";
@@ -180,6 +260,7 @@ const LembretesOracao = () => {
   }
 
   const activeReminders = reminders.filter(r => r.is_active).length;
+  const nextReminder = getNextReminder();
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -216,9 +297,9 @@ const LembretesOracao = () => {
                 <DialogTitle className="font-serif">Novo Lembrete</DialogTitle>
               </DialogHeader>
               
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
-                  <Label>Tipo de lembrete</Label>
+                  <Label className="mb-2 block">Tipo de lembrete</Label>
                   <Select 
                     value={newReminder.reminder_type} 
                     onValueChange={(value) => {
@@ -250,12 +331,10 @@ const LembretesOracao = () => {
                 </div>
 
                 <div>
-                  <Label>Horário</Label>
-                  <Input
-                    type="time"
+                  <Label className="mb-4 block text-center">Selecione o horário</Label>
+                  <TimePickerCustom
                     value={newReminder.reminder_time}
-                    onChange={(e) => setNewReminder({ ...newReminder, reminder_time: e.target.value })}
-                    className="rounded-xl"
+                    onChange={(time) => setNewReminder({ ...newReminder, reminder_time: time })}
                   />
                 </div>
 
@@ -263,13 +342,13 @@ const LembretesOracao = () => {
                   <p className="text-sm text-muted-foreground mb-2">
                     ⏰ Você será lembrado diariamente às
                   </p>
-                  <p className="text-3xl font-bold text-primary">
+                  <p className="text-4xl font-bold text-primary">
                     {newReminder.reminder_time}
                   </p>
                 </div>
 
                 <p className="text-xs text-muted-foreground text-center">
-                  💡 Os lembretes aparecerão nas suas notificações do app.
+                  💡 Os lembretes aparecerão nas suas notificações.
                 </p>
 
                 <Button onClick={handleCreateReminder} className="w-full rounded-xl">
@@ -280,14 +359,41 @@ const LembretesOracao = () => {
           </Dialog>
         </motion.div>
 
-        {/* Stats */}
+        {/* Notification Permission Banner */}
+        {permission !== "granted" && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="mb-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 p-4"
+          >
+            <div className="flex items-start gap-3">
+              <BellRing className="h-5 w-5 text-amber-500 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="font-semibold text-foreground">Ative as notificações</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Para receber lembretes de oração, você precisa permitir notificações.
+                </p>
+                <Button 
+                  size="sm" 
+                  onClick={requestPermission}
+                  className="rounded-xl"
+                >
+                  Ativar Notificações
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Stats + Next Reminder */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           className="mb-6 rounded-2xl gradient-hope p-5 text-primary-foreground"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-4">
             <div>
               <p className="text-sm opacity-80">Lembretes ativos</p>
               <h3 className="font-serif text-2xl font-semibold">
@@ -298,6 +404,23 @@ const LembretesOracao = () => {
               <Bell className="h-7 w-7" />
             </div>
           </div>
+          
+          {nextReminder && (
+            <div className="rounded-xl bg-primary-foreground/10 p-3">
+              <p className="text-xs opacity-80 mb-1">
+                Próximo lembrete {nextReminder.isToday ? "hoje" : "amanhã"}
+              </p>
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                <span className="font-bold text-lg">
+                  {formatTime(nextReminder.reminder.reminder_time)}
+                </span>
+                <span className="text-sm opacity-80">
+                  — {getReminderTypeInfo(nextReminder.reminder.reminder_type).label}
+                </span>
+              </div>
+            </div>
+          )}
         </motion.div>
 
         {/* Quick Add Buttons */}
@@ -317,17 +440,7 @@ const LembretesOracao = () => {
               return (
                 <button
                   key={type.value}
-                  onClick={async () => {
-                    if (exists) {
-                      toast({
-                        title: "Já existe",
-                        description: `Você já tem um lembrete de ${type.label.toLowerCase()}.`,
-                      });
-                      return;
-                    }
-                    setNewReminder({ reminder_type: type.value, reminder_time: type.defaultTime });
-                    await handleCreateReminder();
-                  }}
+                  onClick={() => handleQuickAdd(type)}
                   disabled={exists}
                   className={`flex flex-col items-center gap-2 p-4 rounded-xl transition-all ${
                     exists 
@@ -381,20 +494,33 @@ const LembretesOracao = () => {
                       !reminder.is_active && "opacity-60"
                     }`}
                   >
-                    <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${
-                      reminder.is_active ? "bg-primary/10" : "bg-muted"
-                    }`}>
+                    <button
+                      onClick={() => {
+                        setEditingReminder(reminder);
+                        setIsEditDialogOpen(true);
+                      }}
+                      className={`flex h-12 w-12 items-center justify-center rounded-xl transition-colors ${
+                        reminder.is_active ? "bg-primary/10 hover:bg-primary/20" : "bg-muted"
+                      }`}
+                    >
                       <Icon className={`h-6 w-6 ${reminder.is_active ? typeInfo.color : "text-muted-foreground"}`} />
-                    </div>
+                    </button>
                     
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-foreground">
+                    <button 
+                      onClick={() => {
+                        setEditingReminder(reminder);
+                        setIsEditDialogOpen(true);
+                      }}
+                      className="flex-1 text-left"
+                    >
+                      <h3 className="font-semibold text-foreground flex items-center gap-2">
                         {typeInfo.label}
+                        <Pencil className="h-3 w-3 text-muted-foreground" />
                       </h3>
                       <p className="text-2xl font-bold text-primary">
                         {formatTime(reminder.reminder_time)}
                       </p>
-                    </div>
+                    </button>
 
                     <div className="flex items-center gap-2">
                       <Switch
@@ -434,6 +560,14 @@ const LembretesOracao = () => {
           </p>
         </motion.div>
       </main>
+
+      {/* Edit Dialog */}
+      <EditReminderDialog
+        reminder={editingReminder}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        onSave={handleUpdateReminder}
+      />
 
       <BottomNavigation />
     </div>
