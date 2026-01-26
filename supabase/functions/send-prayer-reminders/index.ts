@@ -1,4 +1,12 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  ApplicationServer,
+  importVapidKeys,
+  PushMessageError,
+  Urgency,
+  type PushSubscription,
+} from "jsr:@negrel/webpush@0.5.0";
+import { decode as base64Decode, encode as base64Encode } from "https://deno.land/std@0.208.0/encoding/base64.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,6 +32,176 @@ const getReminderMessage = (type: string): string => {
   };
   return messages[type] || "É hora de orar! Reserve este momento para Deus.";
 };
+
+interface DbPushSubscription {
+  id: string;
+  user_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+}
+
+// Cache for ApplicationServer instance
+let appServer: ApplicationServer | null = null;
+
+/**
+ * Convert base64url string to standard base64
+ */
+function base64UrlToBase64(base64Url: string): string {
+  let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4) {
+    base64 += '=';
+  }
+  return base64;
+}
+
+/**
+ * Convert Uint8Array to base64url string
+ */
+function uint8ArrayToBase64Url(bytes: Uint8Array): string {
+  const base64 = base64Encode(bytes);
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
+}
+
+/**
+ * Convert base64url-encoded VAPID keys to JWK format
+ */
+function vapidKeysToJwk(publicKeyB64Url: string, privateKeyB64Url: string): { publicKey: JsonWebKey; privateKey: JsonWebKey } {
+  const publicKeyBytes = base64Decode(base64UrlToBase64(publicKeyB64Url));
+  
+  if (publicKeyBytes.length !== 65 || publicKeyBytes[0] !== 0x04) {
+    throw new Error(`Invalid public key format: expected 65 bytes starting with 0x04, got ${publicKeyBytes.length} bytes`);
+  }
+
+  const x = uint8ArrayToBase64Url(publicKeyBytes.slice(1, 33));
+  const y = uint8ArrayToBase64Url(publicKeyBytes.slice(33, 65));
+
+  const privateKeyBytes = base64Decode(base64UrlToBase64(privateKeyB64Url));
+  const d = uint8ArrayToBase64Url(privateKeyBytes);
+
+  const publicKey: JsonWebKey = {
+    kty: "EC",
+    crv: "P-256",
+    x,
+    y,
+    ext: true,
+  };
+
+  const privateKey: JsonWebKey = {
+    kty: "EC",
+    crv: "P-256",
+    x,
+    y,
+    d,
+    ext: true,
+  };
+
+  return { publicKey, privateKey };
+}
+
+async function getApplicationServer(): Promise<ApplicationServer | null> {
+  if (appServer) return appServer;
+
+  const vapidPublicKey = Deno.env.get("VAPID_PUBLIC_KEY");
+  const vapidPrivateKey = Deno.env.get("VAPID_PRIVATE_KEY");
+
+  if (!vapidPublicKey || !vapidPrivateKey) {
+    console.error("[send-prayer-reminders] VAPID keys not configured");
+    return null;
+  }
+
+  try {
+    let vapidKeys;
+    
+    if (vapidPublicKey.startsWith('{')) {
+      vapidKeys = await importVapidKeys({
+        publicKey: JSON.parse(vapidPublicKey),
+        privateKey: JSON.parse(vapidPrivateKey),
+      });
+    } else {
+      console.log("[send-prayer-reminders] Converting VAPID keys from base64url to JWK");
+      const jwkKeys = vapidKeysToJwk(vapidPublicKey, vapidPrivateKey);
+      vapidKeys = await importVapidKeys({
+        publicKey: jwkKeys.publicKey,
+        privateKey: jwkKeys.privateKey,
+      });
+    }
+
+    appServer = await ApplicationServer.new({
+      contactInformation: "mailto:suporte@vidaemcristo.app",
+      vapidKeys,
+    });
+
+    console.log("[send-prayer-reminders] ApplicationServer initialized");
+    return appServer;
+  } catch (error) {
+    console.error("[send-prayer-reminders] Failed to initialize ApplicationServer:", error);
+    return null;
+  }
+}
+
+// deno-lint-ignore no-explicit-any
+async function sendWebPushToUser(
+  server: ApplicationServer,
+  supabase: any,
+  userId: string,
+  title: string,
+  body: string,
+  url: string
+): Promise<boolean> {
+  try {
+    const { data: subscriptions } = await supabase
+      .from("push_subscriptions")
+      .select("*")
+      .eq("user_id", userId);
+
+    if (!subscriptions || subscriptions.length === 0) {
+      return false;
+    }
+
+    const pushPayload = JSON.stringify({
+      title,
+      body,
+      icon: "/icons/icon-192x192.png",
+      badge: "/icons/icon-96x96.png",
+      tag: `prayer-reminder-${Date.now()}`,
+      url,
+      action_url: url,
+    });
+
+    for (const sub of subscriptions as DbPushSubscription[]) {
+      try {
+        const pushSubscription: PushSubscription = {
+          endpoint: sub.endpoint,
+          keys: {
+            p256dh: sub.p256dh,
+            auth: sub.auth,
+          },
+        };
+
+        const subscriber = await server.subscribe(pushSubscription);
+        await subscriber.pushTextMessage(pushPayload, {
+          urgency: Urgency.High,
+          ttl: 3600,
+        });
+
+        console.log(`[send-prayer-reminders] Push sent to user ${userId}`);
+      } catch (error) {
+        if (error instanceof PushMessageError && error.isGone()) {
+          console.log(`[send-prayer-reminders] Removing expired subscription for user ${userId}`);
+          await supabase.from("push_subscriptions").delete().eq("id", sub.id);
+        } else {
+          console.error(`[send-prayer-reminders] Push failed for user ${userId}:`, error);
+        }
+      }
+    }
+
+    return true;
+  } catch (error) {
+    console.error(`[send-prayer-reminders] Error sending push to user ${userId}:`, error);
+    return false;
+  }
+}
 
 Deno.serve(async (req) => {
   // Handle CORS preflight
@@ -115,12 +293,32 @@ Deno.serve(async (req) => {
       throw insertError;
     }
 
-    console.log(`[send-prayer-reminders] Successfully sent ${notifications.length} notifications`);
+    console.log(`[send-prayer-reminders] Successfully sent ${notifications.length} in-app notifications`);
+
+    // Send Web Push notifications
+    const server = await getApplicationServer();
+    let pushSent = 0;
+
+    if (server) {
+      for (const notif of notifications) {
+        const sent = await sendWebPushToUser(
+          server,
+          supabase,
+          notif.user_id,
+          notif.title,
+          notif.message,
+          notif.action_url
+        );
+        if (sent) pushSent++;
+      }
+      console.log(`[send-prayer-reminders] Sent ${pushSent} web push notifications`);
+    }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         sent: notifications.length,
+        pushSent,
         time: currentTime,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
