@@ -7,6 +7,7 @@ interface PushNotificationState {
   isSupported: boolean;
   permission: NotificationPermission | "unsupported";
   isEnabled: boolean;
+  swRegistration: ServiceWorkerRegistration | null;
 }
 
 export function usePushNotifications() {
@@ -16,20 +17,46 @@ export function usePushNotifications() {
     isSupported: false,
     permission: "unsupported",
     isEnabled: false,
+    swRegistration: null,
   });
+
+  // Register service worker for push notifications
+  const registerServiceWorker = useCallback(async () => {
+    if (!("serviceWorker" in navigator)) return null;
+
+    try {
+      // Check if sw-push.js exists, otherwise use default
+      const registration = await navigator.serviceWorker.register("/sw-push.js", {
+        scope: "/",
+      });
+      console.log("[PushNotifications] Service worker registered:", registration.scope);
+      return registration;
+    } catch (error) {
+      console.warn("[PushNotifications] Custom SW not found, using default");
+      return null;
+    }
+  }, []);
 
   useEffect(() => {
     // Check if notifications are supported
-    const isSupported = "Notification" in window;
+    const isSupported = "Notification" in window && "serviceWorker" in navigator;
     
     if (isSupported) {
-      setState({
+      setState((prev) => ({
+        ...prev,
         isSupported: true,
         permission: Notification.permission,
         isEnabled: Notification.permission === "granted",
+      }));
+
+      // Register service worker
+      registerServiceWorker().then((registration) => {
+        if (registration) {
+          setState((prev) => ({ ...prev, swRegistration: registration }));
+        }
       });
     }
-  }, []);
+  }, [registerServiceWorker]);
 
   const requestPermission = useCallback(async () => {
     if (!state.isSupported) {
@@ -51,9 +78,14 @@ export function usePushNotifications() {
       }));
 
       if (permission === "granted") {
+        // Register service worker if not already
+        if (!state.swRegistration) {
+          await registerServiceWorker();
+        }
+
         toast({
           title: "Notificações ativadas! 🔔",
-          description: "Você receberá alertas importantes.",
+          description: "Você receberá alertas mesmo com o app em segundo plano.",
         });
         return true;
       } else if (permission === "denied") {
@@ -70,11 +102,23 @@ export function usePushNotifications() {
       console.error("Error requesting notification permission:", error);
       return false;
     }
-  }, [state.isSupported, toast]);
+  }, [state.isSupported, state.swRegistration, toast, registerServiceWorker]);
 
   const sendLocalNotification = useCallback((title: string, options?: NotificationOptions) => {
     if (state.isEnabled && state.isSupported) {
       try {
+        // Try to use service worker for notification (works in background)
+        if (state.swRegistration) {
+          state.swRegistration.showNotification(title, {
+            icon: "/icons/icon-192x192.png",
+            badge: "/icons/icon-96x96.png",
+            requireInteraction: true,
+            ...options,
+          });
+          return null;
+        }
+
+        // Fallback to regular notification
         const notification = new Notification(title, {
           icon: "/icons/icon-192x192.png",
           badge: "/icons/icon-96x96.png",
@@ -92,7 +136,7 @@ export function usePushNotifications() {
       }
     }
     return null;
-  }, [state.isEnabled, state.isSupported]);
+  }, [state.isEnabled, state.isSupported, state.swRegistration]);
 
   // Listen for new notifications from Supabase and show local notification
   useEffect(() => {
@@ -109,12 +153,15 @@ export function usePushNotifications() {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          const notification = payload.new as { title: string; message: string; type: string };
+          const notification = payload.new as { title: string; message: string; type: string; action_url?: string };
           
-          // Send local notification
+          // Send local notification via service worker
           sendLocalNotification(notification.title, {
             body: notification.message,
             tag: `notification-${Date.now()}`,
+            data: {
+              url: notification.action_url || "/",
+            },
           });
         }
       )
