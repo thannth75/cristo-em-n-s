@@ -223,6 +223,147 @@ export type Database = {
         }
         Relationships: []
       }
+      cell_meeting_attendance: {
+        Row: {
+          attended_at: string | null
+          id: string
+          meeting_id: string
+          user_id: string
+        }
+        Insert: {
+          attended_at?: string | null
+          id?: string
+          meeting_id: string
+          user_id: string
+        }
+        Update: {
+          attended_at?: string | null
+          id?: string
+          meeting_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cell_meeting_attendance_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "cell_meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cell_meetings: {
+        Row: {
+          attendance_count: number | null
+          cell_id: string
+          created_at: string | null
+          created_by: string
+          id: string
+          meeting_date: string
+          notes: string | null
+          topic: string | null
+        }
+        Insert: {
+          attendance_count?: number | null
+          cell_id: string
+          created_at?: string | null
+          created_by: string
+          id?: string
+          meeting_date: string
+          notes?: string | null
+          topic?: string | null
+        }
+        Update: {
+          attendance_count?: number | null
+          cell_id?: string
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          meeting_date?: string
+          notes?: string | null
+          topic?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cell_meetings_cell_id_fkey"
+            columns: ["cell_id"]
+            isOneToOne: false
+            referencedRelation: "cells"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cell_members: {
+        Row: {
+          cell_id: string
+          id: string
+          joined_at: string | null
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          cell_id: string
+          id?: string
+          joined_at?: string | null
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          cell_id?: string
+          id?: string
+          joined_at?: string | null
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cell_members_cell_id_fkey"
+            columns: ["cell_id"]
+            isOneToOne: false
+            referencedRelation: "cells"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cells: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          leader_id: string
+          meeting_day: string | null
+          meeting_location: string | null
+          meeting_time: string | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          leader_id: string
+          meeting_day?: string | null
+          meeting_location?: string | null
+          meeting_time?: string | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          leader_id?: string
+          meeting_day?: string | null
+          meeting_location?: string | null
+          meeting_time?: string | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       chat_messages: {
         Row: {
           content: string

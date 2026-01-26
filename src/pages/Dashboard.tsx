@@ -85,6 +85,7 @@ const Dashboard = () => {
   const features = [
     { title: "Devocional Diário", description: "Comece o dia com Deus", icon: BookOpen, href: "/devocional", badge: "Novo" },
     { title: "Versículos por Humor", description: "Palavra para seu momento", icon: Heart, href: "/versiculos", badge: "Novo" },
+    { title: "Células", description: "Pequenos grupos", icon: Users, href: "/celulas", badge: "Novo" },
     { title: "Plano de Leitura", description: "Leia a Bíblia em 1 ano", icon: Target, href: "/plano-leitura" },
     { title: "Quiz Bíblico", description: "Teste seu conhecimento", icon: Brain, href: "/quiz" },
     { title: "Testemunhos", description: "Histórias de fé", icon: Heart, href: "/testemunhos" },
