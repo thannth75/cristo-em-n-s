@@ -527,6 +527,133 @@ export type Database = {
           },
         ]
       }
+      discipleship: {
+        Row: {
+          created_at: string | null
+          disciple_id: string
+          ended_at: string | null
+          id: string
+          is_active: boolean | null
+          mentor_id: string
+          notes: string | null
+          started_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          disciple_id: string
+          ended_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          mentor_id: string
+          notes?: string | null
+          started_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          disciple_id?: string
+          ended_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          mentor_id?: string
+          notes?: string | null
+          started_at?: string | null
+        }
+        Relationships: []
+      }
+      discipleship_checkins: {
+        Row: {
+          bible_reading: boolean | null
+          challenges: string | null
+          checkin_date: string
+          community_involvement: boolean | null
+          created_at: string | null
+          discipleship_id: string
+          id: string
+          mentor_feedback: string | null
+          prayer_life: boolean | null
+          prayer_requests: string | null
+          spiritual_health: number | null
+          victories: string | null
+        }
+        Insert: {
+          bible_reading?: boolean | null
+          challenges?: string | null
+          checkin_date?: string
+          community_involvement?: boolean | null
+          created_at?: string | null
+          discipleship_id: string
+          id?: string
+          mentor_feedback?: string | null
+          prayer_life?: boolean | null
+          prayer_requests?: string | null
+          spiritual_health?: number | null
+          victories?: string | null
+        }
+        Update: {
+          bible_reading?: boolean | null
+          challenges?: string | null
+          checkin_date?: string
+          community_involvement?: boolean | null
+          created_at?: string | null
+          discipleship_id?: string
+          id?: string
+          mentor_feedback?: string | null
+          prayer_life?: boolean | null
+          prayer_requests?: string | null
+          spiritual_health?: number | null
+          victories?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discipleship_checkins_discipleship_id_fkey"
+            columns: ["discipleship_id"]
+            isOneToOne: false
+            referencedRelation: "discipleship"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      discipleship_goals: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          description: string | null
+          discipleship_id: string
+          id: string
+          is_completed: boolean | null
+          target_date: string | null
+          title: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          discipleship_id: string
+          id?: string
+          is_completed?: boolean | null
+          target_date?: string | null
+          title: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          discipleship_id?: string
+          id?: string
+          is_completed?: boolean | null
+          target_date?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discipleship_goals_discipleship_id_fkey"
+            columns: ["discipleship_id"]
+            isOneToOne: false
+            referencedRelation: "discipleship"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           created_at: string
@@ -765,6 +892,42 @@ export type Database = {
           message?: string
           title?: string
           type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      onboarding_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          step_location: boolean | null
+          step_notifications: boolean | null
+          step_profile: boolean | null
+          step_tutorial: boolean | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          step_location?: boolean | null
+          step_notifications?: boolean | null
+          step_profile?: boolean | null
+          step_tutorial?: boolean | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          step_location?: boolean | null
+          step_notifications?: boolean | null
+          step_profile?: boolean | null
+          step_tutorial?: boolean | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []

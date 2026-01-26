@@ -23,35 +23,35 @@ const AppHeader = ({ userName = "Jovem", onMenuClick }: AppHeaderProps) => {
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-card/95 px-4 py-3 backdrop-blur-xl">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+    <header className="sticky top-0 z-40 border-b border-border bg-card/95 px-3 sm:px-4 py-2 sm:py-3 backdrop-blur-xl safe-area-inset-top">
+      <div className="flex items-center justify-between max-w-7xl mx-auto">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           {/* Logo em destaque */}
           <motion.button
             onClick={() => navigate("/dashboard")}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="relative"
+            className="relative shrink-0"
           >
             <div className="absolute inset-0 blur-lg bg-primary/20 rounded-full scale-125" />
             <img
               src={logo}
               alt="Vida em Cristo"
-              className="relative h-12 w-auto drop-shadow-md"
+              className="relative h-10 sm:h-12 w-auto drop-shadow-md"
             />
           </motion.button>
           
-          <div>
-            <p className="text-sm text-muted-foreground">{getGreeting()},</p>
-            <div className="flex items-center gap-2">
-              <h1 className="font-serif text-lg font-semibold text-foreground">{userName}</h1>
+          <div className="min-w-0">
+            <p className="text-xs sm:text-sm text-muted-foreground">{getGreeting()},</p>
+            <div className="flex items-center gap-1 sm:gap-2">
+              <h1 className="font-serif text-base sm:text-lg font-semibold text-foreground truncate max-w-[120px] sm:max-w-none">{userName}</h1>
               {isAdmin && (
-                <Badge className="bg-destructive/10 text-destructive text-xs px-1.5 py-0">
+                <Badge className="bg-destructive/10 text-destructive text-xs px-1 sm:px-1.5 py-0 shrink-0">
                   <Shield className="h-3 w-3" />
                 </Badge>
               )}
               {isLeader && !isAdmin && (
-                <Badge className="bg-gold/20 text-gold text-xs px-1.5 py-0">
+                <Badge className="bg-gold/20 text-gold text-xs px-1 sm:px-1.5 py-0 shrink-0">
                   <Shield className="h-3 w-3" />
                 </Badge>
               )}
@@ -59,7 +59,7 @@ const AppHeader = ({ userName = "Jovem", onMenuClick }: AppHeaderProps) => {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <NotificationCenter />
         </div>
       </div>

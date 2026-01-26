@@ -225,18 +225,18 @@ const DashboardLider = () => {
     <div className="min-h-screen bg-background pb-24">
       <AppHeader userName={userName} />
 
-      <main className="px-4 py-6">
+      <main className="px-3 sm:px-4 py-4 sm:py-6 max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6"
+          className="mb-4 sm:mb-6"
         >
           <div className="flex items-center gap-3 mb-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0">
               <BarChart3 className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <h1 className="font-serif text-2xl font-semibold text-foreground">Dashboard</h1>
+              <h1 className="font-serif text-xl sm:text-2xl font-semibold text-foreground">Dashboard</h1>
               <p className="text-sm text-muted-foreground">Visão geral da comunidade</p>
             </div>
           </div>
@@ -247,11 +247,11 @@ const DashboardLider = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="mb-6 flex gap-2"
+          className="mb-4 sm:mb-6 flex flex-col sm:flex-row gap-2"
         >
           <Select value={stateFilter} onValueChange={(v) => { setStateFilter(v); setCityFilter("all"); }}>
-            <SelectTrigger className="flex-1 rounded-xl">
-              <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
+            <SelectTrigger className="w-full sm:w-48 rounded-xl">
+              <MapPin className="h-4 w-4 mr-2 text-muted-foreground shrink-0" />
               <SelectValue placeholder="Estado" />
             </SelectTrigger>
             <SelectContent>
@@ -263,7 +263,7 @@ const DashboardLider = () => {
           </Select>
           
           <Select value={cityFilter} onValueChange={setCityFilter}>
-            <SelectTrigger className="flex-1 rounded-xl">
+            <SelectTrigger className="w-full sm:w-48 rounded-xl">
               <SelectValue placeholder="Cidade" />
             </SelectTrigger>
             <SelectContent>
@@ -280,52 +280,52 @@ const DashboardLider = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="mb-6 grid grid-cols-2 gap-3"
+          className="mb-4 sm:mb-6 grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3"
         >
-          <div className="rounded-2xl bg-card p-4 shadow-md">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                <Users className="h-5 w-5 text-primary" />
+          <div className="rounded-2xl bg-card p-3 sm:p-4 shadow-md">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+                <Users className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{totalMembers}</p>
-                <p className="text-xs text-muted-foreground">Membros</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="rounded-2xl bg-card p-4 shadow-md">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold/20">
-                <TrendingUp className="h-5 w-5 text-gold" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{activeThisMonth}</p>
-                <p className="text-xs text-muted-foreground">Ativos (30 dias)</p>
+              <div className="min-w-0">
+                <p className="text-lg sm:text-2xl font-bold text-foreground">{totalMembers}</p>
+                <p className="text-xs text-muted-foreground truncate">Membros</p>
               </div>
             </div>
           </div>
           
-          <div className="rounded-2xl bg-card p-4 shadow-md">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-                <Calendar className="h-5 w-5 text-primary" />
+          <div className="rounded-2xl bg-card p-3 sm:p-4 shadow-md">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-gold/20 shrink-0">
+                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-gold" />
               </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{totalAttendances}</p>
-                <p className="text-xs text-muted-foreground">Total Presenças</p>
+              <div className="min-w-0">
+                <p className="text-lg sm:text-2xl font-bold text-foreground">{activeThisMonth}</p>
+                <p className="text-xs text-muted-foreground truncate">Ativos (30d)</p>
               </div>
             </div>
           </div>
           
-          <div className="rounded-2xl bg-card p-4 shadow-md">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gold/20">
-                <Award className="h-5 w-5 text-gold" />
+          <div className="rounded-2xl bg-card p-3 sm:p-4 shadow-md">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+                <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{avgAttendance}</p>
-                <p className="text-xs text-muted-foreground">Média/Membro</p>
+              <div className="min-w-0">
+                <p className="text-lg sm:text-2xl font-bold text-foreground">{totalAttendances}</p>
+                <p className="text-xs text-muted-foreground truncate">Presenças</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="rounded-2xl bg-card p-3 sm:p-4 shadow-md">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-gold/20 shrink-0">
+                <Award className="h-4 w-4 sm:h-5 sm:w-5 text-gold" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-lg sm:text-2xl font-bold text-foreground">{avgAttendance}</p>
+                <p className="text-xs text-muted-foreground truncate">Média</p>
               </div>
             </div>
           </div>
@@ -333,9 +333,9 @@ const DashboardLider = () => {
 
         <Tabs defaultValue="attendance" className="w-full">
           <TabsList className="grid w-full grid-cols-3 mb-4">
-            <TabsTrigger value="attendance">Presença</TabsTrigger>
-            <TabsTrigger value="engagement">Engajamento</TabsTrigger>
-            <TabsTrigger value="growth">Crescimento</TabsTrigger>
+            <TabsTrigger value="attendance" className="text-xs sm:text-sm">Presença</TabsTrigger>
+            <TabsTrigger value="engagement" className="text-xs sm:text-sm">Engajamento</TabsTrigger>
+            <TabsTrigger value="growth" className="text-xs sm:text-sm">Crescimento</TabsTrigger>
           </TabsList>
 
           {/* Attendance Tab */}

@@ -142,16 +142,16 @@ const Perfil = () => {
       
       <AppHeader userName={userName.split(" ")[0]} />
 
-      <main className="relative z-10 px-4 py-6">
+      <main className="relative z-10 px-3 sm:px-4 py-4 sm:py-6 max-w-2xl mx-auto">
         {/* Perfil Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 overflow-hidden rounded-3xl bg-card shadow-lg"
+          className="mb-4 sm:mb-6 overflow-hidden rounded-2xl sm:rounded-3xl bg-card shadow-lg"
         >
-          <div className="relative h-28 gradient-hope">
+          <div className="relative h-24 sm:h-28 gradient-hope">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.15),transparent_70%)]" />
-            <div className="absolute -bottom-12 left-1/2 -translate-x-1/2">
+            <div className="absolute -bottom-10 sm:-bottom-12 left-1/2 -translate-x-1/2">
               <motion.div
                 initial={{ scale: 0.8 }}
                 animate={{ scale: 1 }}
@@ -171,23 +171,23 @@ const Perfil = () => {
             </div>
           </div>
 
-          <div className="px-6 pb-6 pt-16 text-center">
+          <div className="px-4 sm:px-6 pb-4 sm:pb-6 pt-14 sm:pt-16 text-center">
             <div className="flex items-center justify-center gap-2">
-              <h2 className="font-serif text-xl font-semibold text-foreground">{userName}</h2>
+              <h2 className="font-serif text-lg sm:text-xl font-semibold text-foreground truncate max-w-[200px] sm:max-w-none">{userName}</h2>
               <button
                 onClick={() => setIsEditDialogOpen(true)}
-                className="text-muted-foreground hover:text-primary transition-colors"
+                className="text-muted-foreground hover:text-primary transition-colors shrink-0"
               >
                 <Edit className="h-4 w-4" />
               </button>
             </div>
-            <div className="mt-1 flex items-center justify-center gap-1 text-sm text-muted-foreground">
-              <Mail className="h-4 w-4" />
-              <span>{userEmail}</span>
+            <div className="mt-1 flex items-center justify-center gap-1 text-xs sm:text-sm text-muted-foreground">
+              <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+              <span className="truncate max-w-[200px] sm:max-w-none">{userEmail}</span>
             </div>
-            <div className="mt-4 flex justify-center">
-              <Badge className={`${getRoleBadgeClass()} px-4 py-1.5`}>
-                <Shield className="mr-1.5 h-3.5 w-3.5" />
+            <div className="mt-3 sm:mt-4 flex justify-center">
+              <Badge className={`${getRoleBadgeClass()} px-3 sm:px-4 py-1 sm:py-1.5`}>
+                <Shield className="mr-1 sm:mr-1.5 h-3 w-3 sm:h-3.5 sm:w-3.5" />
                 {getRoleLabel()}
               </Badge>
             </div>
@@ -199,36 +199,36 @@ const Perfil = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="mb-6 grid grid-cols-3 gap-3"
+          className="mb-4 sm:mb-6 grid grid-cols-3 gap-2 sm:gap-3"
         >
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => navigate("/presenca")}
-            className="rounded-2xl bg-card p-4 text-center shadow-md"
+            className="rounded-xl sm:rounded-2xl bg-card p-3 sm:p-4 text-center shadow-md"
           >
-            <Calendar className="mx-auto mb-1 h-5 w-5 text-primary" />
-            <p className="font-serif text-2xl font-bold text-foreground">{stats.presencas}</p>
+            <Calendar className="mx-auto mb-1 h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            <p className="font-serif text-xl sm:text-2xl font-bold text-foreground">{stats.presencas}</p>
             <p className="text-xs text-muted-foreground">Presenças</p>
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => navigate("/estudos")}
-            className="rounded-2xl bg-card p-4 text-center shadow-md"
+            className="rounded-xl sm:rounded-2xl bg-card p-3 sm:p-4 text-center shadow-md"
           >
-            <BookOpen className="mx-auto mb-1 h-5 w-5 text-primary" />
-            <p className="font-serif text-2xl font-bold text-foreground">{stats.estudos}</p>
+            <BookOpen className="mx-auto mb-1 h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+            <p className="font-serif text-xl sm:text-2xl font-bold text-foreground">{stats.estudos}</p>
             <p className="text-xs text-muted-foreground">Estudos</p>
           </motion.button>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => navigate("/conquistas")}
-            className="rounded-2xl bg-card p-4 text-center shadow-md"
+            className="rounded-xl sm:rounded-2xl bg-card p-3 sm:p-4 text-center shadow-md"
           >
-            <Award className="mx-auto mb-1 h-5 w-5 text-gold" />
-            <p className="font-serif text-2xl font-bold text-foreground">{stats.conquistas}</p>
+            <Award className="mx-auto mb-1 h-4 w-4 sm:h-5 sm:w-5 text-gold" />
+            <p className="font-serif text-xl sm:text-2xl font-bold text-foreground">{stats.conquistas}</p>
             <p className="text-xs text-muted-foreground">Conquistas</p>
           </motion.button>
         </motion.div>
