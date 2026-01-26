@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -5,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import NotificationPermissionBanner from "@/components/NotificationPermissionBanner";
 import PresenceTracker from "@/components/PresenceTracker";
+import { useNativePushNotifications } from "@/hooks/useNativePushNotifications";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
@@ -37,6 +39,12 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Component to initialize native push notifications
+const NativePushInitializer = () => {
+  useNativePushNotifications();
+  return null;
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -44,6 +52,7 @@ const App = () => (
       <Sonner />
       <NotificationPermissionBanner />
       <PresenceTracker />
+      <NativePushInitializer />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
