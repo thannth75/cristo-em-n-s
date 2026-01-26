@@ -7,6 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import OnlineStatusBadge from "@/components/comunidade/OnlineStatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -17,6 +18,7 @@ interface Profile {
   user_id: string;
   full_name: string;
   avatar_url: string | null;
+  last_seen?: string | null;
 }
 
 interface Message {
@@ -32,6 +34,7 @@ interface Conversation {
   partnerId: string;
   partnerName: string;
   partnerAvatar: string | null;
+  partnerLastSeen: string | null;
   lastMessage: string;
   lastMessageAt: string;
   unreadCount: number;
@@ -133,6 +136,7 @@ const Mensagens = () => {
           partnerId,
           partnerName: "",
           partnerAvatar: null,
+          partnerLastSeen: null,
           lastMessage: msg.content,
           lastMessageAt: msg.created_at,
           unreadCount: 0,
@@ -149,7 +153,7 @@ const Mensagens = () => {
     if (profileIds.size > 0) {
       const { data: profilesData } = await supabase
         .from("profiles")
-        .select("user_id, full_name, avatar_url")
+        .select("user_id, full_name, avatar_url, last_seen")
         .in("user_id", Array.from(profileIds));
 
       if (profilesData) {
@@ -159,12 +163,12 @@ const Mensagens = () => {
         }
         setProfiles(profileMap);
 
-        // Update conversation names
         conversationMap.forEach((conv, partnerId) => {
           const partnerProfile = profileMap[partnerId];
           if (partnerProfile) {
             conv.partnerName = partnerProfile.full_name;
             conv.partnerAvatar = partnerProfile.avatar_url;
+            conv.partnerLastSeen = partnerProfile.last_seen || null;
           }
         });
       }
@@ -177,7 +181,7 @@ const Mensagens = () => {
   const fetchAllProfiles = async () => {
     const { data } = await supabase
       .from("profiles")
-      .select("user_id, full_name, avatar_url")
+      .select("user_id, full_name, avatar_url, last_seen")
       .eq("is_approved", true)
       .neq("user_id", user?.id);
 
@@ -304,6 +308,10 @@ const Mensagens = () => {
                 <h2 className="font-semibold text-foreground truncate">
                   {selectedPartnerProfile?.full_name || "Usuário"}
                 </h2>
+                <OnlineStatusBadge 
+                  lastSeen={selectedPartnerProfile?.last_seen || null} 
+                  showText 
+                />
               </div>
             </div>
 
@@ -485,6 +493,10 @@ const Mensagens = () => {
                             {getInitials(conv.partnerName)}
                           </AvatarFallback>
                         </Avatar>
+                        {/* Online indicator on avatar */}
+                        <div className="absolute -bottom-0.5 -right-0.5">
+                          <OnlineStatusBadge lastSeen={conv.partnerLastSeen} />
+                        </div>
                         {conv.unreadCount > 0 && (
                           <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">
                             {conv.unreadCount}

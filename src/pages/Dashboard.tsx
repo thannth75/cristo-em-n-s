@@ -26,6 +26,7 @@ import BottomNavigation from "@/components/BottomNavigation";
 import VerseCard from "@/components/VerseCard";
 import FeatureCard from "@/components/FeatureCard";
 import GlowOrb from "@/components/GlowOrb";
+import BirthdaysCard from "@/components/comunidade/BirthdaysCard";
 import { Progress } from "@/components/ui/progress";
 
 const dailyVerses = [
@@ -231,7 +232,8 @@ const Dashboard = () => {
             </motion.div>
           )}
 
-          {/* Funcionalidades */}
+          {/* Aniversariantes do Mês */}
+          <BirthdaysCard />
           <div>
             <h2 className="mb-4 font-serif text-lg font-semibold text-foreground">
               Minha Jornada

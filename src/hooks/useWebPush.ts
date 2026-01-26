@@ -2,9 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "./use-toast";
 
-// VAPID public key from environment
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-
 interface WebPushState {
   isSupported: boolean;
   permission: NotificationPermission | "unsupported";
@@ -30,12 +27,28 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 
 export function useWebPush(userId: string | undefined) {
   const { toast } = useToast();
+  const [vapidKey, setVapidKey] = useState<string | null>(null);
   const [state, setState] = useState<WebPushState>({
     isSupported: false,
     permission: "unsupported",
     isSubscribed: false,
     isLoading: true,
   });
+
+  // Fetch VAPID key from edge function
+  const fetchVapidKey = useCallback(async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("get-vapid-key");
+      if (error) throw error;
+      if (data?.publicKey) {
+        setVapidKey(data.publicKey);
+        return data.publicKey;
+      }
+    } catch (error) {
+      console.error("[WebPush] Failed to fetch VAPID key:", error);
+    }
+    return null;
+  }, []);
 
   // Check if web push is supported
   const checkSupport = useCallback(() => {
@@ -71,7 +84,7 @@ export function useWebPush(userId: string | undefined) {
       const registration = await navigator.serviceWorker.register("/sw-push.js", {
         scope: "/",
       });
-      console.log("[WebPush] Service worker registered:", registration);
+      console.log("[WebPush] Service worker registered:", registration.scope);
       return registration;
     } catch (error) {
       console.error("[WebPush] Service worker registration failed:", error);
@@ -101,14 +114,28 @@ export function useWebPush(userId: string | undefined) {
 
   // Subscribe to push notifications
   const subscribe = useCallback(async () => {
-    if (!userId || !VAPID_PUBLIC_KEY) {
-      console.error("[WebPush] Missing userId or VAPID key");
+    if (!userId) {
+      console.error("[WebPush] Missing userId");
       toast({
-        title: "Erro de configuração",
-        description: "Push notifications não estão configuradas corretamente.",
+        title: "Erro",
+        description: "Faça login para ativar notificações.",
         variant: "destructive",
       });
       return false;
+    }
+
+    // Get VAPID key if not already fetched
+    let publicKey = vapidKey;
+    if (!publicKey) {
+      publicKey = await fetchVapidKey();
+      if (!publicKey) {
+        toast({
+          title: "Erro de configuração",
+          description: "Push notifications não estão configuradas.",
+          variant: "destructive",
+        });
+        return false;
+      }
     }
 
     setState((prev) => ({ ...prev, isLoading: true }));
@@ -138,13 +165,13 @@ export function useWebPush(userId: string | undefined) {
       await navigator.serviceWorker.ready;
 
       // Subscribe to push
-      const applicationServerKey = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+      const applicationServerKey = urlBase64ToUint8Array(publicKey);
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: applicationServerKey as BufferSource,
       });
 
-      console.log("[WebPush] Subscription created:", subscription);
+      console.log("[WebPush] Subscription created:", subscription.endpoint);
 
       // Extract keys from subscription
       const subscriptionJson = subscription.toJSON();
@@ -179,11 +206,6 @@ export function useWebPush(userId: string | undefined) {
         isLoading: false,
       }));
 
-      toast({
-        title: "Notificações ativadas! 🔔",
-        description: "Você receberá alertas mesmo com o app fechado.",
-      });
-
       return true;
     } catch (error) {
       console.error("[WebPush] Subscription error:", error);
@@ -195,7 +217,7 @@ export function useWebPush(userId: string | undefined) {
       });
       return false;
     }
-  }, [userId, toast, registerServiceWorker]);
+  }, [userId, vapidKey, toast, registerServiceWorker, fetchVapidKey]);
 
   // Unsubscribe from push notifications
   const unsubscribe = useCallback(async () => {
@@ -243,13 +265,14 @@ export function useWebPush(userId: string | undefined) {
     const init = async () => {
       if (!checkSupport()) return;
 
+      await fetchVapidKey();
       await registerServiceWorker();
       await checkSubscription();
       setState((prev) => ({ ...prev, isLoading: false }));
     };
 
     init();
-  }, [checkSupport, registerServiceWorker, checkSubscription]);
+  }, [checkSupport, registerServiceWorker, checkSubscription, fetchVapidKey]);
 
   return {
     ...state,
