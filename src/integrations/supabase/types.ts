@@ -439,6 +439,7 @@ export type Database = {
           reposts_count: number | null
           updated_at: string
           user_id: string
+          video_url: string | null
         }
         Insert: {
           comments_count?: number | null
@@ -451,6 +452,7 @@ export type Database = {
           reposts_count?: number | null
           updated_at?: string
           user_id: string
+          video_url?: string | null
         }
         Update: {
           comments_count?: number | null
@@ -463,6 +465,7 @@ export type Database = {
           reposts_count?: number | null
           updated_at?: string
           user_id?: string
+          video_url?: string | null
         }
         Relationships: []
       }
@@ -1649,6 +1652,35 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_stories: {
+        Row: {
+          id: string
+          saved_at: string
+          story_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          saved_at?: string
+          story_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          saved_at?: string
+          story_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_stories_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "user_stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scale_musicians: {
         Row: {
           confirmed: boolean | null
@@ -1768,6 +1800,67 @@ export type Database = {
           youtube_url?: string | null
         }
         Relationships: []
+      }
+      story_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          story_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          story_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          story_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_comments_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "user_stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      story_likes: {
+        Row: {
+          created_at: string
+          id: string
+          story_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          story_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          story_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "story_likes_story_id_fkey"
+            columns: ["story_id"]
+            isOneToOne: false
+            referencedRelation: "user_stories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       story_views: {
         Row: {
@@ -2061,34 +2154,49 @@ export type Database = {
       }
       user_stories: {
         Row: {
+          audio_title: string | null
+          audio_url: string | null
           background_color: string | null
+          comments_count: number | null
           content: string | null
           created_at: string
           expires_at: string
           id: string
           image_url: string | null
+          likes_count: number | null
+          tagged_users: string[] | null
           text_color: string | null
           user_id: string
           views_count: number | null
         }
         Insert: {
+          audio_title?: string | null
+          audio_url?: string | null
           background_color?: string | null
+          comments_count?: number | null
           content?: string | null
           created_at?: string
           expires_at: string
           id?: string
           image_url?: string | null
+          likes_count?: number | null
+          tagged_users?: string[] | null
           text_color?: string | null
           user_id: string
           views_count?: number | null
         }
         Update: {
+          audio_title?: string | null
+          audio_url?: string | null
           background_color?: string | null
+          comments_count?: number | null
           content?: string | null
           created_at?: string
           expires_at?: string
           id?: string
           image_url?: string | null
+          likes_count?: number | null
+          tagged_users?: string[] | null
           text_color?: string | null
           user_id?: string
           views_count?: number | null
