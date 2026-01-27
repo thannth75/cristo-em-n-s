@@ -1,17 +1,14 @@
-import { useEffect, useState, useRef, ChangeEvent } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { 
   Users, 
   Heart, 
   Send, 
   Plus, 
-  Image as ImageIcon,
   MessageSquare,
   ChevronLeft,
-  X,
   Loader2,
-  Repeat2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -19,24 +16,20 @@ import { useToast } from "@/hooks/use-toast";
 import { useXpAward } from "@/hooks/useXpAward";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import PostComments from "@/components/comunidade/PostComments";
-import { StoryCircle, StoryViewer } from "@/components/comunidade/StoryCircle";
-import { CreateStoryDialog } from "@/components/comunidade/CreateStoryDialog";
+import { StoryCircle } from "@/components/comunidade/StoryCircle";
+import { EnhancedStoryViewer } from "@/components/comunidade/EnhancedStoryViewer";
+import { EnhancedCreateStoryDialog } from "@/components/comunidade/EnhancedCreateStoryDialog";
+import { EnhancedCreatePostDialog } from "@/components/comunidade/EnhancedCreatePostDialog";
+import { VideoPost } from "@/components/comunidade/VideoPost";
 import { GroupList, GroupChat } from "@/components/comunidade/GroupList";
 import { RepostButton } from "@/components/comunidade/RepostButton";
-import { MentionInput, renderMentions } from "@/components/comunidade/MentionInput";
+import { renderMentions } from "@/components/comunidade/MentionInput";
 import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
-import { communityPostSchema, chatMessageSchema, privateMessageSchema, validateInput } from "@/lib/validation";
+import { chatMessageSchema, privateMessageSchema, validateInput } from "@/lib/validation";
 import { AdFeed, shouldShowAdAtIndex } from "@/components/ads/AdBanner";
 
 interface Post {
@@ -44,6 +37,7 @@ interface Post {
   user_id: string;
   content: string;
   image_url: string | null;
+  video_url?: string | null;
   likes_count: number;
   comments_count: number;
   reposts_count: number;
@@ -63,6 +57,11 @@ interface Story {
   expires_at: string;
   created_at: string;
   views_count: number;
+  likes_count?: number;
+  comments_count?: number;
+  audio_url?: string | null;
+  audio_title?: string | null;
+  tagged_users?: string[];
   profile?: { full_name: string; avatar_url: string | null };
 }
 
@@ -121,11 +120,6 @@ const Comunidade = () => {
   const [storyInitialIndex, setStoryInitialIndex] = useState(0);
   
   // Posts
-  const [newPostContent, setNewPostContent] = useState("");
-  const [postMentions, setPostMentions] = useState<string[]>([]);
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
   const [isPostDialogOpen, setIsPostDialogOpen] = useState(false);
   
   // Chat
@@ -140,7 +134,7 @@ const Comunidade = () => {
   // Groups
   const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
   
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  
 
   useEffect(() => {
     if (!authLoading) {
@@ -328,90 +322,6 @@ const Comunidade = () => {
     }, 100);
   };
 
-  const handleImageSelect = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast({ title: "Imagem muito grande", description: "O tamanho máximo é 5MB.", variant: "destructive" });
-        return;
-      }
-      setSelectedImage(file);
-      setImagePreview(URL.createObjectURL(file));
-    }
-  };
-
-  const removeSelectedImage = () => {
-    setSelectedImage(null);
-    setImagePreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  const uploadImage = async (file: File): Promise<string | null> => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${user?.id}-${Date.now()}.${fileExt}`;
-    const filePath = `${user?.id}/${fileName}`;
-
-    const { error } = await supabase.storage.from("posts").upload(filePath, file);
-    if (error) return null;
-
-    const { data: urlData } = supabase.storage.from("posts").getPublicUrl(filePath);
-    return urlData.publicUrl;
-  };
-
-  const handleCreatePost = async () => {
-    const cleanContent = newPostContent.replace(/@\[[^\]]+\]\([^)]+\)/g, (match) => {
-      const nameMatch = match.match(/@\[([^\]]+)\]/);
-      return nameMatch ? `@${nameMatch[1]}` : match;
-    });
-
-    const validation = validateInput(communityPostSchema, { content: cleanContent });
-    if (!validation.success) {
-      toast({ title: "Erro de validação", description: validation.error, variant: "destructive" });
-      return;
-    }
-
-    setIsUploading(true);
-    let imageUrl: string | null = null;
-
-    if (selectedImage) {
-      imageUrl = await uploadImage(selectedImage);
-      if (!imageUrl) {
-        toast({ title: "Erro no upload", description: "Não foi possível enviar a imagem.", variant: "destructive" });
-        setIsUploading(false);
-        return;
-      }
-    }
-
-    const { data: insertedData, error } = await supabase.from("community_posts").insert({
-      user_id: user?.id,
-      content: cleanContent,
-      image_url: imageUrl,
-    }).select().single();
-
-    setIsUploading(false);
-
-    if (error) {
-      toast({ title: "Erro", description: "Não foi possível criar o post.", variant: "destructive" });
-    } else {
-      // Save mentions
-      if (postMentions.length > 0 && insertedData) {
-        await supabase.from("post_mentions").insert(
-          postMentions.map(userId => ({
-            post_id: insertedData.id,
-            mentioned_user_id: userId,
-          }))
-        );
-      }
-
-      await awardXp("community_post", insertedData?.id, "Post na comunidade");
-      toast({ title: "Post criado! 🎉" });
-      setNewPostContent("");
-      setPostMentions([]);
-      removeSelectedImage();
-      setIsPostDialogOpen(false);
-      fetchPosts();
-    }
-  };
 
   const handleLikePost = async (postId: string, currentlyLiked: boolean) => {
     if (currentlyLiked) {
@@ -611,6 +521,12 @@ const Comunidade = () => {
                       </div>
                     )}
                     
+                    {post.video_url && (
+                      <div className="mb-3 -mx-4 sm:mx-0">
+                        <VideoPost videoUrl={post.video_url} />
+                      </div>
+                    )}
+                    
                     <div className="flex items-center gap-4 pt-2 border-t border-border">
                       <button
                         onClick={() => handleLikePost(post.id, post.user_liked || false)}
@@ -746,71 +662,17 @@ const Comunidade = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Dialog para criar post com menções */}
-        <Dialog open={isPostDialogOpen} onOpenChange={setIsPostDialogOpen}>
-          <DialogContent className="mx-4 max-w-md rounded-2xl max-h-[85vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="font-serif">Novo Post</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <MentionInput
-                value={newPostContent}
-                onChange={(value, mentions) => {
-                  setNewPostContent(value);
-                  setPostMentions(mentions);
-                }}
-                placeholder="O que você quer compartilhar? Use @ para mencionar alguém"
-              />
-              
-              <AnimatePresence>
-                {imagePreview && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="relative rounded-xl overflow-hidden"
-                  >
-                    <img src={imagePreview} alt="Preview" className="w-full max-h-48 object-cover rounded-xl" />
-                    <button
-                      onClick={removeSelectedImage}
-                      className="absolute top-2 right-2 p-1 rounded-full bg-black/60 text-white hover:bg-black/80"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-              
-              <div className="flex gap-2">
-                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageSelect} className="hidden" />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="rounded-xl gap-2 flex-1"
-                  disabled={isUploading}
-                >
-                  <ImageIcon className="h-4 w-4" />
-                  {selectedImage ? "Trocar foto" : "Adicionar foto"}
-                </Button>
-              </div>
-              
-              <Button onClick={handleCreatePost} className="w-full rounded-xl" disabled={isUploading || !newPostContent.trim()}>
-                {isUploading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Publicando...
-                  </>
-                ) : (
-                  "Publicar"
-                )}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+        {/* Dialog para criar post */}
+        <EnhancedCreatePostDialog
+          open={isPostDialogOpen}
+          onOpenChange={setIsPostDialogOpen}
+          userId={user?.id || ""}
+          onSuccess={fetchPosts}
+          onXpAward={awardXp}
+        />
 
         {/* Create Story Dialog */}
-        <CreateStoryDialog
+        <EnhancedCreateStoryDialog
           open={createStoryOpen}
           onOpenChange={setCreateStoryOpen}
           userId={user?.id || ""}
@@ -819,11 +681,12 @@ const Comunidade = () => {
 
         {/* Story Viewer */}
         {viewingStories && (
-          <StoryViewer
+          <EnhancedStoryViewer
             stories={viewingStories}
             initialIndex={storyInitialIndex}
             onClose={() => setViewingStories(null)}
             onMarkViewed={handleMarkStoryViewed}
+            userId={user?.id || ""}
           />
         )}
 
