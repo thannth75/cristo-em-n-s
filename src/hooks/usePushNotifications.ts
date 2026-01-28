@@ -38,36 +38,60 @@ export function usePushNotifications() {
     isLoading: false,
   });
 
+  // Check if notifications are supported
+  const checkSupport = useCallback(() => {
+    const isSupported = 
+      typeof window !== 'undefined' &&
+      'Notification' in window && 
+      'serviceWorker' in navigator && 
+      'PushManager' in window;
+    
+    return isSupported;
+  }, []);
+
   // Register service worker for push notifications
-  const registerServiceWorker = useCallback(async () => {
-    if (!("serviceWorker" in navigator)) return null;
+  const registerServiceWorker = useCallback(async (): Promise<ServiceWorkerRegistration | null> => {
+    if (!('serviceWorker' in navigator)) {
+      console.warn('[PushNotifications] Service workers not supported');
+      return null;
+    }
 
     try {
-      const registration = await navigator.serviceWorker.register("/sw-push.js", {
-        scope: "/",
+      // Check if already registered
+      const existingReg = await navigator.serviceWorker.getRegistration('/');
+      if (existingReg) {
+        console.log('[PushNotifications] Using existing service worker');
+        await navigator.serviceWorker.ready;
+        return existingReg;
+      }
+
+      // Register new service worker
+      const registration = await navigator.serviceWorker.register('/sw-push.js', {
+        scope: '/',
       });
-      console.log("[PushNotifications] Service worker registered:", registration.scope);
+      
+      console.log('[PushNotifications] Service worker registered:', registration.scope);
       await navigator.serviceWorker.ready;
       return registration;
     } catch (error) {
-      console.warn("[PushNotifications] SW registration error:", error);
+      console.error('[PushNotifications] SW registration error:', error);
       return null;
     }
   }, []);
 
+  // Initialize on mount
   useEffect(() => {
-    // Check if notifications are supported
-    const isSupported = "Notification" in window && "serviceWorker" in navigator && "PushManager" in window;
+    const isSupported = checkSupport();
     
     if (isSupported) {
       setState((prev) => ({
         ...prev,
         isSupported: true,
         permission: Notification.permission,
-        isEnabled: Notification.permission === "granted",
+        isEnabled: Notification.permission === 'granted',
       }));
 
-      // Register service worker
+      // Register service worker in background
       registerServiceWorker().then((registration) => {
         if (registration) {
           setState((prev) => ({ ...prev, swRegistration: registration }));
@@ -77,10 +101,10 @@ export function usePushNotifications() {
       setState(prev => ({
         ...prev,
         isSupported: false,
-        permission: "unsupported",
+        permission: 'unsupported',
       }));
     }
-  }, [registerServiceWorker]);
+  }, [checkSupport, registerServiceWorker]);
 
   const requestPermission = useCallback(async () => {
     if (!state.isSupported) {

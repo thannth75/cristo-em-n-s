@@ -89,12 +89,20 @@ const Auth = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-background overflow-hidden">
+    <div 
+      className="relative min-h-screen bg-background overflow-hidden"
+      style={{
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        paddingLeft: 'env(safe-area-inset-left, 0px)',
+        paddingRight: 'env(safe-area-inset-right, 0px)',
+      }}
+    >
       <ParticlesBackground />
       
       {/* Hero com Logo destacada - Fundo Pastel */}
       <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-[hsl(120,30%,85%)] via-[hsl(120,25%,90%)] to-background" />
+        <div className="absolute inset-0 bg-gradient-to-b from-primary/10 via-primary/5 to-background" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.6),transparent_70%)]" />
         
         <motion.div
@@ -113,7 +121,7 @@ const Auth = () => {
             <motion.img
               src={logo}
               alt="Vida em Cristo"
-              className="relative h-[390px] w-auto drop-shadow-xl"
+              className="relative h-[280px] sm:h-[390px] w-auto drop-shadow-xl"
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             />
@@ -137,7 +145,7 @@ const Auth = () => {
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        className="relative z-10 mx-4 -mt-2 rounded-3xl bg-card/95 backdrop-blur-xl p-6 shadow-2xl border border-border/50"
+        className="relative z-10 mx-4 -mt-2 rounded-3xl bg-card/95 backdrop-blur-xl p-4 sm:p-6 shadow-2xl border border-border/50 max-w-md sm:mx-auto"
       >
         {/* Tabs */}
         <div className="mb-6 flex rounded-2xl bg-muted/50 p-1">

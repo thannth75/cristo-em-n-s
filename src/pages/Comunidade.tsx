@@ -496,11 +496,11 @@ const Comunidade = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24 sm:pb-28">
+    <div className="min-h-screen bg-background" style={{ paddingBottom: 'calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))' }}>
       <AppHeader userName={userName} />
 
       <main className="py-4 sm:py-6">
-        <ResponsiveContainer>
+        <ResponsiveContainer size="lg">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

@@ -143,11 +143,11 @@ export default function Provas() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24 sm:pb-28">
+    <div className="min-h-screen bg-background" style={{ paddingBottom: 'calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))' }}>
       <PageHeader title="Provas e Avaliações" showBack />
 
       <main className="py-4 sm:py-6">
-        <ResponsiveContainer className="space-y-4 sm:space-y-6">
+        <ResponsiveContainer size="lg" className="space-y-4 sm:space-y-6">
           {/* Banner de anúncio sutil no topo */}
           <AdBanner position="inline" />
 

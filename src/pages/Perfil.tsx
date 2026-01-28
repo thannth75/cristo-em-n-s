@@ -137,12 +137,15 @@ const Perfil = () => {
   ];
 
   return (
-    <div className="relative min-h-screen bg-background pb-20 sm:pb-24 overflow-hidden">
+    <div 
+      className="relative min-h-screen bg-background overflow-hidden"
+      style={{ paddingBottom: 'calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))' }}
+    >
       <GlowOrb className="absolute -top-24 sm:-top-32 -right-24 sm:-right-32 h-56 sm:h-80 w-56 sm:w-80 opacity-20" />
       
       <AppHeader userName={userName.split(" ")[0]} />
 
-      <main className="relative z-10 px-3 sm:px-4 py-3 sm:py-6 max-w-2xl mx-auto">
+      <main className="relative z-10 px-4 py-3 sm:py-6 max-w-2xl mx-auto" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left, 16px))', paddingRight: 'max(1rem, env(safe-area-inset-right, 16px))' }}>
         {/* Perfil Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

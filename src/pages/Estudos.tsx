@@ -175,10 +175,10 @@ const Estudos = () => {
   const activeProgress = activeStudy ? getStudyProgress(activeStudy.id, activeStudy.chapters) : null;
 
   return (
-    <div className="min-h-screen bg-background pb-20 sm:pb-24">
+    <div className="min-h-screen bg-background" style={{ paddingBottom: 'calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))' }}>
       <AppHeader userName={userName} />
 
-      <main className="px-3 sm:px-4 py-4 sm:py-6">
+      <main className="px-4 py-4 sm:py-6 max-w-4xl mx-auto" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left, 16px))', paddingRight: 'max(1rem, env(safe-area-inset-right, 16px))' }}>
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

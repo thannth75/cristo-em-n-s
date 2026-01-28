@@ -9,6 +9,7 @@ interface PageWrapperProps {
   userName?: string;
   showGlowOrb?: boolean;
   className?: string;
+  noPadding?: boolean;
 }
 
 /**
@@ -23,9 +24,10 @@ const PageWrapper = ({
   userName = "Jovem",
   showGlowOrb = false,
   className,
+  noPadding = false,
 }: PageWrapperProps) => {
   return (
-    <div className="relative min-h-screen bg-background overflow-hidden">
+    <div className="relative min-h-screen bg-background overflow-x-hidden">
       {showGlowOrb && (
         <GlowOrb className="absolute -top-20 -right-20 h-64 w-64 opacity-30" />
       )}
@@ -35,8 +37,11 @@ const PageWrapper = ({
       <main
         className={cn(
           "relative z-10",
-          "pb-20 sm:pb-24", // Bottom padding for navigation
-          "min-h-[calc(100vh-4rem)]", // Minimum height accounting for header
+          // Bottom padding accounts for navigation + safe area
+          "pb-[calc(5rem+max(1rem,env(safe-area-inset-bottom,16px)))]",
+          // Minimum height accounting for header
+          "min-h-[calc(100vh-4rem)]",
+          !noPadding && "pt-2",
           className
         )}
       >
