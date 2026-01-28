@@ -2,13 +2,14 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   X, Eye, ChevronLeft, ChevronRight, Heart, MessageCircle, 
-  Bookmark, Send, Loader2, Pause, Play, Volume2, VolumeX 
+  Bookmark, Send, Loader2, Pause, Volume2, VolumeX 
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { StoryViewersDialog } from './StoryViewersDialog';
 
 interface Story {
   id: string;
@@ -41,6 +42,7 @@ interface EnhancedStoryViewerProps {
   onClose: () => void;
   onMarkViewed: (storyId: string) => void;
   userId: string;
+  isOwnStory?: boolean;
 }
 
 export const EnhancedStoryViewer = ({
@@ -49,6 +51,7 @@ export const EnhancedStoryViewer = ({
   onClose,
   onMarkViewed,
   userId,
+  isOwnStory = false,
 }: EnhancedStoryViewerProps) => {
   const { toast } = useToast();
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
@@ -57,10 +60,12 @@ export const EnhancedStoryViewer = ({
   const [isLiked, setIsLiked] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [showViewers, setShowViewers] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
+  const [currentLikesCount, setCurrentLikesCount] = useState(0);
   
   const progressInterval = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -73,11 +78,12 @@ export const EnhancedStoryViewer = ({
     if (!story) return;
     checkLikeStatus();
     checkSaveStatus();
+    setCurrentLikesCount(story.likes_count || 0);
   }, [currentIndex, story?.id]);
 
   // Progress timer
   useEffect(() => {
-    if (isPaused || showComments) return;
+    if (isPaused || showComments || showViewers) return;
     
     const STORY_DURATION = 7000; // 7 seconds
     const INTERVAL = 50;
@@ -96,7 +102,7 @@ export const EnhancedStoryViewer = ({
     return () => {
       if (progressInterval.current) clearInterval(progressInterval.current);
     };
-  }, [currentIndex, isPaused, showComments]);
+  }, [currentIndex, isPaused, showComments, showViewers]);
 
   // Audio management
   useEffect(() => {
@@ -151,8 +157,10 @@ export const EnhancedStoryViewer = ({
     if (isLiked) {
       await supabase.from('story_likes').delete()
         .eq('story_id', story.id).eq('user_id', userId);
+      setCurrentLikesCount(prev => Math.max(0, prev - 1));
     } else {
       await supabase.from('story_likes').insert({ story_id: story.id, user_id: userId });
+      setCurrentLikesCount(prev => prev + 1);
     }
     setIsLiked(!isLiked);
   };
@@ -217,6 +225,13 @@ export const EnhancedStoryViewer = ({
     setIsSending(false);
   };
 
+  const handleViewersClick = () => {
+    if (isOwnStory || story.user_id === userId) {
+      setIsPaused(true);
+      setShowViewers(true);
+    }
+  };
+
   // Touch/Click handlers for pause
   const handlePressStart = () => {
     holdTimeout.current = setTimeout(() => {
@@ -228,7 +243,9 @@ export const EnhancedStoryViewer = ({
     if (holdTimeout.current) {
       clearTimeout(holdTimeout.current);
     }
-    setIsPaused(false);
+    if (!showComments && !showViewers) {
+      setIsPaused(false);
+    }
   };
 
   if (!story) return null;
@@ -249,7 +266,7 @@ export const EnhancedStoryViewer = ({
       {story.audio_url && <audio ref={audioRef} loop />}
       
       {/* Progress bars */}
-      <div className="absolute top-4 left-4 right-4 flex gap-1 z-20">
+      <div className="absolute top-4 left-4 right-4 flex gap-1 z-20 safe-area-inset-top">
         {stories.map((_, idx) => (
           <div key={idx} className="flex-1 h-1 rounded-full bg-white/30 overflow-hidden">
             <div
@@ -263,7 +280,7 @@ export const EnhancedStoryViewer = ({
       </div>
 
       {/* Header */}
-      <div className="absolute top-10 left-4 right-4 flex items-center justify-between z-20">
+      <div className="absolute top-10 left-4 right-4 flex items-center justify-between z-20 pt-safe">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
             <span className="text-white font-semibold">
@@ -271,23 +288,25 @@ export const EnhancedStoryViewer = ({
             </span>
           </div>
           <div>
-            <p className="text-white font-semibold">{story.profile?.full_name || 'Usuário'}</p>
-            <p className="text-white/60 text-xs flex items-center gap-1">
+            <p className="text-white font-semibold text-sm">{story.profile?.full_name || 'Usuário'}</p>
+            <button
+              onClick={(e) => { e.stopPropagation(); handleViewersClick(); }}
+              className="text-white/60 text-xs flex items-center gap-1 hover:text-white/80 transition-colors"
+            >
               <Eye className="w-3 h-3" />
-              {story.views_count}
+              {story.views_count} {(isOwnStory || story.user_id === userId) && '• Ver'}
               {story.audio_title && (
                 <span className="ml-2">🎵 {story.audio_title}</span>
               )}
-            </p>
+            </button>
           </div>
         </div>
         
         <div className="flex items-center gap-2">
           {/* Pause indicator */}
-          {isPaused && !showComments && (
+          {isPaused && !showComments && !showViewers && (
             <div className="flex items-center gap-1 text-white/80 text-sm">
               <Pause className="w-4 h-4" />
-              Pausado
             </div>
           )}
           
@@ -332,13 +351,13 @@ export const EnhancedStoryViewer = ({
       </div>
 
       {/* Bottom actions */}
-      <div className="absolute bottom-8 left-4 right-4 flex items-center justify-center gap-6 z-20">
+      <div className="absolute bottom-8 left-4 right-4 flex items-center justify-center gap-6 z-20 pb-safe">
         <button
           onClick={(e) => { e.stopPropagation(); handleLike(); }}
-          className={`flex flex-col items-center gap-1 ${isLiked ? 'text-red-500' : 'text-white'}`}
+          className={`flex flex-col items-center gap-1 ${isLiked ? 'text-destructive' : 'text-white'}`}
         >
           <Heart className={`w-7 h-7 ${isLiked ? 'fill-current' : ''}`} />
-          <span className="text-xs">{(story.likes_count || 0) + (isLiked ? 1 : 0)}</span>
+          <span className="text-xs">{currentLikesCount}</span>
         </button>
         
         <button
@@ -420,7 +439,7 @@ export const EnhancedStoryViewer = ({
               )}
             </div>
             
-            <div className="p-4 border-t border-border flex gap-2">
+            <div className="p-4 border-t border-border flex gap-2 pb-safe">
               <Input
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
@@ -439,6 +458,18 @@ export const EnhancedStoryViewer = ({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Viewers Dialog */}
+      <StoryViewersDialog
+        storyId={story.id}
+        open={showViewers}
+        onOpenChange={(open) => {
+          setShowViewers(open);
+          if (!open) setIsPaused(false);
+        }}
+        viewsCount={story.views_count}
+        likesCount={currentLikesCount}
+      />
     </motion.div>
   );
 };

@@ -24,10 +24,9 @@ const AppHeader = ({ userName = "Jovem", onMenuClick }: AppHeaderProps) => {
 
   return (
     <header 
-      className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-xl"
-      style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top))' }}
+      className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-xl pt-safe"
     >
-      <div className="flex items-center justify-between max-w-7xl mx-auto px-3 sm:px-4 py-2 sm:py-3">
+      <div className="flex items-center justify-between max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-2 sm:py-3">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           {/* Logo em destaque */}
           <motion.button

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, Send, X, Loader2 } from "lucide-react";
+import { MessageCircle, Send, Loader2, Heart, MoreVertical, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -12,13 +12,21 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Comment {
   id: string;
   content: string;
   user_id: string;
   created_at: string;
+  likes_count: number;
   profile?: { full_name: string; avatar_url: string | null };
+  user_liked?: boolean;
 }
 
 interface PostCommentsProps {
@@ -59,9 +67,19 @@ const PostComments = ({ postId, commentsCount, onCommentsChange }: PostCommentsP
         .select("user_id, full_name, avatar_url")
         .in("user_id", userIds);
 
+      // Check which comments user has liked
+      const { data: userLikes } = await supabase
+        .from("comment_reactions")
+        .select("comment_id")
+        .eq("user_id", user?.id)
+        .in("comment_id", commentsData.map(c => c.id));
+
+      const likedCommentIds = new Set(userLikes?.map(l => l.comment_id) || []);
+
       const commentsWithProfiles = commentsData.map(comment => ({
         ...comment,
         profile: profiles?.find(p => p.user_id === comment.user_id),
+        user_liked: likedCommentIds.has(comment.id),
       }));
 
       setComments(commentsWithProfiles);
@@ -103,6 +121,36 @@ const PostComments = ({ postId, commentsCount, onCommentsChange }: PostCommentsP
     }
 
     setIsSending(false);
+  };
+
+  const handleLikeComment = async (commentId: string, isLiked: boolean) => {
+    if (!user) return;
+
+    if (isLiked) {
+      await supabase
+        .from("comment_reactions")
+        .delete()
+        .eq("comment_id", commentId)
+        .eq("user_id", user.id);
+    } else {
+      await supabase.from("comment_reactions").insert({
+        comment_id: commentId,
+        user_id: user.id,
+        reaction_type: "like",
+      });
+    }
+
+    // Update local state
+    setComments(prev => prev.map(c => {
+      if (c.id === commentId) {
+        return {
+          ...c,
+          user_liked: !isLiked,
+          likes_count: isLiked ? Math.max(0, c.likes_count - 1) : c.likes_count + 1,
+        };
+      }
+      return c;
+    }));
   };
 
   const handleDeleteComment = async (commentId: string) => {
@@ -186,26 +234,48 @@ const PostComments = ({ postId, commentsCount, onCommentsChange }: PostCommentsP
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="bg-muted rounded-xl px-3 py-2">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-sm text-foreground truncate">
-                              {comment.profile?.full_name || "Anônimo"}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {formatTime(comment.created_at)}
-                            </span>
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="font-semibold text-sm text-foreground truncate">
+                                {comment.profile?.full_name || "Anônimo"}
+                              </span>
+                              <span className="text-xs text-muted-foreground shrink-0">
+                                {formatTime(comment.created_at)}
+                              </span>
+                            </div>
+                            {comment.user_id === user?.id && (
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <button className="p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                                  </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    onClick={() => handleDeleteComment(comment.id)}
+                                    className="text-destructive focus:text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Excluir
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            )}
                           </div>
                           <p className="text-sm text-foreground mt-1 break-words">
                             {comment.content}
                           </p>
                         </div>
-                        {comment.user_id === user?.id && (
-                          <button
-                            onClick={() => handleDeleteComment(comment.id)}
-                            className="text-xs text-muted-foreground hover:text-destructive mt-1 ml-3 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            Excluir
-                          </button>
-                        )}
+                        {/* Like button for comment */}
+                        <button
+                          onClick={() => handleLikeComment(comment.id, comment.user_liked || false)}
+                          className={`flex items-center gap-1 text-xs mt-1 ml-3 transition-colors ${
+                            comment.user_liked ? "text-destructive" : "text-muted-foreground hover:text-destructive"
+                          }`}
+                        >
+                          <Heart className={`h-3 w-3 ${comment.user_liked ? "fill-current" : ""}`} />
+                          {comment.likes_count > 0 && <span>{comment.likes_count}</span>}
+                        </button>
                       </div>
                     </motion.div>
                   ))}
