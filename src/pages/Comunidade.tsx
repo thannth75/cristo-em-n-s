@@ -12,6 +12,7 @@ import {
   MoreVertical,
   Pencil,
   Trash2,
+  Share2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -36,6 +37,7 @@ import { renderMentions } from "@/components/comunidade/MentionInput";
 import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
 import { chatMessageSchema, privateMessageSchema, validateInput } from "@/lib/validation";
 import { AdFeed, shouldShowAdAtIndex } from "@/components/ads/AdBanner";
+import AIFloatingButton from "@/components/ai/AIFloatingButton";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -845,6 +847,7 @@ const Comunidade = () => {
         )}
       </main>
 
+      <AIFloatingButton type="general" />
       <BottomNavigation />
 
       {levelUpData && (

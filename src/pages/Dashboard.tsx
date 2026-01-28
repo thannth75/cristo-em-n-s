@@ -30,6 +30,7 @@ import GlowOrb from "@/components/GlowOrb";
 import BirthdaysCard from "@/components/comunidade/BirthdaysCard";
 import { Progress } from "@/components/ui/progress";
 import { AdFeed } from "@/components/ads/AdBanner";
+import AIFloatingButton from "@/components/ai/AIFloatingButton";
 
 const dailyVerses = [
   { verse: "Buscai primeiro o Reino de Deus e a sua justiça, e todas as coisas vos serão acrescentadas.", reference: "Mateus 6:33" },
@@ -276,6 +277,7 @@ const Dashboard = () => {
         </motion.div>
       </main>
 
+      <AIFloatingButton type="general" />
       <BottomNavigation />
     </div>
   );
