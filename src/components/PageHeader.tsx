@@ -22,7 +22,7 @@ export default function PageHeader({ title, showBack = false, backPath, children
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-card/95 px-3 sm:px-4 py-2 sm:py-3 backdrop-blur-xl safe-area-inset-top">
+    <header className="sticky top-0 z-40 border-b border-border bg-card/95 px-3 sm:px-4 md:px-6 py-2 sm:py-3 backdrop-blur-xl pt-safe">
       <div className="flex items-center justify-between max-w-7xl mx-auto">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           {showBack && (

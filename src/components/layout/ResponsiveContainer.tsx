@@ -17,8 +17,10 @@ const ResponsiveContainer = ({ children, className, noPadding }: ResponsiveConta
     <div
       className={cn(
         "w-full mx-auto",
-        !noPadding && "px-3 sm:px-4 md:px-6",
+        !noPadding && "px-3 sm:px-4 md:px-6 lg:px-8",
         "max-w-7xl",
+        // Safe area for left/right notches on landscape
+        "safe-area-inset-left safe-area-inset-right",
         className
       )}
     >

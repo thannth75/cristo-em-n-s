@@ -1,7 +1,4 @@
-/// <reference lib="webworker" />
-
 // Service Worker for Web Push Notifications
-declare const self: ServiceWorkerGlobalScope;
 
 // Cache name for PWA
 const CACHE_NAME = 'vida-em-cristo-v1';
@@ -110,5 +107,3 @@ self.addEventListener('activate', (event) => {
   console.log('[SW] Service worker activated');
   event.waitUntil(self.clients.claim());
 });
-
-export {};

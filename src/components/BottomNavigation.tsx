@@ -15,11 +15,11 @@ const BottomNavigation = () => {
   const navigate = useNavigate();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-xl">
-      <div 
-        className="mx-auto flex max-w-lg items-center justify-around px-1 sm:px-2 py-2 sm:py-2.5"
-        style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
-      >
+    <nav 
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-border bg-card/95 backdrop-blur-xl"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+    >
+      <div className="mx-auto flex max-w-lg items-center justify-around px-2 sm:px-4 py-2">
         {navItems.map((item) => {
           const isActive = location.pathname === item.href;
           const Icon = item.icon;
@@ -29,7 +29,7 @@ const BottomNavigation = () => {
               key={item.href}
               onClick={() => navigate(item.href)}
               whileTap={{ scale: 0.9 }}
-              className="relative flex flex-1 flex-col items-center gap-0.5 sm:gap-1 py-1 sm:py-1.5 touch-feedback no-select"
+              className="relative flex flex-1 flex-col items-center gap-0.5 py-1.5 touch-feedback no-select min-w-0"
             >
               {isActive && (
                 <motion.div
@@ -49,7 +49,7 @@ const BottomNavigation = () => {
                 />
               </motion.div>
               <span
-                className={`text-[10px] sm:text-xs transition-colors leading-tight ${
+                className={`text-[10px] sm:text-xs transition-colors leading-tight truncate max-w-full ${
                   isActive ? "font-semibold text-primary" : "text-muted-foreground"
                 }`}
               >
