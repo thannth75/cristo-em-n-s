@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Heart, Plus, Trash2, Sparkles, BookOpen, Hand, MessageCircle, RefreshCw, ChevronDown } from "lucide-react";
+import { Heart, Plus, Trash2, Sparkles, BookOpen, Hand, MessageCircle, RefreshCw, ChevronDown, Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +27,7 @@ import BottomNavigation from "@/components/BottomNavigation";
 import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
 import { MOOD_VERSES } from "@/data/bibleReadingPlans";
 import { journalEntrySchema, validateInput } from "@/lib/validation";
+import AIAssistantChat from "@/components/ai/AIAssistantChat";
 
 interface JournalEntry {
   id: string;
@@ -88,6 +89,7 @@ const Diario = () => {
   const [moodVerse, setMoodVerse] = useState<MoodVerse | null>(null);
   const [currentPrompt, setCurrentPrompt] = useState("");
   const [expandedEntry, setExpandedEntry] = useState<string | null>(null);
+  const [showAIChat, setShowAIChat] = useState(false);
   const [newEntry, setNewEntry] = useState({
     title: "",
     content: "",
@@ -536,6 +538,27 @@ const Diario = () => {
           rewards={levelUpData.rewards}
         />
       )}
+
+      {/* AI Button for diary interactions */}
+      <motion.button
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={() => setShowAIChat(true)}
+        className="fixed bottom-24 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/30"
+        style={{
+          bottom: "calc(6rem + max(0.5rem, env(safe-area-inset-bottom, 8px)))",
+        }}
+      >
+        <Bot className="h-6 w-6" />
+      </motion.button>
+
+      <AIAssistantChat
+        isOpen={showAIChat}
+        onClose={() => setShowAIChat(false)}
+        type="diary"
+        context={{ mood: selectedMood || "" }}
+        initialMessage={selectedMood ? `Estou me sentindo ${selectedMood}. O que a Bíblia diz para mim?` : undefined}
+      />
     </div>
   );
 };
