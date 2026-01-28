@@ -22,11 +22,23 @@ export default function PageHeader({ title, showBack = false, backPath, children
   };
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-card/95 px-3 sm:px-4 md:px-6 py-2 sm:py-3 backdrop-blur-xl pt-safe">
-      <div className="flex items-center justify-between max-w-7xl mx-auto">
+    <header 
+      className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-xl"
+      style={{
+        paddingTop: 'max(0.5rem, env(safe-area-inset-top, 8px))',
+        paddingLeft: 'env(safe-area-inset-left, 0px)',
+        paddingRight: 'env(safe-area-inset-right, 0px)',
+      }}
+    >
+      <div className="flex items-center justify-between max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-2 sm:py-3">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           {showBack && (
-            <Button variant="ghost" size="icon" onClick={handleBack} className="shrink-0">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={handleBack} 
+              className="shrink-0 min-h-[44px] min-w-[44px]"
+            >
               <ArrowLeft className="h-5 w-5" />
             </Button>
           )}

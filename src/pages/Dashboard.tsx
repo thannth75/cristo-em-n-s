@@ -142,13 +142,16 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="relative min-h-screen bg-background pb-20 sm:pb-24 overflow-hidden">
+    <div 
+      className="relative min-h-screen bg-background overflow-hidden"
+      style={{ paddingBottom: 'calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))' }}
+    >
       {/* Orb decorativo */}
       <GlowOrb className="absolute -top-20 -right-20 h-48 sm:h-64 w-48 sm:w-64 opacity-30" />
       
       <AppHeader userName={userName} />
 
-      <main className="relative z-10 px-3 sm:px-4 py-4 sm:py-6">
+      <main className="relative z-10 px-4 py-4 sm:py-6 max-w-4xl mx-auto" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left, 16px))', paddingRight: 'max(1rem, env(safe-area-inset-right, 16px))' }}>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

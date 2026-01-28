@@ -5,6 +5,7 @@ interface ResponsiveContainerProps {
   children: ReactNode;
   className?: string;
   noPadding?: boolean;
+  size?: "sm" | "md" | "lg" | "xl" | "full";
 }
 
 /**
@@ -12,17 +13,32 @@ interface ResponsiveContainerProps {
  * across all screen sizes, preventing content from being hidden behind
  * system UI elements (notches, home indicators, etc.)
  */
-const ResponsiveContainer = ({ children, className, noPadding }: ResponsiveContainerProps) => {
+const ResponsiveContainer = ({ 
+  children, 
+  className, 
+  noPadding,
+  size = "lg" 
+}: ResponsiveContainerProps) => {
+  const sizeClasses = {
+    sm: "max-w-md",
+    md: "max-w-2xl",
+    lg: "max-w-4xl",
+    xl: "max-w-6xl",
+    full: "max-w-7xl",
+  };
+
   return (
     <div
       className={cn(
         "w-full mx-auto",
-        !noPadding && "px-3 sm:px-4 md:px-6 lg:px-8",
-        "max-w-7xl",
-        // Safe area for left/right notches on landscape
-        "safe-area-inset-left safe-area-inset-right",
+        !noPadding && "px-4 sm:px-6",
+        sizeClasses[size],
         className
       )}
+      style={{
+        paddingLeft: noPadding ? undefined : 'max(1rem, env(safe-area-inset-left, 16px))',
+        paddingRight: noPadding ? undefined : 'max(1rem, env(safe-area-inset-right, 16px))',
+      }}
     >
       {children}
     </div>

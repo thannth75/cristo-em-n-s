@@ -24,7 +24,12 @@ const AppHeader = ({ userName = "Jovem", onMenuClick }: AppHeaderProps) => {
 
   return (
     <header 
-      className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-xl pt-safe"
+      className="sticky top-0 z-40 border-b border-border bg-card/95 backdrop-blur-xl"
+      style={{
+        paddingTop: 'max(0.5rem, env(safe-area-inset-top, 8px))',
+        paddingLeft: 'env(safe-area-inset-left, 0px)',
+        paddingRight: 'env(safe-area-inset-right, 0px)',
+      }}
     >
       <div className="flex items-center justify-between max-w-7xl mx-auto px-3 sm:px-4 md:px-6 py-2 sm:py-3">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -33,7 +38,7 @@ const AppHeader = ({ userName = "Jovem", onMenuClick }: AppHeaderProps) => {
             onClick={() => navigate("/dashboard")}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            className="relative shrink-0 touch-feedback"
+            className="relative shrink-0"
           >
             <div className="absolute inset-0 blur-lg bg-primary/20 rounded-full scale-125" />
             <img
@@ -53,7 +58,7 @@ const AppHeader = ({ userName = "Jovem", onMenuClick }: AppHeaderProps) => {
                 </Badge>
               )}
               {isLeader && !isAdmin && (
-                <Badge className="bg-gold/20 text-gold text-[10px] sm:text-xs px-1 sm:px-1.5 py-0 shrink-0">
+                <Badge className="bg-amber-500/20 text-amber-600 text-[10px] sm:text-xs px-1 sm:px-1.5 py-0 shrink-0">
                   <Shield className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                 </Badge>
               )}
