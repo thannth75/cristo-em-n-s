@@ -3,16 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Users, 
-  Heart, 
   Send, 
-  Plus, 
   MessageSquare,
   ChevronLeft,
   Loader2,
-  MoreVertical,
-  Pencil,
-  Trash2,
-  Share2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -24,26 +18,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import ResponsiveContainer from "@/components/layout/ResponsiveContainer";
-import PostComments from "@/components/comunidade/PostComments";
-import { StoryCircle } from "@/components/comunidade/StoryCircle";
+import ModernStoriesRow from "@/components/comunidade/ModernStoriesRow";
+import ModernFeedPost from "@/components/comunidade/ModernFeedPost";
+import CreatePostCard from "@/components/comunidade/CreatePostCard";
 import { EnhancedStoryViewer } from "@/components/comunidade/EnhancedStoryViewer";
 import { EnhancedCreateStoryDialog } from "@/components/comunidade/EnhancedCreateStoryDialog";
 import { EnhancedCreatePostDialog } from "@/components/comunidade/EnhancedCreatePostDialog";
-import { VideoPost } from "@/components/comunidade/VideoPost";
 import { GroupList, GroupChat } from "@/components/comunidade/GroupList";
-import { RepostButton } from "@/components/comunidade/RepostButton";
 import { PostLikersDialog } from "@/components/comunidade/PostLikersDialog";
-import { renderMentions } from "@/components/comunidade/MentionInput";
 import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
 import { chatMessageSchema, privateMessageSchema, validateInput } from "@/lib/validation";
 import { AdFeed, shouldShowAdAtIndex } from "@/components/ads/AdBanner";
 import AIFloatingButton from "@/components/ai/AIFloatingButton";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,6 +48,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Post {
   id: string;
@@ -520,147 +507,60 @@ const Comunidade = () => {
             </div>
           </motion.div>
 
-          {/* Stories row */}
-          <div className="mb-4 overflow-x-auto pb-2 -mx-3 px-3 scrollbar-hide">
-            <div className="flex gap-3">
-              {/* Own story */}
-              <StoryCircle
-                isOwn
-                hasStory={userHasStory}
-                onAdd={() => setCreateStoryOpen(true)}
-                onClick={() => userHasStory && openStories(user?.id!)}
-                userName={profile?.full_name}
-              />
-              
-              {/* Other users' stories */}
-              {uniqueStoryUsers
-                .filter(uid => uid !== user?.id)
-                .map((userId) => (
-                  <StoryCircle
-                    key={userId}
-                    story={groupedStories[userId][0]}
-                    hasStory={true}
-                    onClick={() => openStories(userId)}
-                  />
-                ))}
-            </div>
-          </div>
+          {/* Modern Stories Row */}
+          <ModernStoriesRow
+            currentUserId={user?.id || ""}
+            currentUserName={profile?.full_name}
+            currentUserAvatar={profile?.avatar_url}
+            hasOwnStory={userHasStory}
+            groupedStories={groupedStories}
+            onCreateStory={() => setCreateStoryOpen(true)}
+            onViewStory={openStories}
+          />
 
-          <Tabs defaultValue="feed" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 mb-3 sm:mb-4 h-auto">
-              <TabsTrigger value="feed" className="text-[10px] sm:text-sm py-2">Mural</TabsTrigger>
-              <TabsTrigger value="groups" className="text-[10px] sm:text-sm py-2">Grupos</TabsTrigger>
-              <TabsTrigger value="chat" className="text-[10px] sm:text-sm py-2">Chat</TabsTrigger>
-              <TabsTrigger value="messages" className="text-[10px] sm:text-sm py-2">DM</TabsTrigger>
+          <Tabs defaultValue="feed" className="w-full mt-4">
+            <TabsList className="grid w-full grid-cols-4 mb-3 sm:mb-4 h-auto rounded-none sm:rounded-xl">
+              <TabsTrigger value="feed" className="text-[10px] sm:text-sm py-2.5 rounded-none sm:rounded-lg">Mural</TabsTrigger>
+              <TabsTrigger value="groups" className="text-[10px] sm:text-sm py-2.5 rounded-none sm:rounded-lg">Grupos</TabsTrigger>
+              <TabsTrigger value="chat" className="text-[10px] sm:text-sm py-2.5 rounded-none sm:rounded-lg">Chat</TabsTrigger>
+              <TabsTrigger value="messages" className="text-[10px] sm:text-sm py-2.5 rounded-none sm:rounded-lg">DM</TabsTrigger>
             </TabsList>
 
-            {/* MURAL DE POSTS */}
-            <TabsContent value="feed" className="space-y-4">
-              <Button onClick={() => setIsPostDialogOpen(true)} className="w-full rounded-xl">
-                <Plus className="mr-2 h-4 w-4" />
-                Criar Post
-              </Button>
+            {/* MURAL DE POSTS - Facebook Style */}
+            <TabsContent value="feed" className="space-y-3 sm:space-y-4 mt-0">
+              {/* Create Post Card */}
+              <CreatePostCard
+                userName={profile?.full_name}
+                avatarUrl={profile?.avatar_url}
+                onClick={() => setIsPostDialogOpen(true)}
+              />
 
               {isLoading ? (
-                <div className="flex justify-center py-8">
+                <div className="flex justify-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
               ) : posts.length === 0 ? (
-                <div className="rounded-2xl bg-card p-8 text-center">
+                <div className="rounded-none sm:rounded-2xl bg-card border-y sm:border border-border p-8 text-center">
                   <MessageSquare className="mx-auto mb-3 h-12 w-12 text-muted-foreground/50" />
                   <p className="text-muted-foreground">Nenhum post ainda. Seja o primeiro!</p>
                 </div>
               ) : (
                 posts.map((post, index) => (
                   <div key={post.id}>
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="rounded-2xl bg-card p-3 sm:p-4 shadow-md overflow-hidden"
-                    >
-                      <div className="flex items-center gap-2 sm:gap-3 mb-3">
-                        <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold text-sm sm:text-base">
-                          {post.profiles?.full_name?.charAt(0) || "?"}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-semibold text-sm sm:text-base text-foreground truncate">{post.profiles?.full_name || "Anônimo"}</p>
-                          <p className="text-[10px] sm:text-xs text-muted-foreground">{formatDate(post.created_at)}</p>
-                        </div>
-                        {post.user_id === user?.id && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => { setEditingPost(post); setEditContent(post.content); }}>
-                                <Pencil className="h-4 w-4 mr-2" />
-                                Editar
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => setDeletingPost(post)}
-                                className="text-destructive focus:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Excluir
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                      </div>
-                      
-                      <p className="text-sm sm:text-base text-foreground mb-3 break-words">{renderMentions(post.content)}</p>
-                      
-                      {post.image_url && (
-                        <div className="mb-3 -mx-3 sm:-mx-4 sm:mx-0 sm:rounded-xl overflow-hidden">
-                          <img src={post.image_url} alt="Post" className="w-full max-h-80 object-cover" loading="lazy" />
-                        </div>
-                      )}
-                      
-                      {post.video_url && (
-                        <div className="mb-3 -mx-3 sm:-mx-4 sm:mx-0">
-                          <VideoPost videoUrl={post.video_url} />
-                        </div>
-                      )}
-                      
-                      <div className="flex items-center gap-3 sm:gap-4 pt-2 border-t border-border">
-                        <button
-                          onClick={() => { setViewLikersPostId(post.id); setViewLikersCount(post.likes_count); }}
-                          className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          {post.likes_count} curtidas
-                        </button>
-                        <div className="flex-1" />
-                        <button
-                          onClick={() => handleLikePost(post.id, post.user_liked || false)}
-                          className={`flex items-center gap-1 text-xs sm:text-sm ${post.user_liked ? "text-destructive" : "text-muted-foreground"} hover:text-destructive transition-colors`}
-                        >
-                          <Heart className={`h-4 w-4 ${post.user_liked ? "fill-current" : ""}`} />
-                        </button>
-                        
-                        <PostComments 
-                          postId={post.id} 
-                          commentsCount={post.comments_count}
-                          onCommentsChange={(count) => {
-                            setPosts(prev => prev.map(p => 
-                              p.id === post.id ? { ...p, comments_count: count } : p
-                            ));
-                          }}
-                        />
-                        
-                        <RepostButton
-                          postId={post.id}
-                          postContent={post.content}
-                          postUserName={post.profiles?.full_name || "Anônimo"}
-                          repostsCount={post.reposts_count}
-                          userId={user?.id || ""}
-                          hasReposted={post.user_reposted}
-                          onRepostSuccess={fetchPosts}
-                        />
-                      </div>
-                    </motion.div>
-                    
+                    <ModernFeedPost
+                      post={post}
+                      currentUserId={user?.id || ""}
+                      onLike={handleLikePost}
+                      onEdit={(p) => { setEditingPost(p); setEditContent(p.content); }}
+                      onDelete={(p) => setDeletingPost(p)}
+                      onViewLikers={(id, count) => { setViewLikersPostId(id); setViewLikersCount(count); }}
+                      onCommentsChange={(postId, count) => {
+                        setPosts(prev => prev.map(p => 
+                          p.id === postId ? { ...p, comments_count: count } : p
+                        ));
+                      }}
+                      onRepostSuccess={fetchPosts}
+                    />
                     {shouldShowAdAtIndex(index, 6) && <AdFeed />}
                   </div>
                 ))
