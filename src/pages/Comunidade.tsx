@@ -430,10 +430,11 @@ const Comunidade = () => {
       return;
     }
 
-    const { error } = await supabase.from("private_messages").insert({
-      sender_id: user?.id,
-      receiver_id: selectedUser.user_id,
-      content: validation.data.content,
+    const { error } = await supabase.functions.invoke("send-private-message", {
+      body: {
+        receiver_id: selectedUser.user_id,
+        content: validation.data.content,
+      },
     });
 
     if (!error) {

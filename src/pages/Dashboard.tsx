@@ -31,6 +31,7 @@ import BirthdaysCard from "@/components/comunidade/BirthdaysCard";
 import { Progress } from "@/components/ui/progress";
 import { AdFeed } from "@/components/ads/AdBanner";
 import AIFloatingButton from "@/components/ai/AIFloatingButton";
+import JourneyCarousel, { type JourneyItem } from "@/components/dashboard/JourneyCarousel";
 
 const dailyVerses = [
   { verse: "Buscai primeiro o Reino de Deus e a sua justiça, e todas as coisas vos serão acrescentadas.", reference: "Mateus 6:33" },
@@ -249,13 +250,18 @@ const Dashboard = () => {
             <h2 className="mb-3 sm:mb-4 font-serif text-base sm:text-lg font-semibold text-foreground">
               Minha Jornada
             </h2>
-            <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {/* Mobile: carrossel horizontal (estilo Facebook/shortcuts) */}
+            <div className="sm:hidden">
+              <JourneyCarousel
+                items={features as JourneyItem[]}
+                onNavigate={navigate}
+              />
+            </div>
+
+            {/* Tablet/Desktop: grid */}
+            <div className="hidden sm:grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-3">
               {features.map((feature, index) => (
-                <FeatureCard
-                  key={feature.title}
-                  {...feature}
-                  delay={0.1 * index}
-                />
+                <FeatureCard key={feature.title} {...feature} delay={0.1 * index} />
               ))}
             </div>
           </div>
