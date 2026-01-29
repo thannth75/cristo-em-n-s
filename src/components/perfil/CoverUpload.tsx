@@ -80,7 +80,7 @@ export default function CoverUpload({ userId, currentCoverUrl, onCoverChange }: 
         size="sm"
         onClick={() => fileInputRef.current?.click()}
         disabled={isUploading}
-        className="absolute bottom-4 right-4 bg-black/30 text-white hover:bg-black/50 rounded-full"
+        className="absolute bottom-4 right-4 rounded-full bg-background/70 text-foreground border border-border backdrop-blur hover:bg-background/85"
       >
         {isUploading ? (
           <Loader2 className="h-4 w-4 animate-spin" />

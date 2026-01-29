@@ -222,16 +222,21 @@ const Mensagens = () => {
       return;
     }
 
-    const { data, error } = await supabase.from("private_messages").insert({
-      sender_id: user?.id,
-      receiver_id: selectedConversation,
-      content: validation.data.content,
-    }).select().single();
+    const { data, error } = await supabase.functions.invoke("send-private-message", {
+      body: {
+        receiver_id: selectedConversation,
+        content: validation.data.content,
+      },
+    });
 
     if (error) {
       toast({ title: "Erro", description: "Não foi possível enviar a mensagem.", variant: "destructive" });
-    } else if (data) {
-      setMessages((prev) => [...prev, data]);
+      return;
+    }
+
+    const inserted = (data as any)?.message as Message | undefined;
+    if (inserted) {
+      setMessages((prev) => [...prev, inserted]);
       setNewMessage("");
       fetchConversations();
     }
