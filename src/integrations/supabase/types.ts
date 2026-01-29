@@ -1479,13 +1479,36 @@ export type Database = {
         }
         Relationships: []
       }
+      profile_views: {
+        Row: {
+          id: string
+          profile_user_id: string
+          viewed_at: string
+          viewer_id: string
+        }
+        Insert: {
+          id?: string
+          profile_user_id: string
+          viewed_at?: string
+          viewer_id: string
+        }
+        Update: {
+          id?: string
+          profile_user_id?: string
+          viewed_at?: string
+          viewer_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           approved_at: string | null
           approved_by: string | null
           avatar_url: string | null
+          bio: string | null
           birth_date: string | null
           city: string | null
+          cover_url: string | null
           created_at: string
           current_level: number | null
           email: string
@@ -1503,8 +1526,10 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           avatar_url?: string | null
+          bio?: string | null
           birth_date?: string | null
           city?: string | null
+          cover_url?: string | null
           created_at?: string
           current_level?: number | null
           email: string
@@ -1522,8 +1547,10 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           avatar_url?: string | null
+          bio?: string | null
           birth_date?: string | null
           city?: string | null
+          cover_url?: string | null
           created_at?: string
           current_level?: number | null
           email?: string
@@ -2057,6 +2084,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_follows: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+          id?: string
+        }
+        Relationships: []
       }
       user_milestones: {
         Row: {
