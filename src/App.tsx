@@ -35,6 +35,7 @@ import Mensagens from "./pages/Mensagens";
 import Discipulado from "./pages/Discipulado";
 import Onboarding from "./pages/Onboarding";
 import Provas from "./pages/Provas";
+import PerfilPublico from "./pages/PerfilPublico";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -65,6 +66,7 @@ const App = () => (
           <Route path="/agenda" element={<Agenda />} />
           <Route path="/musicos" element={<Musicos />} />
           <Route path="/perfil" element={<Perfil />} />
+          <Route path="/perfil/:userId" element={<PerfilPublico />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/presenca" element={<Presenca />} />
           <Route path="/diario" element={<Diario />} />

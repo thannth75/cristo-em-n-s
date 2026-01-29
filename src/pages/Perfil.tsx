@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { User, Mail, LogOut, Shield, ChevronRight, Award, Calendar, BookOpen, Camera, Edit, Bell, MapPin, BarChart3 } from "lucide-react";
+import { 
+  User, Mail, LogOut, Shield, ChevronRight, Award, Calendar, BookOpen, 
+  Camera, Edit, Bell, MapPin, BarChart3, Trophy, Star, Users, Eye
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import AppHeader from "@/components/AppHeader";
@@ -10,11 +13,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import GlowOrb from "@/components/GlowOrb";
 import AvatarUpload from "@/components/perfil/AvatarUpload";
+import CoverUpload from "@/components/perfil/CoverUpload";
 import NotificationSettings from "@/components/perfil/NotificationSettings";
 import LocationSettings from "@/components/perfil/LocationSettings";
+import { LevelBadge } from "@/components/gamification/LevelBadge";
 import {
   Dialog,
   DialogContent,
@@ -27,13 +34,16 @@ const Perfil = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, profile, roles, isAdmin, isLeader, isApproved, signOut, isLoading } = useAuth();
-  const [stats, setStats] = useState({ presencas: 0, estudos: 0, conquistas: 0 });
+  const [stats, setStats] = useState({ presencas: 0, estudos: 0, conquistas: 0, followers: 0, following: 0, views: 0 });
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [levelInfo, setLevelInfo] = useState<{ title: string; icon: string; xpRequired: number; nextXp: number } | null>(null);
   const [editForm, setEditForm] = useState({
     full_name: "",
     phone: "",
     birth_date: "",
+    bio: "",
   });
 
   useEffect(() => {
@@ -49,10 +59,12 @@ const Perfil = () => {
   useEffect(() => {
     if (profile) {
       setAvatarUrl(profile.avatar_url);
+      setCoverUrl((profile as any).cover_url || null);
       setEditForm({
         full_name: profile.full_name || "",
         phone: profile.phone || "",
         birth_date: profile.birth_date || "",
+        bio: (profile as any).bio || "",
       });
     }
   }, [profile]);
@@ -60,21 +72,54 @@ const Perfil = () => {
   useEffect(() => {
     if (user && isApproved) {
       fetchStats();
+      fetchLevelInfo();
     }
   }, [user, isApproved]);
 
   const fetchStats = async () => {
-    const [attendanceRes, progressRes, achievementsRes] = await Promise.all([
+    const [attendanceRes, progressRes, achievementsRes, followersRes, followingRes, viewsRes] = await Promise.all([
       supabase.from("attendance").select("id", { count: "exact" }).eq("user_id", user?.id),
       supabase.from("study_progress").select("id", { count: "exact" }).eq("user_id", user?.id),
       supabase.from("user_achievements").select("id", { count: "exact" }).eq("user_id", user?.id),
+      supabase.from("user_follows").select("id", { count: "exact" }).eq("following_id", user?.id),
+      supabase.from("user_follows").select("id", { count: "exact" }).eq("follower_id", user?.id),
+      supabase.from("profile_views").select("id", { count: "exact" }).eq("profile_user_id", user?.id),
     ]);
 
     setStats({
       presencas: attendanceRes.count || 0,
       estudos: progressRes.count || 0,
       conquistas: achievementsRes.count || 0,
+      followers: followersRes.count || 0,
+      following: followingRes.count || 0,
+      views: viewsRes.count || 0,
     });
+  };
+
+  const fetchLevelInfo = async () => {
+    const currentLevel = (profile as any)?.current_level || 1;
+    
+    const { data: levelData } = await supabase
+      .from("level_definitions")
+      .select("*")
+      .lte("level_number", currentLevel)
+      .order("level_number", { ascending: false })
+      .limit(1);
+
+    const { data: nextLevelData } = await supabase
+      .from("level_definitions")
+      .select("xp_required")
+      .eq("level_number", currentLevel + 1)
+      .single();
+
+    if (levelData?.[0]) {
+      setLevelInfo({
+        title: levelData[0].title,
+        icon: levelData[0].icon,
+        xpRequired: levelData[0].xp_required,
+        nextXp: nextLevelData?.xp_required || levelData[0].xp_required + 100,
+      });
+    }
   };
 
   const handleLogout = async () => {
@@ -93,6 +138,7 @@ const Perfil = () => {
         full_name: editForm.full_name,
         phone: editForm.phone || null,
         birth_date: editForm.birth_date || null,
+        bio: editForm.bio || null,
       })
       .eq("user_id", user?.id);
 
@@ -126,6 +172,11 @@ const Perfil = () => {
 
   const userName = profile?.full_name || user?.user_metadata?.full_name || "Jovem";
   const userEmail = profile?.email || user?.email || "";
+  const currentLevel = (profile as any)?.current_level || 1;
+  const totalXp = (profile as any)?.total_xp || 0;
+  const xpProgress = levelInfo 
+    ? Math.min(((totalXp - levelInfo.xpRequired) / (levelInfo.nextXp - levelInfo.xpRequired)) * 100, 100)
+    : 0;
 
   const menuItems = [
     ...(isAdmin || isLeader
@@ -141,99 +192,124 @@ const Perfil = () => {
       className="relative min-h-screen bg-background overflow-hidden"
       style={{ paddingBottom: 'calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))' }}
     >
-      <GlowOrb className="absolute -top-24 sm:-top-32 -right-24 sm:-right-32 h-56 sm:h-80 w-56 sm:w-80 opacity-20" />
-      
-      <AppHeader userName={userName.split(" ")[0]} />
+      {/* Cover Photo */}
+      <div className="relative h-36 sm:h-48 bg-gradient-to-br from-primary/80 to-primary">
+        {coverUrl && (
+          <img 
+            src={coverUrl} 
+            alt="Cover" 
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+        <CoverUpload userId={user?.id || ""} currentCoverUrl={coverUrl} onCoverChange={setCoverUrl} />
+      </div>
 
-      <main className="relative z-10 px-4 py-3 sm:py-6 max-w-2xl mx-auto" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left, 16px))', paddingRight: 'max(1rem, env(safe-area-inset-right, 16px))' }}>
-        {/* Perfil Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-4 sm:mb-6 overflow-hidden rounded-2xl sm:rounded-3xl bg-card shadow-lg"
-        >
-          <div className="relative h-24 sm:h-28 gradient-hope">
-            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.15),transparent_70%)]" />
-            <div className="absolute -bottom-10 sm:-bottom-12 left-1/2 -translate-x-1/2">
-              <motion.div
-                initial={{ scale: 0.8 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: 0.2, type: "spring" }}
-                className="relative"
-              >
-                <div className="absolute inset-0 blur-xl bg-primary/30 rounded-full scale-125" />
-                <div className="relative">
-                  <AvatarUpload
-                    userId={user?.id || ""}
-                    currentAvatarUrl={avatarUrl}
-                    userName={userName}
-                    onAvatarChange={setAvatarUrl}
-                  />
-                </div>
-              </motion.div>
-            </div>
+      <main className="relative z-10 px-4 -mt-16 max-w-2xl mx-auto" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left, 16px))', paddingRight: 'max(1rem, env(safe-area-inset-right, 16px))' }}>
+        {/* Avatar and Name */}
+        <div className="flex flex-col items-center sm:flex-row sm:items-end sm:gap-4">
+          <div className="relative">
+            <AvatarUpload
+              userId={user?.id || ""}
+              currentAvatarUrl={avatarUrl}
+              userName={userName}
+              onAvatarChange={setAvatarUrl}
+            />
+            {levelInfo && (
+              <div className="absolute -bottom-2 -right-2 bg-background rounded-full p-1 shadow-lg">
+                <LevelBadge level={currentLevel} icon={levelInfo.icon} title={levelInfo.title} size="sm" />
+              </div>
+            )}
           </div>
-
-          <div className="px-4 sm:px-6 pb-4 sm:pb-6 pt-14 sm:pt-16 text-center">
-            <div className="flex items-center justify-center gap-2">
-              <h2 className="font-serif text-lg sm:text-xl font-semibold text-foreground truncate max-w-[200px] sm:max-w-none">{userName}</h2>
+          
+          <div className="flex-1 text-center sm:text-left mt-4 sm:mt-0 sm:mb-2">
+            <div className="flex items-center justify-center sm:justify-start gap-2">
+              <h2 className="font-serif text-xl sm:text-2xl font-semibold text-foreground">{userName}</h2>
               <button
                 onClick={() => setIsEditDialogOpen(true)}
-                className="text-muted-foreground hover:text-primary transition-colors shrink-0"
+                className="text-muted-foreground hover:text-primary transition-colors"
               >
                 <Edit className="h-4 w-4" />
               </button>
             </div>
-            <div className="mt-1 flex items-center justify-center gap-1 text-xs sm:text-sm text-muted-foreground">
-              <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-              <span className="truncate max-w-[200px] sm:max-w-none">{userEmail}</span>
+            {levelInfo && (
+              <p className="text-primary font-medium text-sm flex items-center justify-center sm:justify-start gap-1">
+                {levelInfo.icon} {levelInfo.title}
+              </p>
+            )}
+            <div className="flex items-center justify-center sm:justify-start gap-1 text-xs text-muted-foreground mt-1">
+              <Mail className="h-3 w-3" />
+              <span className="truncate max-w-[200px]">{userEmail}</span>
             </div>
-            <div className="mt-3 sm:mt-4 flex justify-center">
-              <Badge className={`${getRoleBadgeClass()} px-3 sm:px-4 py-1 sm:py-1.5`}>
-                <Shield className="mr-1 sm:mr-1.5 h-3 w-3 sm:h-3.5 sm:w-3.5" />
-                {getRoleLabel()}
-              </Badge>
-            </div>
+            <Badge className={`${getRoleBadgeClass()} px-3 py-1 mt-2`}>
+              <Shield className="mr-1 h-3 w-3" />
+              {getRoleLabel()}
+            </Badge>
           </div>
-        </motion.div>
 
-        {/* Stats */}
+          <Button 
+            variant="outline" 
+            className="mt-4 sm:mt-0 sm:mb-2 rounded-xl"
+            onClick={() => setIsEditDialogOpen(true)}
+          >
+            <Edit className="h-4 w-4 mr-1" />
+            Editar Perfil
+          </Button>
+        </div>
+
+        {/* Bio */}
+        {(profile as any)?.bio && (
+          <p className="mt-4 text-muted-foreground text-sm text-center sm:text-left">
+            {(profile as any).bio}
+          </p>
+        )}
+
+        {/* XP Progress */}
+        {levelInfo && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-4 p-4 rounded-2xl bg-card shadow-md"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Nível {currentLevel}</span>
+              <span className="text-xs text-muted-foreground">{totalXp} / {levelInfo.nextXp} XP</span>
+            </div>
+            <Progress value={xpProgress} className="h-2" />
+            <p className="text-xs text-muted-foreground mt-2 text-center">
+              {Math.round(levelInfo.nextXp - totalXp)} XP para o próximo nível
+            </p>
+          </motion.div>
+        )}
+
+        {/* Stats Grid */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="mb-4 sm:mb-6 grid grid-cols-3 gap-2 sm:gap-3"
+          className="mt-4 grid grid-cols-3 sm:grid-cols-6 gap-2"
         >
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate("/presenca")}
-            className="rounded-xl sm:rounded-2xl bg-card p-3 sm:p-4 text-center shadow-md"
-          >
-            <Calendar className="mx-auto mb-1 h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-            <p className="font-serif text-xl sm:text-2xl font-bold text-foreground">{stats.presencas}</p>
-            <p className="text-xs text-muted-foreground">Presenças</p>
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate("/estudos")}
-            className="rounded-xl sm:rounded-2xl bg-card p-3 sm:p-4 text-center shadow-md"
-          >
-            <BookOpen className="mx-auto mb-1 h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-            <p className="font-serif text-xl sm:text-2xl font-bold text-foreground">{stats.estudos}</p>
-            <p className="text-xs text-muted-foreground">Estudos</p>
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate("/conquistas")}
-            className="rounded-xl sm:rounded-2xl bg-card p-3 sm:p-4 text-center shadow-md"
-          >
-            <Award className="mx-auto mb-1 h-4 w-4 sm:h-5 sm:w-5 text-gold" />
-            <p className="font-serif text-xl sm:text-2xl font-bold text-foreground">{stats.conquistas}</p>
-            <p className="text-xs text-muted-foreground">Conquistas</p>
-          </motion.button>
+          {[
+            { label: "Presenças", value: stats.presencas, icon: Calendar, action: () => navigate("/presenca") },
+            { label: "Estudos", value: stats.estudos, icon: BookOpen, action: () => navigate("/estudos") },
+            { label: "Conquistas", value: stats.conquistas, icon: Award, action: () => navigate("/conquistas") },
+            { label: "Seguidores", value: stats.followers, icon: Users, action: undefined },
+            { label: "Seguindo", value: stats.following, icon: Users, action: undefined },
+            { label: "Visitas", value: stats.views, icon: Eye, action: undefined },
+          ].map((stat) => (
+            <motion.button
+              key={stat.label}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={stat.action}
+              disabled={!stat.action}
+              className="rounded-xl bg-card p-2 sm:p-3 text-center shadow-md disabled:cursor-default"
+            >
+              <stat.icon className="mx-auto mb-1 h-4 w-4 text-primary" />
+              <p className="font-bold text-lg text-foreground">{stat.value}</p>
+              <p className="text-[9px] sm:text-xs text-muted-foreground">{stat.label}</p>
+            </motion.button>
+          ))}
         </motion.div>
 
         {/* Menu */}
@@ -242,7 +318,7 @@ const Perfil = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="mb-6 overflow-hidden rounded-2xl bg-card shadow-md"
+            className="mt-4 overflow-hidden rounded-2xl bg-card shadow-md"
           >
             {menuItems.map((item) => (
               <button
@@ -267,6 +343,7 @@ const Perfil = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
+          className="mt-6"
         >
           <Button
             onClick={handleLogout}
@@ -283,7 +360,7 @@ const Perfil = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4 }}
-          className="mt-8 text-center"
+          className="mt-8 pb-4 text-center"
         >
           <p className="font-serif italic text-muted-foreground">
             "Tudo quanto fizerdes, fazei-o para a glória de Deus."
@@ -296,7 +373,7 @@ const Perfil = () => {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="mx-4 max-w-md rounded-2xl max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle className="font-serif">Configurações</DialogTitle>
+            <DialogTitle className="font-serif">Configurações do Perfil</DialogTitle>
           </DialogHeader>
           
           <Tabs defaultValue="profile" className="flex-1 overflow-hidden flex flex-col">
@@ -315,6 +392,20 @@ const Perfil = () => {
                     onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
                     className="rounded-xl"
                   />
+                </div>
+                <div>
+                  <Label>Bio (sobre você)</Label>
+                  <Textarea
+                    value={editForm.bio}
+                    onChange={(e) => setEditForm({ ...editForm, bio: e.target.value })}
+                    placeholder="Conte um pouco sobre você..."
+                    className="rounded-xl resize-none"
+                    maxLength={160}
+                    rows={3}
+                  />
+                  <p className="text-xs text-muted-foreground text-right mt-1">
+                    {editForm.bio.length}/160
+                  </p>
                 </div>
                 <div>
                   <Label>Telefone</Label>
