@@ -36,16 +36,16 @@ export default function CoverUpload({ userId, currentCoverUrl, onCoverChange }: 
       const fileExt = file.name.split(".").pop();
       const fileName = `${userId}/cover-${Date.now()}.${fileExt}`;
 
-      // Upload to storage
+      // Upload to covers bucket
       const { error: uploadError } = await supabase.storage
-        .from("avatars")
+        .from("covers")
         .upload(fileName, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
-        .from("avatars")
+        .from("covers")
         .getPublicUrl(fileName);
 
       // Update profile
