@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.91.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 interface AchievementCheck {
@@ -24,7 +24,7 @@ interface UserStats {
 
 const ACHIEVEMENT_CHECKS: AchievementCheck[] = [
   // Geral
-  { id: "primeiro-passo", name: "Primeiro Passo", category: "geral", check: () => true }, // First login
+  { id: "primeiro-passo", name: "Primeiro Passo", category: "geral", check: () => true },
   
   // Presença
   { id: "fiel-presenca", name: "Fiel na Presença", category: "presenca", check: (s) => s.attendanceCount >= 5 },
@@ -52,34 +52,44 @@ const ACHIEVEMENT_CHECKS: AchievementCheck[] = [
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
+    if (!authHeader?.startsWith("Bearer ")) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Get current user
+    // Create client with user's token for authentication
+    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    // Validate token using getClaims
     const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    
-    if (authError || !user) {
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+
+    if (claimsError || !claimsData?.claims?.sub) {
+      console.error("Auth error:", claimsError);
       return new Response(JSON.stringify({ error: "Invalid token" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const userId = user.id;
+    const userId = claimsData.claims.sub as string;
+    console.log(`Checking achievements for user: ${userId}`);
+
+    // Use service role for database operations
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Fetch user stats in parallel
     const [
@@ -120,7 +130,6 @@ Deno.serve(async (req) => {
     const newAchievements: string[] = [];
 
     for (const check of ACHIEVEMENT_CHECKS) {
-      // Find matching achievement in DB by name/category
       const dbAchievement = allAchievements.find(
         (a) => a.name === check.name || a.category === check.category
       );
@@ -133,7 +142,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Grant first login achievement to everyone who doesn't have it
+    // Grant first login achievement
     const primeiroPassoAchievement = allAchievements.find((a) => a.name === "Primeiro Passo");
     if (primeiroPassoAchievement && !existingIds.has(primeiroPassoAchievement.id)) {
       if (!newAchievements.includes(primeiroPassoAchievement.id)) {
@@ -141,7 +150,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Insert new achievements and create notifications
+    // Insert new achievements
     if (newAchievements.length > 0) {
       const insertData = newAchievements.map((achievementId) => ({
         user_id: userId,
@@ -155,7 +164,6 @@ Deno.serve(async (req) => {
       if (insertError) {
         console.error("Error granting achievements:", insertError);
       } else {
-        // Create notifications for each achievement
         const achievementNames = newAchievements.map((id) => {
           const ach = allAchievements.find((a) => a.id === id);
           return ach?.name || "Nova conquista";
@@ -170,6 +178,7 @@ Deno.serve(async (req) => {
         }));
 
         await supabase.from("notifications").insert(notifications);
+        console.log(`Granted ${newAchievements.length} achievements`);
       }
     }
 
