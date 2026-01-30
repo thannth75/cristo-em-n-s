@@ -55,6 +55,19 @@
   --chart-3: 90 40% 50%;
   --chart-4: 180 35% 40%;
   --chart-5: 200 40% 45%;
+
+  /* Gradients (used by .gradient-hope / .gradient-card utilities) */
+  --gradient-hope: linear-gradient(
+    135deg,
+    hsl(var(--primary) / 0.95) 0%,
+    hsl(var(--chart-2) / 0.85) 55%,
+    hsl(var(--primary) / 0.75) 100%
+  );
+  --gradient-card: linear-gradient(
+    135deg,
+    hsl(var(--card) / 0.98) 0%,
+    hsl(var(--background) / 0.98) 100%
+  );
 }
 
 .dark {
@@ -100,6 +113,19 @@
   --chart-3: 90 45% 55%;
   --chart-4: 180 40% 50%;
   --chart-5: 200 45% 55%;
+
+  /* Gradients (dark mode) */
+  --gradient-hope: linear-gradient(
+    135deg,
+    hsl(var(--primary) / 0.95) 0%,
+    hsl(var(--chart-2) / 0.75) 55%,
+    hsl(var(--primary) / 0.55) 100%
+  );
+  --gradient-card: linear-gradient(
+    135deg,
+    hsl(var(--card) / 0.92) 0%,
+    hsl(var(--background) / 0.92) 100%
+  );
 }
 
 /* Base layer */
