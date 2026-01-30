@@ -2369,12 +2369,10 @@ export type Database = {
       attendance_summary: {
         Row: {
           city: string | null
-          events_attended: number | null
           full_name: string | null
           last_attendance: string | null
-          month: string | null
           state: string | null
-          total_attendances: number | null
+          total_attendance: number | null
           user_id: string | null
         }
         Relationships: []
@@ -2395,9 +2393,36 @@ export type Database = {
         }
         Relationships: []
       }
+      member_directory: {
+        Row: {
+          avatar_url: string | null
+          current_level: number | null
+          full_name: string | null
+          is_approved: boolean | null
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          current_level?: number | null
+          full_name?: string | null
+          is_approved?: boolean | null
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          current_level?: number | null
+          full_name?: string | null
+          is_approved?: boolean | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       public_profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
+          cover_url: string | null
+          created_at: string | null
           current_level: number | null
           full_name: string | null
           is_approved: boolean | null
@@ -2407,6 +2432,9 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
+          cover_url?: string | null
+          created_at?: string | null
           current_level?: number | null
           full_name?: string | null
           is_approved?: boolean | null
@@ -2416,6 +2444,9 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
+          cover_url?: string | null
+          created_at?: string | null
           current_level?: number | null
           full_name?: string | null
           is_approved?: boolean | null

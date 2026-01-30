@@ -22,6 +22,11 @@ function clamp(str: string, max: number) {
   return s.length > max ? `${s.slice(0, max - 1)}…` : s;
 }
 
+function isValidUUID(str: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return json(405, { error: "Method not allowed" });
@@ -48,12 +53,41 @@ Deno.serve(async (req) => {
     const content = clamp(body.content ?? "", 1000);
 
     if (!receiverId) return json(400, { error: "receiver_id is required" });
+    if (!isValidUUID(receiverId)) return json(400, { error: "Invalid receiver_id format" });
     if (!content) return json(400, { error: "content is required" });
     if (receiverId === senderId) return json(400, { error: "Cannot message yourself" });
 
-    // 3) Insert message with service privileges (reliable + avoids RLS friction)
+    // 3) Service client for DB operations
     const service = createClient(supabaseUrl, serviceKey);
 
+    // 4) Rate limiting - max 20 messages per minute
+    const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
+    const { count: recentCount } = await service
+      .from("private_messages")
+      .select("*", { count: "exact", head: true })
+      .eq("sender_id", senderId)
+      .gte("created_at", oneMinuteAgo);
+
+    if (recentCount && recentCount > 20) {
+      return json(429, { error: "Limite de mensagens: máximo 20 por minuto" });
+    }
+
+    // 5) Validate receiver exists and is approved
+    const { data: receiverProfile } = await service
+      .from("profiles")
+      .select("is_approved")
+      .eq("user_id", receiverId)
+      .single();
+
+    if (!receiverProfile) {
+      return json(400, { error: "Destinatário não encontrado" });
+    }
+
+    if (!receiverProfile.is_approved) {
+      return json(400, { error: "Destinatário não está aprovado" });
+    }
+
+    // 6) Insert message
     const { data: inserted, error: insertError } = await service
       .from("private_messages")
       .insert({ sender_id: senderId, receiver_id: receiverId, content })
@@ -65,8 +99,7 @@ Deno.serve(async (req) => {
       return json(500, { error: "Failed to send message" });
     }
 
-    // 4) Send push to receiver (works even with app closed)
-    // Fetch sender name for nicer push text
+    // 7) Send push to receiver
     const { data: senderProfile } = await service
       .from("profiles")
       .select("full_name")
@@ -84,7 +117,6 @@ Deno.serve(async (req) => {
       type: "message",
     };
 
-    // Call internal push sender function
     await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
       method: "POST",
       headers: {
