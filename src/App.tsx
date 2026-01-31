@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import NotificationPermissionBanner from "@/components/NotificationPermissionBanner";
 import PresenceTracker from "@/components/PresenceTracker";
+import InAppNotificationToast from "@/components/InAppNotificationToast";
 import { useNativePushNotifications } from "@/hooks/useNativePushNotifications";
 import { useAutoWebPush } from "@/hooks/useAutoWebPush";
 import Index from "./pages/Index";
@@ -55,6 +56,7 @@ const App = () => (
       <NotificationPermissionBanner />
       <PresenceTracker />
       <PushInitializer />
+      <InAppNotificationToast />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />

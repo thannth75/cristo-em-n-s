@@ -142,16 +142,19 @@ export const RepostButton = ({
   return (
     <>
       <button
-        onClick={() => setDialogOpen(true)}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (!hasReposted) setDialogOpen(true);
+        }}
         disabled={hasReposted}
-        className={`flex items-center gap-1 text-sm transition-colors ${
+        className={`flex items-center justify-center gap-1.5 w-full h-full transition-colors ${
           hasReposted
-            ? 'text-primary'
+            ? 'text-primary cursor-default'
             : 'text-muted-foreground hover:text-primary'
         }`}
       >
-        <Repeat2 className="h-4 w-4" />
-        {repostsCount > 0 && repostsCount}
+        <Repeat2 className="h-5 w-5 shrink-0" />
+        <span className="text-sm font-medium">Repostar</span>
       </button>
 
       <RepostDialog
