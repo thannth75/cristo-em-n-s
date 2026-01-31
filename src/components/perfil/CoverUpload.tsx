@@ -19,12 +19,19 @@ export default function CoverUpload({ userId, currentCoverUrl, onCoverChange }: 
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file
+    // Validate user
+    if (!userId) {
+      toast({ title: "Erro", description: "Usuário não identificado.", variant: "destructive" });
+      return;
+    }
+
+    // Validate file type
     if (!file.type.startsWith("image/")) {
       toast({ title: "Erro", description: "Por favor, selecione uma imagem.", variant: "destructive" });
       return;
     }
 
+    // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
       toast({ title: "Erro", description: "A imagem deve ter menos de 5MB.", variant: "destructive" });
       return;
@@ -33,36 +40,66 @@ export default function CoverUpload({ userId, currentCoverUrl, onCoverChange }: 
     setIsUploading(true);
 
     try {
-      const fileExt = file.name.split(".").pop();
+      const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      // Use userId as folder name to match RLS policy: storage.foldername(name)[1] = userId
       const fileName = `${userId}/cover-${Date.now()}.${fileExt}`;
+
+      // Delete previous cover if exists
+      if (currentCoverUrl) {
+        try {
+          const urlParts = currentCoverUrl.split("/covers/");
+          if (urlParts[1]) {
+            await supabase.storage.from("covers").remove([decodeURIComponent(urlParts[1])]);
+          }
+        } catch {
+          // Ignore delete errors
+        }
+      }
 
       // Upload to covers bucket
       const { error: uploadError } = await supabase.storage
         .from("covers")
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, file, { 
+          upsert: true,
+          contentType: file.type,
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw new Error(uploadError.message);
+      }
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from("covers")
         .getPublicUrl(fileName);
 
-      // Update profile
+      // Update profile with new cover URL
       const { error: updateError } = await supabase
         .from("profiles")
         .update({ cover_url: publicUrl })
         .eq("user_id", userId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Profile update error:", updateError);
+        throw new Error(updateError.message);
+      }
 
       onCoverChange(publicUrl);
       toast({ title: "Capa atualizada! 🎉" });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading cover:", error);
-      toast({ title: "Erro ao enviar imagem", variant: "destructive" });
+      toast({ 
+        title: "Erro ao enviar imagem", 
+        description: error?.message || "Tente novamente.",
+        variant: "destructive" 
+      });
     } finally {
       setIsUploading(false);
+      // Reset input so user can select same file again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
   };
 

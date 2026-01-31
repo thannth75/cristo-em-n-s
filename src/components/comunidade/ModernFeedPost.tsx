@@ -167,39 +167,53 @@ export default function ModernFeedPost({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center justify-around py-1 sm:py-2 border-b border-border/50">
+      <div className="grid grid-cols-3 border-b border-border/50">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => onLike(post.id, post.user_liked || false)}
           className={cn(
-            "flex-1 gap-2 h-10 sm:h-11 rounded-none text-muted-foreground hover:text-destructive hover:bg-destructive/5",
+            "flex items-center justify-center gap-1.5 h-11 rounded-none text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors",
             post.user_liked && "text-destructive"
           )}
         >
-          <Heart className={cn("h-5 w-5", post.user_liked && "fill-current")} />
-          <span className="hidden xs:inline text-sm">Curtir</span>
+          <Heart className={cn("h-5 w-5 shrink-0", post.user_liked && "fill-current")} />
+          <span className="text-sm font-medium">Curtir</span>
         </Button>
 
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setShowComments(!showComments)}
-          className="flex-1 gap-2 h-10 sm:h-11 rounded-none text-muted-foreground hover:text-primary hover:bg-primary/5"
+          className="flex items-center justify-center gap-1.5 h-11 rounded-none text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors"
         >
-          <MessageCircle className="h-5 w-5" />
-          <span className="hidden xs:inline text-sm">Comentar</span>
+          <MessageCircle className="h-5 w-5 shrink-0" />
+          <span className="text-sm font-medium">Comentar</span>
         </Button>
 
-        <RepostButton
-          postId={post.id}
-          postContent={post.content}
-          postUserName={userName}
-          repostsCount={post.reposts_count}
-          userId={currentUserId}
-          hasReposted={post.user_reposted}
-          onRepostSuccess={onRepostSuccess}
-        />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => !post.user_reposted && setShowComments(false)}
+          disabled={post.user_reposted}
+          className={cn(
+            "flex items-center justify-center gap-1.5 h-11 rounded-none text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors",
+            post.user_reposted && "text-primary"
+          )}
+          asChild
+        >
+          <div>
+            <RepostButton
+              postId={post.id}
+              postContent={post.content}
+              postUserName={userName}
+              repostsCount={post.reposts_count}
+              userId={currentUserId}
+              hasReposted={post.user_reposted}
+              onRepostSuccess={onRepostSuccess}
+            />
+          </div>
+        </Button>
       </div>
 
       {/* Comments section */}

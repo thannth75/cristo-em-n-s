@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
-  User, Mail, LogOut, Shield, ChevronRight, Award, Calendar, BookOpen, 
-  Camera, Edit, Bell, MapPin, BarChart3, Trophy, Star, Users, Eye
+  Mail, LogOut, Shield, ChevronRight, Award, Calendar, BookOpen, 
+  Edit, BarChart3, Eye
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,7 +34,7 @@ const Perfil = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, profile, roles, isAdmin, isLeader, isApproved, signOut, isLoading } = useAuth();
-  const [stats, setStats] = useState({ presencas: 0, estudos: 0, conquistas: 0, followers: 0, following: 0, views: 0 });
+  const [stats, setStats] = useState({ presencas: 0, estudos: 0, conquistas: 0, views: 0 });
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -77,12 +77,10 @@ const Perfil = () => {
   }, [user, isApproved]);
 
   const fetchStats = async () => {
-    const [attendanceRes, progressRes, achievementsRes, followersRes, followingRes, viewsRes] = await Promise.all([
+    const [attendanceRes, progressRes, achievementsRes, viewsRes] = await Promise.all([
       supabase.from("attendance").select("id", { count: "exact" }).eq("user_id", user?.id),
       supabase.from("study_progress").select("id", { count: "exact" }).eq("user_id", user?.id),
       supabase.from("user_achievements").select("id", { count: "exact" }).eq("user_id", user?.id),
-      supabase.from("user_follows").select("id", { count: "exact" }).eq("following_id", user?.id),
-      supabase.from("user_follows").select("id", { count: "exact" }).eq("follower_id", user?.id),
       supabase.from("profile_views").select("id", { count: "exact" }).eq("profile_user_id", user?.id),
     ]);
 
@@ -90,8 +88,6 @@ const Perfil = () => {
       presencas: attendanceRes.count || 0,
       estudos: progressRes.count || 0,
       conquistas: achievementsRes.count || 0,
-      followers: followersRes.count || 0,
-      following: followingRes.count || 0,
       views: viewsRes.count || 0,
     });
   };
@@ -287,14 +283,12 @@ const Perfil = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="mt-4 grid grid-cols-3 sm:grid-cols-6 gap-2"
+          className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3"
         >
           {[
             { label: "Presenças", value: stats.presencas, icon: Calendar, action: () => navigate("/presenca") },
             { label: "Estudos", value: stats.estudos, icon: BookOpen, action: () => navigate("/estudos") },
             { label: "Conquistas", value: stats.conquistas, icon: Award, action: () => navigate("/conquistas") },
-            { label: "Seguidores", value: stats.followers, icon: Users, action: undefined },
-            { label: "Seguindo", value: stats.following, icon: Users, action: undefined },
             { label: "Visitas", value: stats.views, icon: Eye, action: undefined },
           ].map((stat) => (
             <motion.button
@@ -303,11 +297,11 @@ const Perfil = () => {
               whileTap={{ scale: 0.98 }}
               onClick={stat.action}
               disabled={!stat.action}
-              className="rounded-xl bg-card p-2 sm:p-3 text-center shadow-md disabled:cursor-default"
+              className="rounded-xl bg-card p-3 sm:p-4 text-center shadow-md disabled:cursor-default"
             >
-              <stat.icon className="mx-auto mb-1 h-4 w-4 text-primary" />
-              <p className="font-bold text-lg text-foreground">{stat.value}</p>
-              <p className="text-[9px] sm:text-xs text-muted-foreground">{stat.label}</p>
+              <stat.icon className="mx-auto mb-1.5 h-5 w-5 text-primary" />
+              <p className="font-bold text-xl text-foreground">{stat.value}</p>
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
             </motion.button>
           ))}
         </motion.div>
