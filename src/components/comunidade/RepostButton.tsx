@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Repeat2, X, Loader2 } from 'lucide-react';
+import { Repeat2, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 interface RepostDialogProps {
   open: boolean;
@@ -63,7 +63,7 @@ export const RepostDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle className="font-serif flex items-center gap-2">
             <Repeat2 className="w-5 h-5" />
@@ -86,7 +86,7 @@ export const RepostDialog = ({
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="Adicione um comentário (opcional)..."
-              className="resize-none"
+              className="resize-none rounded-xl"
               maxLength={280}
               rows={3}
             />
@@ -98,7 +98,7 @@ export const RepostDialog = ({
           <Button
             onClick={handleRepost}
             disabled={isReposting}
-            className="w-full"
+            className="w-full rounded-xl"
           >
             {isReposting ? (
               <>
@@ -139,22 +139,27 @@ export const RepostButton = ({
 }: RepostButtonProps) => {
   const [dialogOpen, setDialogOpen] = useState(false);
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!hasReposted) {
+      setDialogOpen(true);
+    }
+  };
+
   return (
     <>
       <button
-        onClick={(e) => {
-          e.stopPropagation();
-          if (!hasReposted) setDialogOpen(true);
-        }}
+        onClick={handleClick}
         disabled={hasReposted}
-        className={`flex items-center justify-center gap-1.5 w-full h-full transition-colors ${
+        className={cn(
+          "flex items-center justify-center gap-1.5 py-3 min-h-[48px] w-full transition-colors active:bg-muted/50",
           hasReposted
-            ? 'text-primary cursor-default'
-            : 'text-muted-foreground hover:text-primary'
-        }`}
+            ? "text-primary cursor-default"
+            : "text-muted-foreground hover:text-primary hover:bg-primary/5"
+        )}
       >
         <Repeat2 className="h-5 w-5 shrink-0" />
-        <span className="text-sm font-medium">Repostar</span>
+        <span className="text-sm font-medium hidden xs:inline">Repostar</span>
       </button>
 
       <RepostDialog
