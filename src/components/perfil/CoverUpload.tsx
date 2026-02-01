@@ -41,10 +41,9 @@ export default function CoverUpload({ userId, currentCoverUrl, onCoverChange }: 
 
     try {
       const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      // Use userId as folder name to match RLS policy: storage.foldername(name)[1] = userId
       const fileName = `${userId}/cover-${Date.now()}.${fileExt}`;
 
-      // Delete previous cover if exists
+      // Try to delete previous cover if exists
       if (currentCoverUrl) {
         try {
           const urlParts = currentCoverUrl.split("/covers/");
@@ -52,12 +51,12 @@ export default function CoverUpload({ userId, currentCoverUrl, onCoverChange }: 
             await supabase.storage.from("covers").remove([decodeURIComponent(urlParts[1])]);
           }
         } catch {
-          // Ignore delete errors
+          // Ignore delete errors - file might not exist
         }
       }
 
       // Upload to covers bucket
-      const { error: uploadError } = await supabase.storage
+      const { error: uploadError, data: uploadData } = await supabase.storage
         .from("covers")
         .upload(fileName, file, { 
           upsert: true,
@@ -66,7 +65,7 @@ export default function CoverUpload({ userId, currentCoverUrl, onCoverChange }: 
 
       if (uploadError) {
         console.error("Upload error:", uploadError);
-        throw new Error(uploadError.message);
+        throw new Error(uploadError.message || "Erro no upload");
       }
 
       // Get public URL
@@ -74,24 +73,27 @@ export default function CoverUpload({ userId, currentCoverUrl, onCoverChange }: 
         .from("covers")
         .getPublicUrl(fileName);
 
+      // Add cache buster to force refresh
+      const urlWithCacheBuster = `${publicUrl}?t=${Date.now()}`;
+
       // Update profile with new cover URL
       const { error: updateError } = await supabase
         .from("profiles")
-        .update({ cover_url: publicUrl })
+        .update({ cover_url: urlWithCacheBuster })
         .eq("user_id", userId);
 
       if (updateError) {
         console.error("Profile update error:", updateError);
-        throw new Error(updateError.message);
+        throw new Error(updateError.message || "Erro ao atualizar perfil");
       }
 
-      onCoverChange(publicUrl);
+      onCoverChange(urlWithCacheBuster);
       toast({ title: "Capa atualizada! 🎉" });
     } catch (error: any) {
       console.error("Error uploading cover:", error);
       toast({ 
         title: "Erro ao enviar imagem", 
-        description: error?.message || "Tente novamente.",
+        description: error?.message || "Verifique sua conexão e tente novamente.",
         variant: "destructive" 
       });
     } finally {
@@ -103,28 +105,34 @@ export default function CoverUpload({ userId, currentCoverUrl, onCoverChange }: 
     }
   };
 
+  const handleClick = () => {
+    fileInputRef.current?.click();
+  };
+
   return (
     <>
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp,image/gif"
         onChange={handleFileSelect}
         className="hidden"
+        capture="environment"
       />
       <Button
-        variant="ghost"
+        type="button"
+        variant="secondary"
         size="sm"
-        onClick={() => fileInputRef.current?.click()}
-        disabled={isUploading}
-        className="absolute bottom-4 right-4 rounded-full bg-background/70 text-foreground border border-border backdrop-blur hover:bg-background/85"
+        onClick={handleClick}
+        disabled={isUploading || !userId}
+        className="absolute bottom-4 right-4 rounded-full bg-background/80 text-foreground border border-border backdrop-blur-sm hover:bg-background/95 shadow-lg min-h-[44px] min-w-[44px] px-3"
       >
         {isUploading ? (
           <Loader2 className="h-4 w-4 animate-spin" />
         ) : (
           <>
-            <Camera className="h-4 w-4 mr-1" />
-            <span className="hidden sm:inline">Alterar capa</span>
+            <Camera className="h-4 w-4 mr-2" />
+            <span className="text-xs sm:text-sm">Alterar capa</span>
           </>
         )}
       </Button>

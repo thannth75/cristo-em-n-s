@@ -173,7 +173,7 @@ export const EnhancedCreatePostDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="mx-4 max-w-md rounded-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle className="font-serif">Novo Post</DialogTitle>
         </DialogHeader>
@@ -232,7 +232,7 @@ export const EnhancedCreatePostDialog = ({
               type="button"
               variant="outline"
               onClick={() => imageInputRef.current?.click()}
-              className="flex-1 gap-2"
+              className="flex-1 gap-2 rounded-xl"
               disabled={isUploading || !!selectedVideo}
             >
               <Image className="h-4 w-4" />
@@ -243,7 +243,7 @@ export const EnhancedCreatePostDialog = ({
               type="button"
               variant="outline"
               onClick={() => videoInputRef.current?.click()}
-              className="flex-1 gap-2"
+              className="flex-1 gap-2 rounded-xl"
               disabled={isUploading || !!selectedImage}
             >
               <Video className="h-4 w-4" />
@@ -252,12 +252,12 @@ export const EnhancedCreatePostDialog = ({
           </div>
           
           <p className="text-xs text-muted-foreground text-center">
-            📷 Fotos até 5MB • 🎬 Vídeos até 100MB (cultos, pregações, louvores)
+            📷 Fotos até 5MB • 🎬 Vídeos até 100MB
           </p>
           
           <Button
             onClick={handleCreatePost}
-            className="w-full"
+            className="w-full rounded-xl"
             disabled={isUploading || !content.trim()}
           >
             {isUploading ? (

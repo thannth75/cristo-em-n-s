@@ -2,7 +2,6 @@ import { useState, useRef } from "react";
 import { Camera, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "@/components/ui/button";
 
 interface AvatarUploadProps {
   userId: string;
@@ -19,6 +18,16 @@ const AvatarUpload = ({ userId, currentAvatarUrl, userName, onAvatarChange }: Av
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    // Validate user
+    if (!userId) {
+      toast({ 
+        title: "Erro", 
+        description: "Usuário não identificado.", 
+        variant: "destructive" 
+      });
+      return;
+    }
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
@@ -44,44 +53,64 @@ const AvatarUpload = ({ userId, currentAvatarUrl, userName, onAvatarChange }: Av
 
     try {
       // Create unique file path
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${userId}/avatar.${fileExt}`;
+      const fileExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
+      const fileName = `${userId}/avatar-${Date.now()}.${fileExt}`;
 
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage
         .from("avatars")
-        .upload(fileName, file, { upsert: true });
+        .upload(fileName, file, { 
+          upsert: true,
+          contentType: file.type,
+        });
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw new Error(uploadError.message || "Erro no upload");
+      }
 
       // Get public URL
       const { data: { publicUrl } } = supabase.storage
         .from("avatars")
         .getPublicUrl(fileName);
 
+      // Add cache buster to force refresh
+      const urlWithCacheBuster = `${publicUrl}?t=${Date.now()}`;
+
       // Update profile with new avatar URL
       const { error: updateError } = await supabase
         .from("profiles")
-        .update({ avatar_url: publicUrl })
+        .update({ avatar_url: urlWithCacheBuster })
         .eq("user_id", userId);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Profile update error:", updateError);
+        throw new Error(updateError.message || "Erro ao atualizar perfil");
+      }
 
-      onAvatarChange(publicUrl);
+      onAvatarChange(urlWithCacheBuster);
       toast({ 
         title: "Foto atualizada! 📸", 
         description: "Sua foto de perfil foi alterada." 
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading avatar:", error);
       toast({ 
         title: "Erro", 
-        description: "Não foi possível atualizar a foto.", 
+        description: error?.message || "Não foi possível atualizar a foto.", 
         variant: "destructive" 
       });
     } finally {
       setIsUploading(false);
+      // Reset input so user can select same file again
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
     }
+  };
+
+  const handleClick = () => {
+    fileInputRef.current?.click();
   };
 
   return (
@@ -89,9 +118,10 @@ const AvatarUpload = ({ userId, currentAvatarUrl, userName, onAvatarChange }: Av
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp,image/gif"
         onChange={handleFileSelect}
         className="hidden"
+        capture="environment"
       />
       
       <div className="relative">
@@ -110,9 +140,11 @@ const AvatarUpload = ({ userId, currentAvatarUrl, userName, onAvatarChange }: Av
         )}
         
         <button
-          onClick={() => fileInputRef.current?.click()}
-          disabled={isUploading}
-          className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors"
+          type="button"
+          onClick={handleClick}
+          disabled={isUploading || !userId}
+          className="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] min-w-[44px]"
+          style={{ touchAction: 'manipulation' }}
         >
           {isUploading ? (
             <Loader2 className="h-4 w-4 animate-spin" />

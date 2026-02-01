@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bot, Send, X, Loader2, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAIAssistant } from "@/hooks/useAIAssistant";
 import ReactMarkdown from "react-markdown";
@@ -28,7 +28,7 @@ const AIAssistantChat = ({
   });
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -40,7 +40,7 @@ const AIAssistantChat = ({
   // Focus input when opened
   useEffect(() => {
     if (isOpen && inputRef.current) {
-      setTimeout(() => inputRef.current?.focus(), 100);
+      setTimeout(() => inputRef.current?.focus(), 300);
     }
   }, [isOpen]);
 
@@ -78,18 +78,23 @@ const AIAssistantChat = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4"
+          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end justify-center"
           onClick={(e) => e.target === e.currentTarget && onClose()}
         >
           <motion.div
-            initial={{ y: "100%", opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: "100%", opacity: 0 }}
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="w-full sm:max-w-lg h-[85vh] sm:h-[600px] bg-background rounded-t-3xl sm:rounded-2xl flex flex-col overflow-hidden shadow-2xl"
+            className="w-full max-w-lg bg-background rounded-t-3xl flex flex-col overflow-hidden shadow-2xl"
+            style={{
+              height: "calc(100vh - env(safe-area-inset-top, 0px) - 2rem)",
+              maxHeight: "700px",
+              paddingBottom: "env(safe-area-inset-bottom, 0px)",
+            }}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary/10 to-primary/5">
+            <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary/10 to-primary/5 shrink-0">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/20">
                   <Bot className="h-5 w-5 text-primary" />
@@ -105,7 +110,7 @@ const AIAssistantChat = ({
                     variant="ghost"
                     size="icon"
                     onClick={clearMessages}
-                    className="rounded-xl h-8 w-8"
+                    className="rounded-xl h-9 w-9"
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -114,7 +119,7 @@ const AIAssistantChat = ({
                   variant="ghost"
                   size="icon"
                   onClick={onClose}
-                  className="rounded-xl h-8 w-8"
+                  className="rounded-xl h-9 w-9"
                 >
                   <X className="h-4 w-4" />
                 </Button>
@@ -124,7 +129,7 @@ const AIAssistantChat = ({
             {/* Messages */}
             <ScrollArea className="flex-1 p-4" ref={scrollRef}>
               {messages.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-center px-4">
+                <div className="h-full flex flex-col items-center justify-center text-center px-4 py-8">
                   <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 mb-4">
                     <Sparkles className="h-8 w-8 text-primary" />
                   </div>
@@ -135,7 +140,7 @@ const AIAssistantChat = ({
                     Posso ajudar com dúvidas bíblicas, reflexões espirituais e palavras de
                     encorajamento.
                   </p>
-                  <div className="grid gap-2 w-full">
+                  <div className="grid gap-2 w-full max-w-xs">
                     {suggestedQuestions.map((question, i) => (
                       <button
                         key={i}
@@ -148,7 +153,7 @@ const AIAssistantChat = ({
                   </div>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-4 pb-4">
                   {messages.map((msg, i) => (
                     <motion.div
                       key={i}
@@ -196,17 +201,21 @@ const AIAssistantChat = ({
               )}
             </ScrollArea>
 
-            {/* Input */}
-            <div className="p-4 border-t bg-background pb-safe">
-              <div className="flex gap-2">
-                <Textarea
+            {/* Input - Fixed at bottom with proper spacing */}
+            <div 
+              className="p-4 border-t bg-background shrink-0"
+              style={{
+                paddingBottom: "max(1rem, env(safe-area-inset-bottom, 16px))",
+              }}
+            >
+              <div className="flex gap-2 items-center">
+                <Input
                   ref={inputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   placeholder="Digite sua pergunta..."
-                  className="min-h-[44px] max-h-[120px] rounded-xl resize-none"
-                  rows={1}
+                  className="flex-1 h-11 rounded-xl"
                 />
                 <Button
                   onClick={handleSend}

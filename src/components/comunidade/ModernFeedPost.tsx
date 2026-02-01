@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Heart, MessageCircle, Share2, MoreHorizontal, Bookmark, Send, Pencil, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -113,7 +113,7 @@ export default function ModernFeedPost({
         {isOwn && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground">
+              <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-muted-foreground">
                 <MoreHorizontal className="h-5 w-5" />
               </Button>
             </DropdownMenuTrigger>
@@ -160,65 +160,52 @@ export default function ModernFeedPost({
         >
           {post.likes_count} {post.likes_count === 1 ? "curtida" : "curtidas"}
         </button>
-        <div className="flex gap-4">
+        <div className="flex gap-3 sm:gap-4">
           <span>{post.comments_count} comentários</span>
-          <span>{post.reposts_count} compartilhamentos</span>
+          <span>{post.reposts_count} reposts</span>
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="grid grid-cols-3 border-b border-border/50">
-        <Button
-          variant="ghost"
-          size="sm"
+      {/* Actions - Grid de 3 colunas perfeitamente alinhado */}
+      <div className="grid grid-cols-3 divide-x divide-border/50">
+        {/* Curtir */}
+        <button
           onClick={() => onLike(post.id, post.user_liked || false)}
           className={cn(
-            "flex items-center justify-center gap-1.5 h-11 rounded-none text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors",
-            post.user_liked && "text-destructive"
+            "flex items-center justify-center gap-1.5 py-3 min-h-[48px] transition-colors active:bg-muted/50",
+            post.user_liked
+              ? "text-destructive"
+              : "text-muted-foreground hover:text-destructive hover:bg-destructive/5"
           )}
         >
           <Heart className={cn("h-5 w-5 shrink-0", post.user_liked && "fill-current")} />
-          <span className="text-sm font-medium">Curtir</span>
-        </Button>
+          <span className="text-sm font-medium hidden xs:inline">Curtir</span>
+        </button>
 
-        <Button
-          variant="ghost"
-          size="sm"
+        {/* Comentar */}
+        <button
           onClick={() => setShowComments(!showComments)}
-          className="flex items-center justify-center gap-1.5 h-11 rounded-none text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors"
+          className="flex items-center justify-center gap-1.5 py-3 min-h-[48px] text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors active:bg-muted/50"
         >
           <MessageCircle className="h-5 w-5 shrink-0" />
-          <span className="text-sm font-medium">Comentar</span>
-        </Button>
+          <span className="text-sm font-medium hidden xs:inline">Comentar</span>
+        </button>
 
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => !post.user_reposted && setShowComments(false)}
-          disabled={post.user_reposted}
-          className={cn(
-            "flex items-center justify-center gap-1.5 h-11 rounded-none text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors",
-            post.user_reposted && "text-primary"
-          )}
-          asChild
-        >
-          <div>
-            <RepostButton
-              postId={post.id}
-              postContent={post.content}
-              postUserName={userName}
-              repostsCount={post.reposts_count}
-              userId={currentUserId}
-              hasReposted={post.user_reposted}
-              onRepostSuccess={onRepostSuccess}
-            />
-          </div>
-        </Button>
+        {/* Repostar */}
+        <RepostButton
+          postId={post.id}
+          postContent={post.content}
+          postUserName={userName}
+          repostsCount={post.reposts_count}
+          userId={currentUserId}
+          hasReposted={post.user_reposted}
+          onRepostSuccess={onRepostSuccess}
+        />
       </div>
 
       {/* Comments section */}
       {showComments && (
-        <div className="p-3 sm:p-4 bg-muted/30">
+        <div className="p-3 sm:p-4 bg-muted/30 border-t border-border/50">
           <PostComments
             postId={post.id}
             commentsCount={post.comments_count}
