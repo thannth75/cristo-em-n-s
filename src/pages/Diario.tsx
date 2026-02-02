@@ -271,7 +271,7 @@ const Diario = () => {
                 Nova Reflexão
               </Button>
             </DialogTrigger>
-            <DialogContent className="mx-4 max-w-md rounded-2xl max-h-[85vh] overflow-y-auto">
+            <DialogContent className="rounded-2xl">
               <DialogHeader>
                 <DialogTitle className="font-serif">Nova Reflexão</DialogTitle>
               </DialogHeader>

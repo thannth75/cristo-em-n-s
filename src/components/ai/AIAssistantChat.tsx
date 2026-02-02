@@ -86,11 +86,10 @@ const AIAssistantChat = ({
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="w-full max-w-lg bg-background rounded-t-3xl flex flex-col overflow-hidden shadow-2xl"
+            className="w-full max-w-lg bg-background rounded-t-3xl flex flex-col shadow-2xl"
             style={{
-              height: "calc(100vh - env(safe-area-inset-top, 0px) - 2rem)",
-              maxHeight: "700px",
-              paddingBottom: "env(safe-area-inset-bottom, 0px)",
+              height: "70vh",
+              maxHeight: "600px",
             }}
           >
             {/* Header */}
@@ -201,13 +200,8 @@ const AIAssistantChat = ({
               )}
             </ScrollArea>
 
-            {/* Input - Fixed at bottom with proper spacing */}
-            <div 
-              className="p-4 border-t bg-background shrink-0"
-              style={{
-                paddingBottom: "max(1rem, env(safe-area-inset-bottom, 16px))",
-              }}
-            >
+            {/* Input - Fixed at bottom with safe area */}
+            <div className="p-4 border-t bg-background shrink-0 pb-safe">
               <div className="flex gap-2 items-center">
                 <Input
                   ref={inputRef}
