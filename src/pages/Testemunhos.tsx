@@ -262,7 +262,7 @@ const Testemunhos = () => {
                 <Plus className="h-5 w-5" />
               </Button>
             </DialogTrigger>
-            <DialogContent className="mx-4 max-w-md rounded-2xl max-h-[85vh] overflow-y-auto">
+            <DialogContent className="rounded-2xl">
               <DialogHeader>
                 <DialogTitle className="font-serif">Compartilhar Testemunho</DialogTitle>
               </DialogHeader>

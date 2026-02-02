@@ -215,7 +215,7 @@ const Oracoes = () => {
                 <Plus className="h-5 w-5" />
               </Button>
             </DialogTrigger>
-            <DialogContent className="mx-4 max-w-md rounded-2xl">
+            <DialogContent className="rounded-2xl">
               <DialogHeader>
                 <DialogTitle className="font-serif">Novo Pedido</DialogTitle>
               </DialogHeader>

@@ -365,7 +365,7 @@ const Perfil = () => {
 
       {/* Edit Profile Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="mx-4 max-w-md rounded-2xl max-h-[85vh] overflow-hidden flex flex-col">
+        <DialogContent className="rounded-2xl max-h-[85vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="font-serif">Configurações do Perfil</DialogTitle>
           </DialogHeader>

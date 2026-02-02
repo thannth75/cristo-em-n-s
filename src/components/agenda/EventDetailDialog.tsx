@@ -68,7 +68,7 @@ const EventDetailDialog = ({ event, open, onOpenChange }: EventDetailDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="mx-4 max-w-md rounded-2xl">
+      <DialogContent className="rounded-2xl">
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div className="flex-1">

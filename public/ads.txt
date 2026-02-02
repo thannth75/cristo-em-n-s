@@ -1,1 +1,4 @@
-google.com, pub-5086844435418084, DIRECT, f08c47fec0942fa0
+# AdMob configured for native apps (Android/iOS)
+# App ID: ca-app-pub-5086844435418084~7605117992
+# Banner Ad Unit ID: ca-app-pub-5086844435418084/6826350806
+# Note: Web ads (AdSense) disabled per user request
