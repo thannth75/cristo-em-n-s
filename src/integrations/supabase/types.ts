@@ -97,6 +97,38 @@ export type Database = {
           },
         ]
       }
+      auto_devotional_log: {
+        Row: {
+          devotional_id: string | null
+          generated_at: string
+          id: string
+          model_used: string | null
+          prompt_used: string | null
+        }
+        Insert: {
+          devotional_id?: string | null
+          generated_at?: string
+          id?: string
+          model_used?: string | null
+          prompt_used?: string | null
+        }
+        Update: {
+          devotional_id?: string | null
+          generated_at?: string
+          id?: string
+          model_used?: string | null
+          prompt_used?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "auto_devotional_log_devotional_id_fkey"
+            columns: ["devotional_id"]
+            isOneToOne: false
+            referencedRelation: "daily_devotionals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bible_book_content: {
         Row: {
           application: string | null
@@ -510,6 +542,7 @@ export type Database = {
           created_by: string
           devotional_date: string
           id: string
+          is_auto_generated: boolean | null
           prayer_focus: string | null
           reflection_questions: string[] | null
           title: string
@@ -522,6 +555,7 @@ export type Database = {
           created_by: string
           devotional_date: string
           id?: string
+          is_auto_generated?: boolean | null
           prayer_focus?: string | null
           reflection_questions?: string[] | null
           title: string
@@ -534,6 +568,7 @@ export type Database = {
           created_by?: string
           devotional_date?: string
           id?: string
+          is_auto_generated?: boolean | null
           prayer_focus?: string | null
           reflection_questions?: string[] | null
           title?: string
