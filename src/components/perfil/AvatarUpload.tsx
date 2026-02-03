@@ -121,7 +121,6 @@ const AvatarUpload = ({ userId, currentAvatarUrl, userName, onAvatarChange }: Av
         accept="image/jpeg,image/png,image/webp,image/gif"
         onChange={handleFileSelect}
         className="hidden"
-        capture="environment"
       />
       
       <div className="relative">

@@ -78,7 +78,7 @@ const AIAssistantChat = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-end justify-center"
+          className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-end justify-center"
           onClick={(e) => e.target === e.currentTarget && onClose()}
         >
           <motion.div
@@ -88,8 +88,10 @@ const AIAssistantChat = ({
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className="w-full max-w-lg bg-background rounded-t-3xl flex flex-col shadow-2xl"
             style={{
+              // Mantém o input sempre acima do BottomNavigation
               height: "70vh",
               maxHeight: "600px",
+              marginBottom: "calc(4.5rem + env(safe-area-inset-bottom, 16px))",
             }}
           >
             {/* Header */}
@@ -201,7 +203,10 @@ const AIAssistantChat = ({
             </ScrollArea>
 
             {/* Input - Fixed at bottom with safe area */}
-            <div className="p-4 border-t bg-background shrink-0 pb-safe">
+            <div
+              className="p-4 border-t bg-background shrink-0"
+              style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom, 16px))" }}
+            >
               <div className="flex gap-2 items-center">
                 <Input
                   ref={inputRef}

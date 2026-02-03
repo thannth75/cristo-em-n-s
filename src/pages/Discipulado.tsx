@@ -542,7 +542,7 @@ const Discipulado = () => {
 
       {/* New Discipleship Dialog */}
       <Dialog open={isNewDialogOpen} onOpenChange={setIsNewDialogOpen}>
-        <DialogContent className="mx-4 max-w-md rounded-2xl">
+        <DialogContent className="max-w-md rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-serif">Novo Discipulado</DialogTitle>
           </DialogHeader>
@@ -585,7 +585,7 @@ const Discipulado = () => {
 
       {/* New Goal Dialog */}
       <Dialog open={isGoalDialogOpen} onOpenChange={setIsGoalDialogOpen}>
-        <DialogContent className="mx-4 max-w-md rounded-2xl">
+        <DialogContent className="max-w-md rounded-2xl">
           <DialogHeader>
             <DialogTitle className="font-serif">Nova Meta</DialogTitle>
           </DialogHeader>
@@ -626,7 +626,7 @@ const Discipulado = () => {
 
       {/* Checkin Dialog */}
       <Dialog open={isCheckinDialogOpen} onOpenChange={setIsCheckinDialogOpen}>
-        <DialogContent className="mx-4 max-w-md rounded-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-md rounded-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-serif">Check-in Semanal</DialogTitle>
           </DialogHeader>

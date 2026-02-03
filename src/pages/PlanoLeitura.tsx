@@ -418,7 +418,7 @@ const PlanoLeitura = () => {
 
         {/* Plan Selection Dialog */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="mx-4 max-w-md rounded-2xl">
+          <DialogContent className="max-w-md rounded-2xl">
             <DialogHeader>
               <DialogTitle className="font-serif">Escolha um Plano</DialogTitle>
             </DialogHeader>
