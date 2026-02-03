@@ -197,7 +197,7 @@ const Perfil = () => {
             className="absolute inset-0 w-full h-full object-cover"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent pointer-events-none" />
         <CoverUpload userId={user?.id || ""} currentCoverUrl={coverUrl} onCoverChange={setCoverUrl} />
       </div>
 

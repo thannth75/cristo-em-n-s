@@ -209,7 +209,7 @@ const Musicos = () => {
                 </div>
               </motion.button>
             </DialogTrigger>
-            <DialogContent className="mx-4 max-w-md rounded-2xl">
+            <DialogContent className="max-w-md rounded-2xl">
               <DialogHeader>
                 <DialogTitle className="font-serif">Nova Música</DialogTitle>
               </DialogHeader>

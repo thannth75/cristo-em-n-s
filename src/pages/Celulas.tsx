@@ -534,7 +534,7 @@ const Celulas = () => {
 
         {/* Dialog Criar Célula */}
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogContent className="mx-4 max-w-md rounded-2xl max-h-[85vh] overflow-y-auto">
+          <DialogContent className="max-w-md rounded-2xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="font-serif">Nova Célula</DialogTitle>
             </DialogHeader>
@@ -602,7 +602,7 @@ const Celulas = () => {
 
         {/* Dialog Criar Encontro */}
         <Dialog open={isMeetingDialogOpen} onOpenChange={setIsMeetingDialogOpen}>
-          <DialogContent className="mx-4 max-w-md rounded-2xl">
+          <DialogContent className="max-w-md rounded-2xl">
             <DialogHeader>
               <DialogTitle className="font-serif">Agendar Encontro</DialogTitle>
             </DialogHeader>

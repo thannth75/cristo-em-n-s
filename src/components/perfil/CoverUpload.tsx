@@ -117,7 +117,6 @@ export default function CoverUpload({ userId, currentCoverUrl, onCoverChange }: 
         accept="image/jpeg,image/png,image/webp,image/gif"
         onChange={handleFileSelect}
         className="hidden"
-        capture="environment"
       />
       <Button
         type="button"
