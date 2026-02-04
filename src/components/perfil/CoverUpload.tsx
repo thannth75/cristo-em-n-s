@@ -124,7 +124,8 @@ export default function CoverUpload({ userId, currentCoverUrl, onCoverChange }: 
         size="sm"
         onClick={handleClick}
         disabled={isUploading || !userId}
-        className="absolute bottom-4 right-4 rounded-full bg-background/80 text-foreground border border-border backdrop-blur-sm hover:bg-background/95 shadow-lg min-h-[44px] min-w-[44px] px-3"
+        className="relative z-30 rounded-full bg-background/80 text-foreground border border-border backdrop-blur-sm hover:bg-background/95 shadow-lg min-h-[44px] min-w-[44px] px-3"
+        style={{ touchAction: "manipulation" }}
       >
         {isUploading ? (
           <Loader2 className="h-4 w-4 animate-spin" />

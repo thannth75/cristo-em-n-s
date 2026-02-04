@@ -65,7 +65,7 @@ export function LevelUpCelebration({
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="mx-4 max-w-sm rounded-3xl border-0 bg-gradient-to-b from-primary/20 via-background to-background p-0 overflow-hidden">
+      <DialogContent className="max-w-sm rounded-3xl border-0 bg-gradient-to-b from-primary/20 via-background to-background p-0 overflow-hidden">
         <AnimatePresence>
           {open && (
             <motion.div
