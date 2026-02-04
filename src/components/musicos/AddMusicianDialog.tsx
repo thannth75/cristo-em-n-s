@@ -166,7 +166,7 @@ const AddMusicianDialog = ({ onMusicianAdded }: AddMusicianDialogProps) => {
           Músico
         </Button>
       </DialogTrigger>
-      <DialogContent className="mx-4 max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-md rounded-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="font-serif">Cadastrar Músico</DialogTitle>
         </DialogHeader>

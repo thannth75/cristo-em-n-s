@@ -225,7 +225,7 @@ const StudyDetailDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="mx-4 max-w-md rounded-2xl max-h-[85vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-md rounded-2xl max-h-[85vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="font-serif flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-primary" />

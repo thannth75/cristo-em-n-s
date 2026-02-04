@@ -198,7 +198,6 @@ const Perfil = () => {
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent pointer-events-none" />
-        <CoverUpload userId={user?.id || ""} currentCoverUrl={coverUrl} onCoverChange={setCoverUrl} />
       </div>
 
       <main className="relative z-10 px-4 -mt-16 max-w-2xl mx-auto" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left, 16px))', paddingRight: 'max(1rem, env(safe-area-inset-right, 16px))' }}>
@@ -362,6 +361,17 @@ const Perfil = () => {
           <p className="mt-1 text-sm font-medium text-primary">— 1 Coríntios 10:31</p>
         </motion.div>
       </main>
+
+      {/* Cover upload button - rendered after <main> so it stays clickable */}
+      <div
+        className="absolute z-30"
+        style={{
+          top: "calc(9rem - 2.75rem)",
+          right: "max(1rem, env(safe-area-inset-right, 16px))",
+        }}
+      >
+        <CoverUpload userId={user?.id || ""} currentCoverUrl={coverUrl} onCoverChange={setCoverUrl} />
+      </div>
 
       {/* Edit Profile Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>

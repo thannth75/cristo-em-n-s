@@ -19,6 +19,7 @@ import { Progress } from "@/components/ui/progress";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
+import QuizAdminToolbar from "@/components/quizzes/QuizAdminToolbar";
 
 interface Quiz {
   id: string;
@@ -49,7 +50,7 @@ interface QuizAttempt {
 
 const Quiz = () => {
   const navigate = useNavigate();
-  const { user, profile, isApproved, isLoading: authLoading } = useAuth();
+  const { user, profile, isApproved, isAdmin, isLeader, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const { awardXp, showLevelUp, levelUpData, closeLevelUp } = useXpAward(user?.id);
   
@@ -193,18 +194,30 @@ const Quiz = () => {
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case "easy": return "bg-primary/10 text-primary";
-      case "medium": return "bg-gold/20 text-gold";
-      case "hard": return "bg-destructive/10 text-destructive";
+      case "easy":
+      case "facil":
+        return "bg-primary/10 text-primary";
+      case "medium":
+      case "medio":
+        return "bg-gold/20 text-gold";
+      case "hard":
+      case "dificil":
+        return "bg-destructive/10 text-destructive";
       default: return "bg-muted text-muted-foreground";
     }
   };
 
   const getDifficultyLabel = (difficulty: string) => {
     switch (difficulty) {
-      case "easy": return "Fácil";
-      case "medium": return "Médio";
-      case "hard": return "Difícil";
+      case "easy":
+      case "facil":
+        return "Fácil";
+      case "medium":
+      case "medio":
+        return "Médio";
+      case "hard":
+      case "dificil":
+        return "Difícil";
       default: return difficulty;
     }
   };
@@ -265,9 +278,9 @@ const Quiz = () => {
                   disabled={showResult}
                   className={`w-full p-4 rounded-xl text-left transition-all ${
                     isCorrect
-                      ? "bg-green-500/20 border-2 border-green-500"
+                      ? "bg-primary/15 border-2 border-primary"
                       : isWrong
-                      ? "bg-red-500/20 border-2 border-red-500"
+                      ? "bg-destructive/10 border-2 border-destructive"
                       : isSelected
                       ? "bg-primary/20 border-2 border-primary"
                       : "bg-muted border-2 border-transparent"
@@ -275,16 +288,16 @@ const Quiz = () => {
                 >
                   <div className="flex items-center gap-3">
                     <span className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
-                      isCorrect ? "bg-green-500 text-white" :
-                      isWrong ? "bg-red-500 text-white" :
+                      isCorrect ? "bg-primary text-primary-foreground" :
+                      isWrong ? "bg-destructive text-destructive-foreground" :
                       isSelected ? "bg-primary text-primary-foreground" :
                       "bg-background text-foreground"
                     }`}>
                       {String.fromCharCode(65 + index)}
                     </span>
                     <span className="text-foreground">{option}</span>
-                    {isCorrect && <CheckCircle className="ml-auto h-5 w-5 text-green-500" />}
-                    {isWrong && <XCircle className="ml-auto h-5 w-5 text-red-500" />}
+                    {isCorrect && <CheckCircle className="ml-auto h-5 w-5 text-primary" />}
+                    {isWrong && <XCircle className="ml-auto h-5 w-5 text-destructive" />}
                   </div>
                 </motion.button>
               );
@@ -388,6 +401,12 @@ const Quiz = () => {
       <AppHeader userName={userName} />
 
       <main className="px-4 py-6">
+        <QuizAdminToolbar
+          userId={user?.id || ""}
+          canManage={!!user && (isAdmin || isLeader)}
+          onRefresh={fetchData}
+        />
+
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
