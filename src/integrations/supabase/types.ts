@@ -1749,6 +1749,38 @@ export type Database = {
         }
         Relationships: []
       }
+      routine_daily_checkins: {
+        Row: {
+          completed_at: string
+          id: string
+          reflection_notes: string | null
+          routine_day_id: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          id?: string
+          reflection_notes?: string | null
+          routine_day_id: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          id?: string
+          reflection_notes?: string | null
+          routine_day_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "routine_daily_checkins_routine_day_id_fkey"
+            columns: ["routine_day_id"]
+            isOneToOne: false
+            referencedRelation: "spiritual_routine_days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saved_stories: {
         Row: {
           id: string
@@ -1895,6 +1927,83 @@ export type Database = {
           tempo?: number | null
           title?: string
           youtube_url?: string | null
+        }
+        Relationships: []
+      }
+      spiritual_routine_days: {
+        Row: {
+          action_item: string | null
+          bible_reading: string | null
+          created_at: string
+          day_number: number
+          description: string | null
+          id: string
+          plan_id: string
+          reflection_prompt: string | null
+          title: string
+        }
+        Insert: {
+          action_item?: string | null
+          bible_reading?: string | null
+          created_at?: string
+          day_number: number
+          description?: string | null
+          id?: string
+          plan_id: string
+          reflection_prompt?: string | null
+          title: string
+        }
+        Update: {
+          action_item?: string | null
+          bible_reading?: string | null
+          created_at?: string
+          day_number?: number
+          description?: string | null
+          id?: string
+          plan_id?: string
+          reflection_prompt?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "spiritual_routine_days_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "spiritual_routine_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      spiritual_routine_plans: {
+        Row: {
+          category: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          duration_days: number
+          id: string
+          is_active: boolean | null
+          name: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_days?: number
+          id?: string
+          is_active?: boolean | null
+          name: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          duration_days?: number
+          id?: string
+          is_active?: boolean | null
+          name?: string
         }
         Relationships: []
       }
@@ -2269,6 +2378,44 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_routine_progress: {
+        Row: {
+          completed_at: string | null
+          current_day: number
+          id: string
+          is_active: boolean | null
+          plan_id: string
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          current_day?: number
+          id?: string
+          is_active?: boolean | null
+          plan_id: string
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          current_day?: number
+          id?: string
+          is_active?: boolean | null
+          plan_id?: string
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_routine_progress_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "spiritual_routine_plans"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_stories: {
         Row: {

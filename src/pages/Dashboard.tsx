@@ -94,7 +94,7 @@ const Dashboard = () => {
   const features = [
     { title: "Devocional Diário", description: "Comece o dia com Deus", icon: BookOpen, href: "/devocional", badge: "Novo" },
     { title: "Mensagens", description: "Chat privado", icon: MessageCircle, href: "/mensagens", badge: "Novo" },
-    { title: "Discipulado", description: "Crescimento espiritual", icon: Users, href: "/discipulado", badge: "Novo" },
+    { title: "Rotina com Deus", description: "Planos espirituais guiados", icon: Heart, href: "/rotina-com-deus", badge: "Novo" },
     { title: "Provas e Notas", description: "Avaliações e frequência", icon: ClipboardCheck, href: "/provas", badge: "Novo" },
     { title: "Versículos por Humor", description: "Palavra para seu momento", icon: Heart, href: "/versiculos" },
     { title: "Células", description: "Pequenos grupos", icon: Users, href: "/celulas" },
