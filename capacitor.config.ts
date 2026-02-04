@@ -12,6 +12,10 @@ const config: CapacitorConfig = {
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert']
     },
+    AdMob: {
+      appId: 'ca-app-pub-5086844435418084~7605117992',
+      initializeForTesting: false,
+    },
     SplashScreen: {
       launchShowDuration: 2000,
       backgroundColor: '#1a472a',

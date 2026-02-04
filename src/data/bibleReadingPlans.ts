@@ -140,7 +140,7 @@ export const BIBLE_BOOK_SUMMARIES: Record<string, { summary: string; keyThemes: 
   },
   "Mateus": {
     summary: "O Evangelho que apresenta Jesus como o Messias prometido, Rei de Israel, com ênfase no reino dos céus.",
-    keyThemes: ["Reino dos Céus", "Cumprimento das profecias", "Ensinos de Jesus", "Discipulado"],
+    keyThemes: ["Reino dos Céus", "Cumprimento das profecias", "Ensinos de Jesus", "Seguir a Cristo"],
     keyVerses: ["Mateus 6:33", "Mateus 28:19-20", "Mateus 5:1-12"],
     application: "Jesus é o Rei prometido e devemos buscá-lo em primeiro lugar."
   },

@@ -33,7 +33,7 @@ import Versiculos from "./pages/Versiculos";
 import Celulas from "./pages/Celulas";
 import DashboardLider from "./pages/DashboardLider";
 import Mensagens from "./pages/Mensagens";
-import Discipulado from "./pages/Discipulado";
+import RotinaComDeus from "./pages/RotinaComDeus";
 import Onboarding from "./pages/Onboarding";
 import Provas from "./pages/Provas";
 import PerfilPublico from "./pages/PerfilPublico";
@@ -86,7 +86,7 @@ const App = () => (
           <Route path="/celulas" element={<Celulas />} />
           <Route path="/dashboard-lider" element={<DashboardLider />} />
           <Route path="/mensagens" element={<Mensagens />} />
-          <Route path="/discipulado" element={<Discipulado />} />
+          <Route path="/rotina-com-deus" element={<RotinaComDeus />} />
           <Route path="/provas" element={<Provas />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
