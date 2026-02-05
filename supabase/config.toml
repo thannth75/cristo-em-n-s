@@ -14,3 +14,9 @@ verify_jwt = false
 
 [functions.ai-assistant]
 verify_jwt = false
+ 
+ [functions.generate-daily-devotional]
+ verify_jwt = false
+ 
+ [functions.generate-auto-quiz]
+ verify_jwt = false

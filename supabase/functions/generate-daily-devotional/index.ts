@@ -57,6 +57,9 @@ serve(async (req) => {
     // Select a random seed verse
     const seedVerse = SEED_VERSES[Math.floor(Math.random() * SEED_VERSES.length)];
     
+     // Get day of week for context
+     const dayOfWeek = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"][new Date().getDay()];
+ 
     // Get admin user to set as creator
     const { data: adminUser } = await supabase
       .from("user_roles")
@@ -77,27 +80,33 @@ serve(async (req) => {
     // Try to use Lovable AI if available
     if (lovableApiKey) {
       try {
-        const prompt = `Você é um pastor cristão experiente escrevendo um devocional diário para jovens cristãos.
-        
-Baseado no versículo "${seedVerse.text}" (${seedVerse.ref}), crie um devocional inspirador com:
+         const prompt = `Você é um pastor cristão experiente escrevendo um devocional diário para jovens cristãos.
+ 
+ CONTEXTO: Hoje é ${dayOfWeek}, ${today}. 
+ 
+ Baseado no versículo "${seedVerse.text}" (${seedVerse.ref}), crie um devocional inspirador e ORIGINAL com:
 
-1. Um título criativo e cativante (máximo 60 caracteres)
-2. Uma reflexão espiritual de 3-4 parágrafos (aproximadamente 200 palavras) que:
-   - Conecte o versículo com a vida cotidiana dos jovens
-   - Ofereça encorajamento prático
-   - Mantenha linguagem acessível mas profunda
+ 1. Um título criativo e cativante (máximo 60 caracteres) - NÃO use "Meditando em..."
+ 2. Uma reflexão espiritual de 3-4 parágrafos (aproximadamente 250 palavras) que:
+    - Conecte o versículo com a vida cotidiana dos jovens de hoje
+    - Traga exemplos práticos e aplicáveis
+    - Ofereça encorajamento genuíno e profundo
+    - Mantenha linguagem acessível mas teologicamente sólida
+    - Inclua pelo menos uma história ou ilustração
 3. 3 perguntas de reflexão pessoal
 4. Um foco de oração para o dia
 
+ IMPORTANTE: Seja criativo e original. Evite clichês religiosos.
+ 
 Responda APENAS em JSON válido no formato:
 {
-  "title": "Título do devocional",
-  "content": "Texto da reflexão...",
+   "title": "Título criativo do devocional",
+   "content": "Texto completo da reflexão com parágrafos separados por \\n\\n",
   "reflection_questions": ["Pergunta 1?", "Pergunta 2?", "Pergunta 3?"],
-  "prayer_focus": "Foco de oração..."
+   "prayer_focus": "Foco de oração específico..."
 }`;
 
-        const response = await fetch("https://api.lovable.dev/v1/chat/completions", {
+         const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${lovableApiKey}`,
