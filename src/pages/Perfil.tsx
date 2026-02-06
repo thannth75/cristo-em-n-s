@@ -364,9 +364,9 @@ const Perfil = () => {
 
       {/* Cover upload button - rendered after <main> so it stays clickable */}
       <div
-        className="absolute z-30"
+        className="absolute z-40"
         style={{
-          top: "calc(9rem - 2.75rem)",
+          top: "6rem",
           right: "max(1rem, env(safe-area-inset-right, 16px))",
         }}
       >

@@ -373,11 +373,11 @@ export default function QuizAdminToolbar({ userId, canManage, onRefresh }: QuizA
         <Button
           variant="outline"
           className="rounded-xl"
-          onClick={() => handleGenerate(3)}
+          onClick={() => handleGenerate(5)}
           disabled={isGenerating}
         >
           <Sparkles className="h-4 w-4 mr-2" />
-          {isGenerating ? "Gerando..." : "Gerar 3 (IA)"}
+          {isGenerating ? "Gerando..." : "Gerar 5 (IA)"}
         </Button>
       </div>
     </div>
