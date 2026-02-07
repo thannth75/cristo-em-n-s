@@ -1891,6 +1891,42 @@ export type Database = {
           },
         ]
       }
+      security_audit_log: {
+        Row: {
+          action_type: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          new_values: Json | null
+          old_values: Json | null
+          target_id: string | null
+          target_table: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          target_id?: string | null
+          target_table?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_values?: Json | null
+          old_values?: Json | null
+          target_id?: string | null
+          target_table?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       songs: {
         Row: {
           artist: string | null
@@ -2669,6 +2705,16 @@ export type Database = {
         Returns: boolean
       }
       is_user_approved: { Args: { _user_id: string }; Returns: boolean }
+      log_security_audit: {
+        Args: {
+          p_action_type: string
+          p_new_values?: Json
+          p_old_values?: Json
+          p_target_id?: string
+          p_target_table?: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "jovem" | "lider" | "admin"
