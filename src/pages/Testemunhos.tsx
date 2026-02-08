@@ -181,16 +181,11 @@ const Testemunhos = () => {
   };
 
   const handleLikeTestimony = async (testimonyId: string, currentlyLiked: boolean) => {
+    // Apenas inserir/remover o like - o trigger cuida do contador automaticamente
     if (currentlyLiked) {
       await supabase.from("testimony_likes").delete().eq("testimony_id", testimonyId).eq("user_id", user?.id);
-      await supabase.from("testimonies").update({ 
-        likes_count: testimonies.find(t => t.id === testimonyId)!.likes_count - 1 
-      }).eq("id", testimonyId);
     } else {
       await supabase.from("testimony_likes").insert({ testimony_id: testimonyId, user_id: user?.id });
-      await supabase.from("testimonies").update({ 
-        likes_count: testimonies.find(t => t.id === testimonyId)!.likes_count + 1 
-      }).eq("id", testimonyId);
     }
     fetchTestimonies();
   };
