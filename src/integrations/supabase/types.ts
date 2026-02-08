@@ -2609,6 +2609,32 @@ export type Database = {
           testimonies_count: number | null
           user_id: string | null
         }
+        Insert: {
+          city?: string | null
+          devotionals_completed?: never
+          full_name?: string | null
+          is_approved?: boolean | null
+          posts_count?: never
+          prayers_count?: never
+          quizzes_completed?: never
+          state?: string | null
+          study_chapters_completed?: never
+          testimonies_count?: never
+          user_id?: string | null
+        }
+        Update: {
+          city?: string | null
+          devotionals_completed?: never
+          full_name?: string | null
+          is_approved?: boolean | null
+          posts_count?: never
+          prayers_count?: never
+          quizzes_completed?: never
+          state?: string | null
+          study_chapters_completed?: never
+          testimonies_count?: never
+          user_id?: string | null
+        }
         Relationships: []
       }
       member_directory: {
@@ -2639,11 +2665,9 @@ export type Database = {
         Row: {
           avatar_url: string | null
           bio: string | null
-          cover_url: string | null
           created_at: string | null
           current_level: number | null
           full_name: string | null
-          is_approved: boolean | null
           last_seen: string | null
           total_xp: number | null
           user_id: string | null
@@ -2651,11 +2675,9 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           bio?: string | null
-          cover_url?: string | null
           created_at?: string | null
           current_level?: number | null
           full_name?: string | null
-          is_approved?: boolean | null
           last_seen?: string | null
           total_xp?: number | null
           user_id?: string | null
@@ -2663,11 +2685,9 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           bio?: string | null
-          cover_url?: string | null
           created_at?: string | null
           current_level?: number | null
           full_name?: string | null
-          is_approved?: boolean | null
           last_seen?: string | null
           total_xp?: number | null
           user_id?: string | null
