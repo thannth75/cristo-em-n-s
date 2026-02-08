@@ -219,12 +219,11 @@ const Comunidade = () => {
   };
 
   const handleLikePost = async (postId: string, currentlyLiked: boolean) => {
+    // Apenas inserir/remover o like - o trigger cuida do contador automaticamente
     if (currentlyLiked) {
       await supabase.from("post_likes").delete().eq("post_id", postId).eq("user_id", user?.id);
-      await supabase.from("community_posts").update({ likes_count: posts.find(p => p.id === postId)!.likes_count - 1 }).eq("id", postId);
     } else {
       await supabase.from("post_likes").insert({ post_id: postId, user_id: user?.id });
-      await supabase.from("community_posts").update({ likes_count: posts.find(p => p.id === postId)!.likes_count + 1 }).eq("id", postId);
     }
     fetchPosts();
   };
