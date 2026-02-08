@@ -2711,6 +2711,10 @@ export type Database = {
         }[]
       }
       calculate_level_from_xp: { Args: { xp_total: number }; Returns: number }
+      can_view_sensitive_profile_data: {
+        Args: { target_user_id: string }
+        Returns: boolean
+      }
       get_user_email: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
