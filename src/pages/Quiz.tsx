@@ -50,7 +50,7 @@ interface QuizAttempt {
 
 const Quiz = () => {
   const navigate = useNavigate();
-  const { user, profile, isApproved, isAdmin, isLeader, isLoading: authLoading } = useAuth();
+  const { user, profile, isApproved, isAdmin, isLeader, isLoading: authLoading, canAccessYouthContent, userCity } = useAuth();
   const { toast } = useToast();
   const { awardXp, showLevelUp, levelUpData, closeLevelUp } = useXpAward(user?.id);
   
@@ -74,21 +74,31 @@ const Quiz = () => {
         navigate("/auth");
       } else if (!isApproved) {
         navigate("/pending");
+      } else if (!canAccessYouthContent) {
+        // Quiz é exclusivo para jovens
+        navigate("/dashboard");
       }
     }
-  }, [user, isApproved, authLoading, navigate]);
+  }, [user, isApproved, authLoading, canAccessYouthContent, navigate]);
 
   useEffect(() => {
-    if (isApproved && user) {
+    if (isApproved && user && canAccessYouthContent) {
       fetchData();
     }
-  }, [isApproved, user]);
+  }, [isApproved, user, canAccessYouthContent]);
 
   const fetchData = async () => {
     setIsLoading(true);
+
+    // Filtrar quizzes por cidade se não for admin
+    let quizzesQuery = supabase.from("bible_quizzes").select("*").eq("is_active", true);
+    
+    if (!isAdmin && userCity) {
+      quizzesQuery = quizzesQuery.eq("city", userCity);
+    }
     
     const [quizzesRes, attemptsRes] = await Promise.all([
-      supabase.from("bible_quizzes").select("*").eq("is_active", true),
+      quizzesQuery,
       supabase.from("user_quiz_attempts").select("*").eq("user_id", user?.id),
     ]);
 
