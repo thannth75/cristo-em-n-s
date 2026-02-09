@@ -60,7 +60,7 @@ interface DailyCheckin {
 
 const RotinaComDeus = () => {
   const navigate = useNavigate();
-  const { user, profile, isApproved, isLoading: authLoading } = useAuth();
+  const { user, profile, isApproved, isLoading: authLoading, isProfileComplete } = useAuth();
   const { toast } = useToast();
   const { awardXp, showLevelUp, levelUpData, closeLevelUp } = useXpAward(user?.id);
 
@@ -81,9 +81,11 @@ const RotinaComDeus = () => {
         navigate("/auth");
       } else if (!isApproved) {
         navigate("/pending");
+      } else if (!isProfileComplete) {
+        navigate("/onboarding");
       }
     }
-  }, [user, isApproved, authLoading, navigate]);
+  }, [user, isApproved, authLoading, isProfileComplete, navigate]);
 
   useEffect(() => {
     if (isApproved && user) {

@@ -18,9 +18,11 @@ interface RoleManagerProps {
 }
 
 const roles = [
-  { value: "jovem", label: "Jovem", description: "Acesso básico ao app" },
-  { value: "lider", label: "Líder", description: "Pode gerenciar estudos e eventos" },
-  { value: "admin", label: "Administrador", description: "Acesso completo ao sistema" },
+  { value: "jovem", label: "Jovem", description: "Acesso a estudos, provas e comunidade" },
+  { value: "membro", label: "Membro", description: "Comunidade e devocionais" },
+  { value: "musico", label: "Músico", description: "Área de músicos e comunidade" },
+  { value: "lider", label: "Líder", description: "Gerencia sua cidade" },
+  { value: "admin", label: "Administrador", description: "Acesso total ao sistema" },
 ];
 
 const RoleManager = ({ targetUserId, currentRole, adminUserId, onRoleChange }: RoleManagerProps) => {
@@ -42,7 +44,7 @@ const RoleManager = ({ targetUserId, currentRole, adminUserId, onRoleChange }: R
       // Then insert new role
       const { error } = await supabase.from("user_roles").insert([{
         user_id: targetUserId,
-        role: newRole as "jovem" | "lider" | "admin",
+        role: newRole as "jovem" | "lider" | "admin" | "membro" | "musico",
         assigned_by: adminUserId,
       }]);
 

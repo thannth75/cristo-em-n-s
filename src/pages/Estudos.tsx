@@ -41,7 +41,7 @@ interface StudyProgress {
 
 const Estudos = () => {
   const navigate = useNavigate();
-  const { user, profile, isApproved, isAdmin, isLeader, isLoading: authLoading } = useAuth();
+  const { user, profile, isApproved, isAdmin, isLeader, isLoading: authLoading, canAccessYouthContent, userCity } = useAuth();
   const { toast } = useToast();
   const [studies, setStudies] = useState<BibleStudy[]>([]);
   const [progress, setProgress] = useState<StudyProgress[]>([]);
@@ -65,9 +65,12 @@ const Estudos = () => {
         navigate("/auth");
       } else if (!isApproved) {
         navigate("/pending");
+      } else if (!canAccessYouthContent) {
+        // Redirecionar se não tem acesso a conteúdo de jovens
+        navigate("/dashboard");
       }
     }
-  }, [user, isApproved, authLoading, navigate]);
+  }, [user, isApproved, authLoading, canAccessYouthContent, navigate]);
 
   useEffect(() => {
     if (isApproved && user) {
@@ -77,13 +80,20 @@ const Estudos = () => {
 
   const fetchData = async () => {
     setIsLoading(true);
+
+    // Filtrar estudos por cidade se não for admin
+    let studiesQuery = supabase
+      .from("bible_studies")
+      .select("*")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false });
+
+    if (!isAdmin && userCity) {
+      studiesQuery = studiesQuery.eq("city", userCity);
+    }
     
     const [studiesRes, progressRes] = await Promise.all([
-      supabase
-        .from("bible_studies")
-        .select("*")
-        .eq("is_active", true)
-        .order("created_at", { ascending: false }),
+      studiesQuery,
       supabase
         .from("study_progress")
         .select("study_id, chapters_completed")

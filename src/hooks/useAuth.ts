@@ -13,10 +13,15 @@ interface Profile {
   is_approved: boolean | null;
   approved_by: string | null;
   approved_at: string | null;
+  city: string | null;
+  state: string | null;
+  is_profile_complete: boolean | null;
 }
 
+type AppRole = "jovem" | "lider" | "admin" | "membro" | "musico";
+
 interface UserRole {
-  role: "jovem" | "lider" | "admin";
+  role: AppRole;
 }
 
 export interface AuthState {
@@ -27,6 +32,11 @@ export interface AuthState {
   isApproved: boolean;
   isAdmin: boolean;
   isLeader: boolean;
+  isYouth: boolean;
+  isMember: boolean;
+  isMusician: boolean;
+  isProfileComplete: boolean;
+  userCity: string | null;
 }
 
 export function useAuth() {
@@ -38,6 +48,11 @@ export function useAuth() {
     isApproved: false,
     isAdmin: false,
     isLeader: false,
+    isYouth: false,
+    isMember: false,
+    isMusician: false,
+    isProfileComplete: false,
+    userCity: null,
   });
 
   useEffect(() => {
@@ -58,8 +73,12 @@ export function useAuth() {
 
         const profile = profileResult.data as Profile | null;
         const userRoles = (rolesResult.data || []) as UserRole[];
+        
         const isAdmin = userRoles.some((r) => r.role === "admin");
         const isLeader = userRoles.some((r) => r.role === "lider");
+        const isYouth = userRoles.some((r) => r.role === "jovem");
+        const isMember = userRoles.some((r) => r.role === "membro");
+        const isMusician = userRoles.some((r) => r.role === "musico");
 
         setState({
           user,
@@ -69,6 +88,11 @@ export function useAuth() {
           isApproved: profile?.is_approved ?? false,
           isAdmin,
           isLeader,
+          isYouth,
+          isMember,
+          isMusician,
+          isProfileComplete: profile?.is_profile_complete ?? false,
+          userCity: profile?.city ?? null,
         });
       } catch (error) {
         console.error("Error fetching user data:", error);
@@ -100,6 +124,11 @@ export function useAuth() {
           isApproved: false,
           isAdmin: false,
           isLeader: false,
+          isYouth: false,
+          isMember: false,
+          isMusician: false,
+          isProfileComplete: false,
+          userCity: null,
         });
       }
     });
@@ -111,5 +140,16 @@ export function useAuth() {
     await supabase.auth.signOut();
   };
 
-  return { ...state, signOut };
+  // Helper para verificar se pode acessar conteúdo de jovens
+  const canAccessYouthContent = state.isYouth || state.isLeader || state.isAdmin;
+  
+  // Helper para verificar se pode acessar área de músicos
+  const canAccessMusicianContent = state.isMusician || state.isLeader || state.isAdmin;
+
+  return { 
+    ...state, 
+    signOut,
+    canAccessYouthContent,
+    canAccessMusicianContent,
+  };
 }

@@ -194,6 +194,9 @@ const Onboarding = () => {
     switch (currentStep) {
       case 1:
         return formData.full_name.trim().length >= 3;
+      case 2:
+        // Cidade e estado são obrigatórios
+        return formData.state.trim().length > 0 && formData.city.trim().length >= 2;
       default:
         return true;
     }
@@ -358,8 +361,8 @@ const Onboarding = () => {
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <Label>Estado</Label>
+              <div>
+                  <Label>Estado *</Label>
                   <Select
                     value={formData.state}
                     onValueChange={(v) => setFormData({ ...formData, state: v })}
@@ -377,18 +380,19 @@ const Onboarding = () => {
                   </Select>
                 </div>
                 <div>
-                  <Label>Cidade</Label>
+                  <Label>Cidade *</Label>
                   <Input
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                     placeholder="Sua cidade"
                     className="rounded-xl"
+                    required
                   />
                 </div>
               </div>
 
               <p className="text-xs text-muted-foreground mt-4 text-center">
-                Essa informação é opcional e ajuda líderes a entender a distribuição geográfica.
+                Essa informação é <strong>obrigatória</strong> para organizar conteúdos por região.
               </p>
             </motion.div>
           )}

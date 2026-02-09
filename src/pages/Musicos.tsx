@@ -49,7 +49,7 @@ interface Song {
 
 const Musicos = () => {
   const navigate = useNavigate();
-  const { user, profile, isApproved, isAdmin, isLeader, isLoading: authLoading } = useAuth();
+  const { user, profile, isApproved, isAdmin, isLeader, isLoading: authLoading, canAccessMusicianContent } = useAuth();
   const { toast } = useToast();
   const [scales, setScales] = useState<MusicScale[]>([]);
   const [songs, setSongs] = useState<Song[]>([]);
@@ -70,9 +70,12 @@ const Musicos = () => {
         navigate("/auth");
       } else if (!isApproved) {
         navigate("/pending");
+      } else if (!canAccessMusicianContent) {
+        // Redirecionar se não tem acesso à área de músicos
+        navigate("/dashboard");
       }
     }
-  }, [user, isApproved, authLoading, navigate]);
+  }, [user, isApproved, authLoading, canAccessMusicianContent, navigate]);
 
   useEffect(() => {
     if (isApproved) {

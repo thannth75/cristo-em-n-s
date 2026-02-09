@@ -40,7 +40,7 @@ interface Profile {
 
 const Presenca = () => {
   const navigate = useNavigate();
-  const { user, profile, isApproved, isAdmin, isLeader, isLoading: authLoading } = useAuth();
+  const { user, profile, isApproved, isAdmin, isLeader, isLoading: authLoading, canAccessYouthContent, userCity } = useAuth();
   const { toast } = useToast();
   const { awardXp, showLevelUp, levelUpData, closeLevelUp } = useXpAward(user?.id);
   const [events, setEvents] = useState<Event[]>([]);
@@ -55,9 +55,12 @@ const Presenca = () => {
         navigate("/auth");
       } else if (!isApproved) {
         navigate("/pending");
+      } else if (!canAccessYouthContent) {
+        // Redirecionar se não tem acesso a conteúdo de jovens
+        navigate("/dashboard");
       }
     }
-  }, [user, isApproved, authLoading, navigate]);
+  }, [user, isApproved, authLoading, canAccessYouthContent, navigate]);
 
   useEffect(() => {
     if (isApproved) {
@@ -75,11 +78,18 @@ const Presenca = () => {
   }, [selectedEvent]);
 
   const fetchEvents = async () => {
-    const { data } = await supabase
+    // Filtrar eventos por cidade se não for admin
+    let eventsQuery = supabase
       .from("events")
       .select("id, title, event_date, start_time")
       .order("event_date", { ascending: false })
       .limit(20);
+
+    if (!isAdmin && userCity) {
+      eventsQuery = eventsQuery.eq("city", userCity);
+    }
+
+    const { data } = await eventsQuery;
 
     setEvents(data || []);
     if (data && data.length > 0) {
@@ -89,11 +99,18 @@ const Presenca = () => {
   };
 
   const fetchMembers = async () => {
-    const { data } = await supabase
+    // Filtrar membros por cidade se não for admin
+    let membersQuery = supabase
       .from("profiles")
-      .select("id, user_id, full_name, is_approved")
+      .select("id, user_id, full_name, is_approved, city")
       .eq("is_approved", true)
       .order("full_name");
+
+    if (!isAdmin && userCity) {
+      membersQuery = membersQuery.eq("city", userCity);
+    }
+
+    const { data } = await membersQuery;
 
     setMembers(data || []);
   };

@@ -51,7 +51,17 @@ interface NextEvent {
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, profile, isApproved, isAdmin, isLeader, isLoading } = useAuth();
+  const { 
+    user, 
+    profile, 
+    isApproved, 
+    isAdmin, 
+    isLeader, 
+    isLoading,
+    isProfileComplete,
+    canAccessYouthContent,
+    canAccessMusicianContent,
+  } = useAuth();
   useAchievements(); // Verificar conquistas automáticas
   const gamification = useGamification(user?.id);
   
@@ -67,9 +77,12 @@ const Dashboard = () => {
         navigate("/auth");
       } else if (!isApproved) {
         navigate("/pending");
+      } else if (!isProfileComplete) {
+        // Redirecionar para onboarding se perfil não está completo
+        navigate("/onboarding");
       }
     }
-  }, [user, isApproved, isLoading, navigate]);
+  }, [user, isApproved, isLoading, isProfileComplete, navigate]);
 
   useEffect(() => {
     const fetchNextEvent = async () => {
@@ -91,26 +104,48 @@ const Dashboard = () => {
     }
   }, [isApproved]);
 
-  const features = [
+  // Features base para todos (comunidade + devocionais)
+  const baseFeatures = [
     { title: "Devocional Diário", description: "Comece o dia com Deus", icon: BookOpen, href: "/devocional", badge: "Novo" },
     { title: "Mensagens", description: "Chat privado", icon: MessageCircle, href: "/mensagens", badge: "Novo" },
     { title: "Rotina com Deus", description: "Planos espirituais guiados", icon: Heart, href: "/rotina-com-deus", badge: "Novo" },
-    { title: "Provas e Notas", description: "Avaliações e frequência", icon: ClipboardCheck, href: "/provas", badge: "Novo" },
     { title: "Versículos por Humor", description: "Palavra para seu momento", icon: Heart, href: "/versiculos" },
-    { title: "Células", description: "Pequenos grupos", icon: Users, href: "/celulas" },
-    { title: "Plano de Leitura", description: "Leia a Bíblia em 1 ano", icon: Target, href: "/plano-leitura" },
-    { title: "Quiz Bíblico", description: "Teste seu conhecimento", icon: Brain, href: "/quiz" },
     { title: "Testemunhos", description: "Histórias de fé", icon: Heart, href: "/testemunhos" },
     { title: "Lembretes de Oração", description: "Momentos com Deus", icon: MessageSquare, href: "/lembretes-oracao" },
     { title: "Diário Espiritual", description: "Reflexões pessoais", icon: Heart, href: "/diario" },
     { title: "Agenda", description: "Cultos e eventos", icon: Calendar, href: "/agenda" },
-    { title: "Presença", description: "Registro de participação", icon: Users, href: "/presenca" },
-    { title: "Músicos", description: "Escalas e repertório", icon: Music, href: "/musicos" },
     { title: "Conquistas", description: "Badges e progresso", icon: Award, href: "/conquistas" },
     { title: "Ranking", description: "Veja sua posição", icon: Trophy, href: "/ranking" },
     { title: "Comunidade", description: "Chat e posts", icon: MessageCircle, href: "/comunidade" },
     { title: "Pedidos de Oração", description: "Compartilhe com líderes", icon: MessageSquare, href: "/oracoes" },
   ];
+
+  // Features exclusivas para jovens (estudos, provas, presença, notas)
+  const youthFeatures = [
+    { title: "Provas e Notas", description: "Avaliações e frequência", icon: ClipboardCheck, href: "/provas", badge: "Novo" },
+    { title: "Células", description: "Pequenos grupos", icon: Users, href: "/celulas" },
+    { title: "Plano de Leitura", description: "Leia a Bíblia em 1 ano", icon: Target, href: "/plano-leitura" },
+    { title: "Quiz Bíblico", description: "Teste seu conhecimento", icon: Brain, href: "/quiz" },
+    { title: "Presença", description: "Registro de participação", icon: Users, href: "/presenca" },
+  ];
+
+  // Feature de músicos
+  const musicianFeatures = [
+    { title: "Músicos", description: "Escalas e repertório", icon: Music, href: "/musicos" },
+  ];
+
+  // Montar features baseado no papel
+  const features = [...baseFeatures];
+  
+  // Adicionar features de jovens se tiver acesso
+  if (canAccessYouthContent) {
+    features.push(...youthFeatures);
+  }
+  
+  // Adicionar features de músicos se tiver acesso
+  if (canAccessMusicianContent) {
+    features.push(...musicianFeatures);
+  }
 
   // Adicionar admin se for líder ou admin
   if (isAdmin || isLeader) {

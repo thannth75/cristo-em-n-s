@@ -57,7 +57,7 @@ interface ExamGrade {
 
 export default function Provas() {
   const navigate = useNavigate();
-  const { user, isLoading: authLoading, isApproved, isLeader, isAdmin } = useAuth();
+  const { user, isLoading: authLoading, isApproved, isLeader, isAdmin, canAccessYouthContent, userCity } = useAuth();
   const { toast } = useToast();
   const [exams, setExams] = useState<Exam[]>([]);
   const [myGrades, setMyGrades] = useState<ExamGrade[]>([]);
@@ -72,8 +72,11 @@ export default function Provas() {
       navigate("/auth");
     } else if (!authLoading && user && !isApproved) {
       navigate("/pending");
+    } else if (!authLoading && user && isApproved && !canAccessYouthContent) {
+      // Redirecionar se não tem acesso a conteúdo de jovens
+      navigate("/dashboard");
     }
-  }, [user, authLoading, isApproved, navigate]);
+  }, [user, authLoading, isApproved, canAccessYouthContent, navigate]);
 
   useEffect(() => {
     if (user && isApproved) {
@@ -84,11 +87,18 @@ export default function Provas() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Buscar provas
-      const { data: examsData } = await supabase
+      // Buscar provas - filtradas por cidade se não for admin
+      let examsQuery = supabase
         .from("exams")
         .select("*")
         .order("exam_date", { ascending: false });
+
+      // Filtrar por cidade se não for admin
+      if (!isAdmin && userCity) {
+        examsQuery = examsQuery.eq("city", userCity);
+      }
+
+      const { data: examsData } = await examsQuery;
 
       if (examsData) setExams(examsData);
 
