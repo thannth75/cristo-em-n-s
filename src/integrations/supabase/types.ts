@@ -183,6 +183,7 @@ export type Database = {
       bible_quizzes: {
         Row: {
           book: string | null
+          city: string | null
           created_at: string
           created_by: string
           description: string | null
@@ -194,6 +195,7 @@ export type Database = {
         }
         Insert: {
           book?: string | null
+          city?: string | null
           created_at?: string
           created_by: string
           description?: string | null
@@ -205,6 +207,7 @@ export type Database = {
         }
         Update: {
           book?: string | null
+          city?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
@@ -220,6 +223,7 @@ export type Database = {
         Row: {
           book: string
           chapters: string | null
+          city: string | null
           created_at: string
           created_by: string
           description: string | null
@@ -232,6 +236,7 @@ export type Database = {
         Insert: {
           book: string
           chapters?: string | null
+          city?: string | null
           created_at?: string
           created_by: string
           description?: string | null
@@ -244,6 +249,7 @@ export type Database = {
         Update: {
           book?: string
           chapters?: string | null
+          city?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
@@ -768,6 +774,7 @@ export type Database = {
       }
       events: {
         Row: {
+          city: string | null
           created_at: string
           created_by: string
           description: string | null
@@ -781,6 +788,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          city?: string | null
           created_at?: string
           created_by: string
           description?: string | null
@@ -794,6 +802,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          city?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
@@ -848,6 +857,7 @@ export type Database = {
       }
       exams: {
         Row: {
+          city: string | null
           created_at: string
           created_by: string
           description: string | null
@@ -859,6 +869,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          city?: string | null
           created_at?: string
           created_by: string
           description?: string | null
@@ -870,6 +881,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          city?: string | null
           created_at?: string
           created_by?: string
           description?: string | null
@@ -1550,6 +1562,7 @@ export type Database = {
           full_name: string
           id: string
           is_approved: boolean | null
+          is_profile_complete: boolean | null
           last_seen: string | null
           phone: string | null
           state: string | null
@@ -1571,6 +1584,7 @@ export type Database = {
           full_name: string
           id?: string
           is_approved?: boolean | null
+          is_profile_complete?: boolean | null
           last_seen?: string | null
           phone?: string | null
           state?: string | null
@@ -1592,6 +1606,7 @@ export type Database = {
           full_name?: string
           id?: string
           is_approved?: boolean | null
+          is_profile_complete?: boolean | null
           last_seen?: string | null
           phone?: string | null
           state?: string | null
@@ -2711,10 +2726,16 @@ export type Database = {
         }[]
       }
       calculate_level_from_xp: { Args: { xp_total: number }; Returns: number }
+      can_access_youth_content: { Args: { _user_id: string }; Returns: boolean }
+      can_manage_city: {
+        Args: { _city: string; _user_id: string }
+        Returns: boolean
+      }
       can_view_sensitive_profile_data: {
         Args: { target_user_id: string }
         Returns: boolean
       }
+      get_user_city: { Args: { _user_id: string }; Returns: string }
       get_user_email: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
@@ -2728,7 +2749,14 @@ export type Database = {
         Args: { _user_id: string }
         Returns: boolean
       }
+      is_member: { Args: { _user_id: string }; Returns: boolean }
+      is_musician: { Args: { _user_id: string }; Returns: boolean }
+      is_same_city_or_admin: {
+        Args: { _target_city: string; _user_id: string }
+        Returns: boolean
+      }
       is_user_approved: { Args: { _user_id: string }; Returns: boolean }
+      is_youth: { Args: { _user_id: string }; Returns: boolean }
       log_security_audit: {
         Args: {
           p_action_type: string
