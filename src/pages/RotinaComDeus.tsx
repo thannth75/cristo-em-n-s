@@ -205,7 +205,7 @@ const RotinaComDeus = () => {
     }
 
     // Award XP
-    await awardXp("routine_checkin", checkinData.id, "Check-in diário da rotina");
+    await awardXp("rotina", checkinData.id, "Check-in diário da rotina");
 
     // Advance to next day
     const nextDay = userProgress.current_day + 1;
@@ -220,7 +220,7 @@ const RotinaComDeus = () => {
         })
         .eq("id", userProgress.id);
 
-      await awardXp("routine_complete", userProgress.plan_id, "Plano de rotina completo!");
+      await awardXp("rotina", userProgress.plan_id, "Plano de rotina completo!");
 
       toast({
         title: "🎉 Parabéns!",
