@@ -205,7 +205,7 @@ const RotinaComDeus = () => {
     }
 
     // Award XP
-    await awardXp("routine_checkin", checkinData.id, "Check-in diário da rotina");
+    await awardXp("rotina", checkinData.id, "Check-in diário da rotina");
 
     // Advance to next day
     const nextDay = userProgress.current_day + 1;
