@@ -220,7 +220,7 @@ const RotinaComDeus = () => {
         })
         .eq("id", userProgress.id);
 
-      await awardXp("routine_complete", userProgress.plan_id, "Plano de rotina completo!");
+      await awardXp("rotina", userProgress.plan_id, "Plano de rotina completo!");
 
       toast({
         title: "🎉 Parabéns!",
