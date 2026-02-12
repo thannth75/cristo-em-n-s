@@ -27,6 +27,7 @@ import BottomNavigation from "@/components/BottomNavigation";
 import VerseCard from "@/components/VerseCard";
 import FeatureCard from "@/components/FeatureCard";
 import GlowOrb from "@/components/GlowOrb";
+import ParallaxBackground from "@/components/ParallaxBackground";
 import BirthdaysCard from "@/components/comunidade/BirthdaysCard";
 import { Progress } from "@/components/ui/progress";
 import { AdFeed } from "@/components/ads/AdBanner";
@@ -183,9 +184,11 @@ const Dashboard = () => {
       className="relative min-h-screen bg-background overflow-hidden"
       style={{ paddingBottom: 'calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))' }}
     >
+      {/* Parallax 3D Background */}
+      <ParallaxBackground />
+
       {/* Orb decorativo */}
       <GlowOrb className="absolute -top-20 -right-20 h-48 sm:h-64 w-48 sm:w-64 opacity-30" />
-      
       <AppHeader userName={userName} />
 
       <main className="relative z-10 px-4 py-4 sm:py-6 max-w-4xl mx-auto" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left, 16px))', paddingRight: 'max(1rem, env(safe-area-inset-right, 16px))' }}>
