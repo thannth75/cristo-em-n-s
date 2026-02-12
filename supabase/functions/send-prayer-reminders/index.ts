@@ -210,9 +210,17 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    // Authenticate: only allow calls with service role key
+    const authHeader = req.headers.get("Authorization");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    if (authHeader !== `Bearer ${supabaseServiceKey}`) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
     // Get current time in HH:MM format (Brazil timezone - UTC-3)
