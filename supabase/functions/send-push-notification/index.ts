@@ -186,7 +186,7 @@ Deno.serve(async (req) => {
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // Authenticate the caller
+    // Authenticate the caller - accept service role key OR valid user token
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
@@ -195,17 +195,21 @@ Deno.serve(async (req) => {
       );
     }
 
-    const userClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
     const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
-      return new Response(
-        JSON.stringify({ error: "Invalid token" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+    const isServiceRole = token === supabaseServiceKey;
+
+    if (!isServiceRole) {
+      const userClient = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+
+      const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+      if (claimsError || !claimsData?.claims) {
+        return new Response(
+          JSON.stringify({ error: "Invalid token" }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
