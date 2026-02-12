@@ -179,6 +179,28 @@ Deno.serve(async (req) => {
 
         await supabase.from("notifications").insert(notifications);
         console.log(`Granted ${newAchievements.length} achievements`);
+
+        // Send Web Push notification for achievements
+        try {
+          await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${supabaseServiceKey}`,
+              apikey: supabaseServiceKey,
+            },
+            body: JSON.stringify({
+              user_id: userId,
+              title: "🏆 Nova Conquista!",
+              body: `Você desbloqueou: ${achievementNames.join(", ")}`,
+              url: "/conquistas",
+              tag: `achievement-${Date.now()}`,
+              type: "achievement",
+            }),
+          });
+        } catch (pushError) {
+          console.error("Error sending push for achievements:", pushError);
+        }
       }
     }
 
