@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import logo from "@/assets/logo-vida-em-cristo.png";
-import ParticlesBackground from "@/components/ParticlesBackground";
+import ParallaxBackground from "@/components/ParallaxBackground";
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -98,7 +98,7 @@ const Auth = () => {
         paddingRight: 'env(safe-area-inset-right, 0px)',
       }}
     >
-      <ParticlesBackground />
+      <ParallaxBackground />
       
       {/* Hero com Logo destacada - Fundo Pastel */}
       <div className="relative">
