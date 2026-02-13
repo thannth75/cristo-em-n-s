@@ -32,6 +32,7 @@ import BirthdaysCard from "@/components/comunidade/BirthdaysCard";
 import { Progress } from "@/components/ui/progress";
 import { AdFeed } from "@/components/ads/AdBanner";
 import AIFloatingButton from "@/components/ai/AIFloatingButton";
+import AmbientSound from "@/components/AmbientSound";
 import JourneyCarousel, { type JourneyItem } from "@/components/dashboard/JourneyCarousel";
 
 const dailyVerses = [
@@ -118,7 +119,7 @@ const Dashboard = () => {
     { title: "Conquistas", description: "Badges e progresso", icon: Award, href: "/conquistas" },
     { title: "Ranking", description: "Veja sua posição", icon: Trophy, href: "/ranking" },
     { title: "Comunidade", description: "Chat e posts", icon: MessageCircle, href: "/comunidade" },
-    { title: "Pedidos de Oração", description: "Compartilhe com líderes", icon: MessageSquare, href: "/oracoes" },
+    { title: "Pedidos de Oração", description: "Ore com os irmãos", icon: MessageSquare, href: "/oracoes" },
   ];
 
   // Features exclusivas para jovens (estudos, provas, presença, notas)
@@ -321,6 +322,7 @@ const Dashboard = () => {
         </motion.div>
       </main>
 
+      <AmbientSound />
       <AIFloatingButton type="general" />
       <BottomNavigation />
     </div>
