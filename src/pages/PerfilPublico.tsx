@@ -97,15 +97,15 @@ const PerfilPublico = () => {
     setIsLoading(true);
 
     try {
-      // Fetch profile
+      // Fetch profile using secure public_profiles view (excludes email, phone, birth_date)
       const { data: profileData } = await supabase
-        .from("profiles")
-        .select("*")
+        .from("public_profiles" as any)
+        .select("user_id, full_name, avatar_url, cover_url, bio, city, state, current_level, total_xp, created_at")
         .eq("user_id", userId)
         .single();
 
       if (profileData) {
-        setProfile(profileData as PublicProfile);
+        setProfile(profileData as unknown as PublicProfile);
       }
 
       // Fetch stats in parallel
@@ -149,17 +149,18 @@ const PerfilPublico = () => {
       }
 
       // Fetch level info
+      const currentLevel = (profileData as any)?.current_level || 1;
       const { data: levelData } = await supabase
         .from("level_definitions")
         .select("*")
-        .lte("level_number", profileData?.current_level || 1)
+        .lte("level_number", currentLevel)
         .order("level_number", { ascending: false })
         .limit(1);
 
       const { data: nextLevelData } = await supabase
         .from("level_definitions")
         .select("xp_required")
-        .eq("level_number", (profileData?.current_level || 1) + 1)
+        .eq("level_number", currentLevel + 1)
         .single();
 
       if (levelData?.[0]) {
