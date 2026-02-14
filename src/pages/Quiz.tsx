@@ -50,7 +50,7 @@ interface QuizAttempt {
 
 const Quiz = () => {
   const navigate = useNavigate();
-  const { user, profile, isApproved, isAdmin, isLeader, isLoading: authLoading, canAccessYouthContent, userCity } = useAuth();
+  const { user, profile, isApproved, isAdmin, isLeader, isLoading: authLoading, userCity } = useAuth();
   const { toast } = useToast();
   const { awardXp, showLevelUp, levelUpData, closeLevelUp } = useXpAward(user?.id);
   
@@ -74,18 +74,15 @@ const Quiz = () => {
         navigate("/auth");
       } else if (!isApproved) {
         navigate("/pending");
-      } else if (!canAccessYouthContent) {
-        // Quiz é exclusivo para jovens
-        navigate("/dashboard");
       }
     }
-  }, [user, isApproved, authLoading, canAccessYouthContent, navigate]);
+  }, [user, isApproved, authLoading, navigate]);
 
   useEffect(() => {
-    if (isApproved && user && canAccessYouthContent) {
+    if (isApproved && user) {
       fetchData();
     }
-  }, [isApproved, user, canAccessYouthContent]);
+  }, [isApproved, user]);
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -171,11 +168,7 @@ const Quiz = () => {
       });
 
       // Award XP based on performance
-      if (percentage >= 80) {
-        await awardXp("quiz_complete_perfect", activeQuiz?.id, `Quiz perfeito: ${activeQuiz?.title}`);
-      } else {
-        await awardXp("quiz_complete", activeQuiz?.id, `Quiz: ${activeQuiz?.title}`);
-      }
+      await awardXp("quiz", activeQuiz?.id, percentage >= 80 ? `Quiz perfeito: ${activeQuiz?.title}` : `Quiz: ${activeQuiz?.title}`);
 
       toast({
         title: "Quiz concluído! 🎉",
