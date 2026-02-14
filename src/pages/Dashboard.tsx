@@ -113,6 +113,7 @@ const Dashboard = () => {
     { title: "Lembretes de Oração", description: "Momentos com Deus", icon: MessageSquare, href: "/lembretes-oracao" },
     { title: "Diário Espiritual", description: "Reflexões pessoais", icon: Heart, href: "/diario" },
     { title: "Agenda", description: "Cultos e eventos", icon: Calendar, href: "/agenda" },
+    { title: "Quiz Bíblico", description: "Teste seu conhecimento", icon: Brain, href: "/quiz" },
     { title: "Conquistas", description: "Badges e progresso", icon: Award, href: "/conquistas" },
     { title: "Ranking", description: "Veja sua posição", icon: Trophy, href: "/ranking" },
     { title: "Comunidade", description: "Chat e posts", icon: MessageCircle, href: "/comunidade" },
@@ -124,7 +125,6 @@ const Dashboard = () => {
     { title: "Provas e Notas", description: "Avaliações e frequência", icon: ClipboardCheck, href: "/provas", badge: "Novo" },
     { title: "Células", description: "Pequenos grupos", icon: Users, href: "/celulas" },
     { title: "Plano de Leitura", description: "Leia a Bíblia em 1 ano", icon: Target, href: "/plano-leitura" },
-    { title: "Quiz Bíblico", description: "Teste seu conhecimento", icon: Brain, href: "/quiz" },
     { title: "Presença", description: "Registro de participação", icon: Users, href: "/presenca" },
   ];
 
