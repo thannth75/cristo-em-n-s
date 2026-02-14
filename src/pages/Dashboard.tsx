@@ -79,12 +79,9 @@ const Dashboard = () => {
         navigate("/auth");
       } else if (!isApproved) {
         navigate("/pending");
-      } else if (!isProfileComplete) {
-        // Redirecionar para onboarding se perfil não está completo
-        navigate("/onboarding");
       }
     }
-  }, [user, isApproved, isLoading, isProfileComplete, navigate]);
+  }, [user, isApproved, isLoading, navigate]);
 
   useEffect(() => {
     const fetchNextEvent = async () => {
