@@ -20,6 +20,8 @@ import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
 import QuizAdminToolbar from "@/components/quizzes/QuizAdminToolbar";
+import QuizDeleteButton from "@/components/quizzes/QuizDeleteButton";
+import QuizEditDialog from "@/components/quizzes/QuizEditDialog";
 
 interface Quiz {
   id: string;
@@ -67,6 +69,7 @@ const Quiz = () => {
   const [score, setScore] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
+  const canManage = !!user && (isAdmin || isLeader);
 
   useEffect(() => {
     if (!authLoading) {
@@ -460,42 +463,53 @@ const Quiz = () => {
               const bestScore = getBestScore(quiz.id);
               
               return (
-                <motion.button
+                <motion.div
                   key={quiz.id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 * index }}
-                  onClick={() => startQuiz(quiz)}
-                  className="w-full rounded-2xl bg-card p-4 shadow-md text-left hover:shadow-lg transition-shadow"
+                  className="rounded-2xl bg-card p-4 shadow-md hover:shadow-lg transition-shadow"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-foreground">{quiz.title}</h3>
-                        <span className={`px-2 py-0.5 rounded-full text-xs ${getDifficultyColor(quiz.difficulty)}`}>
-                          {getDifficultyLabel(quiz.difficulty)}
-                        </span>
-                      </div>
-                      {quiz.description && (
-                        <p className="text-sm text-muted-foreground">{quiz.description}</p>
-                      )}
-                      {quiz.book && (
-                        <p className="text-xs text-primary mt-1">📖 {quiz.book}</p>
-                      )}
-                      <div className="mt-2 flex items-center gap-3">
-                        <span className="text-xs text-muted-foreground">
-                          🏆 {quiz.points_reward} pts
-                        </span>
-                        {bestScore !== null && (
-                          <span className="text-xs text-primary">
-                            Melhor: {bestScore} pts
+                  <button
+                    onClick={() => startQuiz(quiz)}
+                    className="w-full text-left"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <h3 className="font-semibold text-foreground">{quiz.title}</h3>
+                          <span className={`px-2 py-0.5 rounded-full text-xs ${getDifficultyColor(quiz.difficulty)}`}>
+                            {getDifficultyLabel(quiz.difficulty)}
                           </span>
+                        </div>
+                        {quiz.description && (
+                          <p className="text-sm text-muted-foreground">{quiz.description}</p>
                         )}
+                        {quiz.book && (
+                          <p className="text-xs text-primary mt-1">📖 {quiz.book}</p>
+                        )}
+                        <div className="mt-2 flex items-center gap-3">
+                          <span className="text-xs text-muted-foreground">
+                            🏆 {quiz.points_reward} pts
+                          </span>
+                          {bestScore !== null && (
+                            <span className="text-xs text-primary">
+                              Melhor: {bestScore} pts
+                            </span>
+                          )}
+                        </div>
                       </div>
+                      <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0 mt-1" />
                     </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                </motion.button>
+                  </button>
+                  {/* Admin actions */}
+                  {canManage && (
+                    <div className="flex items-center gap-1 mt-3 pt-3 border-t border-border">
+                      <QuizEditDialog quiz={quiz} onUpdated={fetchData} />
+                      <QuizDeleteButton quizId={quiz.id} quizTitle={quiz.title} onDeleted={fetchData} />
+                    </div>
+                  )}
+                </motion.div>
               );
             })}
           </div>
