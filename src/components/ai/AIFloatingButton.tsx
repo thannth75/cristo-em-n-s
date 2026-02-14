@@ -17,7 +17,7 @@ const AIFloatingButton = ({ type = "general", context }: AIFloatingButtonProps) 
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(true)}
-        className="fixed bottom-24 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/30"
+        className="fixed right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/30"
         style={{
           bottom: "calc(6rem + max(0.5rem, env(safe-area-inset-bottom, 8px)))",
         }}
@@ -35,7 +35,7 @@ const AIFloatingButton = ({ type = "general", context }: AIFloatingButtonProps) 
           animate={{ scale: [1, 1.2, 1], opacity: [1, 0.8, 1] }}
           transition={{ duration: 1.5, repeat: Infinity }}
         >
-          <Sparkles className="h-4 w-4 text-yellow-300" />
+          <Sparkles className="h-4 w-4 text-primary-foreground" />
         </motion.div>
       </motion.button>
 
