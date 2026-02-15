@@ -90,11 +90,12 @@ const Quiz = () => {
   const fetchData = async () => {
     setIsLoading(true);
 
-    // Filtrar quizzes por cidade se não for admin
+    // Show all quizzes: global (city=null) + user's city quizzes
     let quizzesQuery = supabase.from("bible_quizzes").select("*").eq("is_active", true);
     
     if (!isAdmin && userCity) {
-      quizzesQuery = quizzesQuery.eq("city", userCity);
+      // Show quizzes without city (global) OR matching user's city
+      quizzesQuery = quizzesQuery.or(`city.is.null,city.eq.${userCity}`);
     }
     
     const [quizzesRes, attemptsRes] = await Promise.all([

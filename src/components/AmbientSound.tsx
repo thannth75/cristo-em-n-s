@@ -2,127 +2,129 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Volume2, VolumeX } from "lucide-react";
 
-// Notas de hinos da Harpa Cristã em escalas pentatônicas suaves
-const HARP_SEQUENCES = [
-  // Harpa 1 - Paz (C major pentatonic ascending)
-  [261.63, 293.66, 329.63, 392.0, 440.0, 523.25, 440.0, 392.0],
-  // Harpa 2 - Alegria (G major pentatonic)
-  [392.0, 440.0, 493.88, 587.33, 659.25, 587.33, 493.88, 440.0],
-  // Harpa 3 - Serenidade (F major)
-  [349.23, 392.0, 440.0, 523.25, 587.33, 523.25, 440.0, 392.0],
-  // Harpa 4 - Contemplação (Am pentatonic)
-  [220.0, 261.63, 293.66, 329.63, 392.0, 329.63, 293.66, 261.63],
-];
-
+// Orchestral worship pad - majestic, peaceful, glorious
 const AmbientSound = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const isPlayingRef = useRef(false);
-  const timeoutsRef = useRef<number[]>([]);
-
-  const playHarpNote = useCallback((ctx: AudioContext, frequency: number, time: number, duration: number) => {
-    const osc = ctx.createOscillator();
-    const gainNode = ctx.createGain();
-    
-    // Triangle wave para som de harpa suave
-    osc.type = "triangle";
-    osc.frequency.setValueAtTime(frequency, time);
-    
-    // Adicionar leve detune para riqueza
-    osc.detune.setValueAtTime(Math.random() * 6 - 3, time);
-    
-    // Envelope ADSR tipo harpa (ataque rápido, decaimento longo)
-    gainNode.gain.setValueAtTime(0, time);
-    gainNode.gain.linearRampToValueAtTime(0.08, time + 0.02); // Ataque rápido
-    gainNode.gain.exponentialRampToValueAtTime(0.04, time + 0.3); // Sustain
-    gainNode.gain.exponentialRampToValueAtTime(0.001, time + duration); // Release longo
-    
-    // Harmônico suave
-    const harmonic = ctx.createOscillator();
-    const harmonicGain = ctx.createGain();
-    harmonic.type = "sine";
-    harmonic.frequency.setValueAtTime(frequency * 2, time);
-    harmonicGain.gain.setValueAtTime(0, time);
-    harmonicGain.gain.linearRampToValueAtTime(0.015, time + 0.02);
-    harmonicGain.gain.exponentialRampToValueAtTime(0.001, time + duration * 0.6);
-    
-    // Reverb simulado com delay
-    const delay = ctx.createDelay();
-    delay.delayTime.value = 0.15;
-    const delayGain = ctx.createGain();
-    delayGain.gain.value = 0.2;
-    
-    osc.connect(gainNode);
-    gainNode.connect(ctx.destination);
-    gainNode.connect(delay);
-    delay.connect(delayGain);
-    delayGain.connect(ctx.destination);
-    
-    harmonic.connect(harmonicGain);
-    harmonicGain.connect(ctx.destination);
-    
-    osc.start(time);
-    osc.stop(time + duration + 0.1);
-    harmonic.start(time);
-    harmonic.stop(time + duration + 0.1);
-  }, []);
-
-  const playSequence = useCallback((ctx: AudioContext) => {
-    if (!isPlayingRef.current || ctx.state === "closed") return;
-    
-    const sequence = HARP_SEQUENCES[Math.floor(Math.random() * HARP_SEQUENCES.length)];
-    const noteInterval = 0.8 + Math.random() * 0.4; // Intervalo variável entre notas
-    const noteDuration = 2.5 + Math.random() * 1.5;
-    
-    sequence.forEach((freq, i) => {
-      if (ctx.state !== "closed") {
-        playHarpNote(ctx, freq, ctx.currentTime + i * noteInterval, noteDuration);
-      }
-    });
-    
-    // Agendar próxima sequência com pausa contemplativa
-    const totalDuration = sequence.length * noteInterval + 2 + Math.random() * 3;
-    const timeout = window.setTimeout(() => {
-      playSequence(ctx);
-    }, totalDuration * 1000);
-    
-    timeoutsRef.current.push(timeout);
-  }, [playHarpNote]);
+  const nodesRef = useRef<OscillatorNode[]>([]);
 
   const startSound = useCallback(() => {
     const ctx = new AudioContext();
     audioContextRef.current = ctx;
     isPlayingRef.current = true;
-    
-    // Pad base muito suave para preenchimento
-    const padOsc = ctx.createOscillator();
-    const padGain = ctx.createGain();
-    padOsc.type = "sine";
-    padOsc.frequency.value = 130.81; // C3
-    padGain.gain.value = 0;
-    padGain.gain.linearRampToValueAtTime(0.012, ctx.currentTime + 3);
-    padOsc.connect(padGain);
-    padGain.connect(ctx.destination);
-    padOsc.start();
-    
-    // Iniciar sequência de harpa após fade-in
-    const timeout = window.setTimeout(() => {
-      playSequence(ctx);
-    }, 1500);
-    timeoutsRef.current.push(timeout);
-    
+
+    const masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(0, ctx.currentTime);
+    masterGain.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 4);
+    masterGain.connect(ctx.destination);
+
+    // Reverb simulation
+    const convolver = ctx.createConvolver();
+    const reverbLength = ctx.sampleRate * 3;
+    const impulse = ctx.createBuffer(2, reverbLength, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const data = impulse.getChannelData(ch);
+      for (let i = 0; i < reverbLength; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / reverbLength, 2.5);
+      }
+    }
+    convolver.buffer = impulse;
+    const reverbGain = ctx.createGain();
+    reverbGain.gain.value = 0.3;
+    convolver.connect(reverbGain);
+    reverbGain.connect(masterGain);
+
+    // Majestic orchestral pad - C major with extensions
+    // Root C2, E2, G2, C3, E3, G3, B3 (Cmaj7 spread voicing)
+    const padFreqs = [65.41, 82.41, 98.0, 130.81, 164.81, 196.0, 246.94];
+    const padGains = [0.25, 0.2, 0.2, 0.3, 0.15, 0.15, 0.1];
+
+    padFreqs.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, ctx.currentTime);
+      // Gentle vibrato for warmth
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+      lfo.type = "sine";
+      lfo.frequency.value = 0.15 + Math.random() * 0.1;
+      lfoGain.gain.value = freq * 0.003;
+      lfo.connect(lfoGain);
+      lfoGain.connect(osc.frequency);
+      lfo.start();
+
+      const gain = ctx.createGain();
+      gain.gain.value = padGains[i];
+
+      osc.connect(gain);
+      gain.connect(masterGain);
+      gain.connect(convolver);
+      osc.start();
+      nodesRef.current.push(osc, lfo);
+    });
+
+    // Ethereal high strings - slow evolving shimmer
+    const shimmerFreqs = [523.25, 659.25, 783.99]; // C5, E5, G5
+    shimmerFreqs.forEach((freq) => {
+      const osc = ctx.createOscillator();
+      osc.type = "triangle";
+      osc.frequency.value = freq;
+      
+      const gain = ctx.createGain();
+      // Slow breathing amplitude
+      const ampLfo = ctx.createOscillator();
+      const ampLfoGain = ctx.createGain();
+      ampLfo.type = "sine";
+      ampLfo.frequency.value = 0.05 + Math.random() * 0.03;
+      ampLfoGain.gain.value = 0.015;
+      ampLfo.connect(ampLfoGain);
+      ampLfoGain.connect(gain.gain);
+      gain.gain.value = 0.02;
+
+      osc.connect(gain);
+      gain.connect(masterGain);
+      gain.connect(convolver);
+      osc.start();
+      ampLfo.start();
+      nodesRef.current.push(osc, ampLfo);
+    });
+
+    // Subtle sub-bass for depth and majesty
+    const sub = ctx.createOscillator();
+    sub.type = "sine";
+    sub.frequency.value = 32.7; // C1
+    const subGain = ctx.createGain();
+    subGain.gain.value = 0.08;
+    sub.connect(subGain);
+    subGain.connect(masterGain);
+    sub.start();
+    nodesRef.current.push(sub);
+
     setIsPlaying(true);
-  }, [playSequence]);
+  }, []);
 
   const stopSound = useCallback(() => {
     isPlayingRef.current = false;
-    timeoutsRef.current.forEach(clearTimeout);
-    timeoutsRef.current = [];
     
     if (audioContextRef.current && audioContextRef.current.state !== "closed") {
-      audioContextRef.current.close();
-      audioContextRef.current = null;
+      // Fade out gracefully
+      const ctx = audioContextRef.current;
+      const now = ctx.currentTime;
+      
+      // Stop all nodes after fade
+      nodesRef.current.forEach(node => {
+        try { node.stop(now + 2); } catch { /* ignore */ }
+      });
+      nodesRef.current = [];
+      
+      setTimeout(() => {
+        if (audioContextRef.current && audioContextRef.current.state !== "closed") {
+          audioContextRef.current.close();
+          audioContextRef.current = null;
+        }
+      }, 2500);
     }
     setIsPlaying(false);
   }, []);
@@ -138,7 +140,10 @@ const AmbientSound = () => {
   useEffect(() => {
     return () => {
       isPlayingRef.current = false;
-      timeoutsRef.current.forEach(clearTimeout);
+      nodesRef.current.forEach(node => {
+        try { node.stop(); } catch { /* ignore */ }
+      });
+      nodesRef.current = [];
       if (audioContextRef.current && audioContextRef.current.state !== "closed") {
         audioContextRef.current.close();
       }
@@ -179,7 +184,7 @@ const AmbientSound = () => {
             exit={{ opacity: 0, x: 10 }}
             className="absolute right-12 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg bg-card px-3 py-1.5 text-xs text-foreground shadow-md border border-border"
           >
-            {isPlaying ? "Harpa tocando 🎵" : "Tocar harpa suave"}
+            {isPlaying ? "Adoração ambiente 🎶" : "Som de adoração"}
           </motion.div>
         )}
       </AnimatePresence>
