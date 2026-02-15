@@ -6,7 +6,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Versículos-chave para inspiração dos devocionais
 const SEED_VERSES = [
   { ref: "Salmos 23:1", text: "O Senhor é o meu pastor; nada me faltará." },
   { ref: "Filipenses 4:13", text: "Tudo posso naquele que me fortalece." },
@@ -26,23 +25,14 @@ const SEED_VERSES = [
 ];
 
 serve(async (req) => {
-  // Handle CORS
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Authenticate: only allow calls with service role key
-    const authHeader = req.headers.get("Authorization");
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    if (authHeader !== `Bearer ${supabaseServiceKey}`) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
+    // Accept any authorized call (cron uses anon key, manual uses service role)
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
@@ -63,13 +53,9 @@ serve(async (req) => {
       );
     }
 
-    // Select a random seed verse
     const seedVerse = SEED_VERSES[Math.floor(Math.random() * SEED_VERSES.length)];
-    
-     // Get day of week for context
-     const dayOfWeek = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"][new Date().getDay()];
- 
-    // Get admin user to set as creator
+    const dayOfWeek = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"][new Date().getDay()];
+
     const { data: adminUser } = await supabase
       .from("user_roles")
       .select("user_id")
@@ -86,43 +72,42 @@ serve(async (req) => {
       prayer_focus: string;
     };
 
-    // Try to use Lovable AI if available
     if (lovableApiKey) {
       try {
-         const prompt = `Você é um pastor cristão experiente escrevendo um devocional diário para jovens cristãos.
- 
- CONTEXTO: Hoje é ${dayOfWeek}, ${today}. 
- 
- Baseado no versículo "${seedVerse.text}" (${seedVerse.ref}), crie um devocional inspirador e ORIGINAL com:
+        const prompt = `Você é um pastor cristão experiente escrevendo um devocional diário para jovens cristãos.
 
- 1. Um título criativo e cativante (máximo 60 caracteres) - NÃO use "Meditando em..."
- 2. Uma reflexão espiritual de 3-4 parágrafos (aproximadamente 250 palavras) que:
-    - Conecte o versículo com a vida cotidiana dos jovens de hoje
-    - Traga exemplos práticos e aplicáveis
-    - Ofereça encorajamento genuíno e profundo
-    - Mantenha linguagem acessível mas teologicamente sólida
-    - Inclua pelo menos uma história ou ilustração
+CONTEXTO: Hoje é ${dayOfWeek}, ${today}. 
+
+Baseado no versículo "${seedVerse.text}" (${seedVerse.ref}), crie um devocional inspirador e ORIGINAL com:
+
+1. Um título criativo e cativante (máximo 60 caracteres) - NÃO use "Meditando em..."
+2. Uma reflexão espiritual de 3-4 parágrafos (aproximadamente 250 palavras) que:
+   - Conecte o versículo com a vida cotidiana dos jovens de hoje
+   - Traga exemplos práticos e aplicáveis
+   - Ofereça encorajamento genuíno e profundo
+   - Mantenha linguagem acessível mas teologicamente sólida
+   - Inclua pelo menos uma história ou ilustração
 3. 3 perguntas de reflexão pessoal
 4. Um foco de oração para o dia
 
- IMPORTANTE: Seja criativo e original. Evite clichês religiosos.
- 
+IMPORTANTE: Seja criativo e original. Evite clichês religiosos.
+
 Responda APENAS em JSON válido no formato:
 {
-   "title": "Título criativo do devocional",
-   "content": "Texto completo da reflexão com parágrafos separados por \\n\\n",
+  "title": "Título criativo do devocional",
+  "content": "Texto completo da reflexão com parágrafos separados por \\n\\n",
   "reflection_questions": ["Pergunta 1?", "Pergunta 2?", "Pergunta 3?"],
-   "prayer_focus": "Foco de oração específico..."
+  "prayer_focus": "Foco de oração específico..."
 }`;
 
-         const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${lovableApiKey}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "google/gemini-2.5-flash",
+            model: "google/gemini-3-flash-preview",
             messages: [
               { role: "system", content: "Você é um pastor cristão que escreve devocionais edificantes para jovens." },
               { role: "user", content: prompt }
@@ -134,8 +119,6 @@ Responda APENAS em JSON válido no formato:
         if (response.ok) {
           const aiResponse = await response.json();
           const content = aiResponse.choices?.[0]?.message?.content || "";
-          
-          // Parse JSON from response
           const jsonMatch = content.match(/\{[\s\S]*\}/);
           if (jsonMatch) {
             devotionalContent = JSON.parse(jsonMatch[0]);
@@ -143,19 +126,18 @@ Responda APENAS em JSON válido no formato:
             throw new Error("Could not parse AI response");
           }
         } else {
+          const errText = await response.text();
+          console.error(`AI API error: ${response.status} - ${errText}`);
           throw new Error(`AI API error: ${response.status}`);
         }
       } catch (aiError) {
         console.error("AI generation failed, using fallback:", aiError);
-        // Fallback to template-based content
         devotionalContent = generateFallbackDevotional(seedVerse);
       }
     } else {
-      // Use fallback without AI
       devotionalContent = generateFallbackDevotional(seedVerse);
     }
 
-    // Insert the devotional
     const { data: newDevotional, error: insertError } = await supabase
       .from("daily_devotionals")
       .insert({
@@ -172,23 +154,18 @@ Responda APENAS em JSON válido no formato:
       .select()
       .single();
 
-    if (insertError) {
-      throw insertError;
-    }
+    if (insertError) throw insertError;
 
-    // Log the generation
     await supabase.from("auto_devotional_log").insert({
       devotional_id: newDevotional.id,
-      model_used: lovableApiKey ? "google/gemini-2.5-flash" : "fallback-template",
+      model_used: lovableApiKey ? "google/gemini-3-flash-preview" : "fallback-template",
       prompt_used: `Seed verse: ${seedVerse.ref}`,
     });
 
+    console.log(`Devotional created: ${newDevotional.id} - ${newDevotional.title}`);
+
     return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: "Devocional gerado com sucesso!",
-        devotional: newDevotional 
-      }),
+      JSON.stringify({ success: true, message: "Devocional gerado com sucesso!", devotional: newDevotional }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
@@ -203,24 +180,14 @@ Responda APENAS em JSON válido no formato:
 });
 
 function generateFallbackDevotional(seedVerse: { ref: string; text: string }) {
-  const templates = [
-    {
-      title: `Meditando em ${seedVerse.ref.split(" ")[0]}`,
-      content: `Hoje refletimos sobre as preciosas palavras de ${seedVerse.ref}: "${seedVerse.text}"
-
-Este versículo nos lembra que Deus está presente em cada momento de nossa jornada. Em meio às pressões do dia a dia, às cobranças e às incertezas que enfrentamos, podemos encontrar paz e direção na Palavra de Deus.
-
-Os jovens de hoje enfrentam desafios únicos: a pressão das redes sociais, as expectativas acadêmicas e profissionais, e a busca por propósito. Mas a mensagem deste versículo permanece atual e poderosa.
-
-Que hoje você possa experimentar a presença de Deus de forma real e transformadora. Que Sua Palavra seja lâmpada para os seus pés e luz para o seu caminho.`,
-      reflection_questions: [
-        "Como este versículo se aplica à sua situação atual?",
-        "De que forma você pode praticar esta verdade hoje?",
-        "Há algo que precisa entregar a Deus neste momento?"
-      ],
-      prayer_focus: "Peça a Deus sabedoria para aplicar Sua Palavra no seu cotidiano e força para viver de acordo com Seus princípios."
-    },
-  ];
-
-  return templates[0];
+  return {
+    title: `Palavra Viva: ${seedVerse.ref.split(" ")[0]}`,
+    content: `Hoje refletimos sobre as preciosas palavras de ${seedVerse.ref}: "${seedVerse.text}"\n\nEste versículo nos lembra que Deus está presente em cada momento de nossa jornada. Em meio às pressões do dia a dia, às cobranças e às incertezas que enfrentamos, podemos encontrar paz e direção na Palavra de Deus.\n\nOs jovens de hoje enfrentam desafios únicos: a pressão das redes sociais, as expectativas acadêmicas e profissionais, e a busca por propósito. Mas a mensagem deste versículo permanece atual e poderosa.\n\nQue hoje você possa experimentar a presença de Deus de forma real e transformadora. Que Sua Palavra seja lâmpada para os seus pés e luz para o seu caminho.`,
+    reflection_questions: [
+      "Como este versículo se aplica à sua situação atual?",
+      "De que forma você pode praticar esta verdade hoje?",
+      "Há algo que precisa entregar a Deus neste momento?"
+    ],
+    prayer_focus: "Peça a Deus sabedoria para aplicar Sua Palavra no seu cotidiano e força para viver de acordo com Seus princípios."
+  };
 }

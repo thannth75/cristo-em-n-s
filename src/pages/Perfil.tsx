@@ -210,8 +210,9 @@ const Perfil = () => {
               userName={userName}
               onAvatarChange={setAvatarUrl}
             />
+            {/* Level badge positioned top-left to avoid overlap with camera button */}
             {levelInfo && (
-              <div className="absolute -bottom-2 -right-2 bg-background rounded-full p-1 shadow-lg">
+              <div className="absolute -top-1 -left-1 bg-background rounded-full p-0.5 shadow-lg z-10">
                 <LevelBadge level={currentLevel} icon={levelInfo.icon} title={levelInfo.title} size="sm" />
               </div>
             )}
