@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Calendar, Clock, MapPin, Plus, Trash2 } from "lucide-react";
+import { Calendar, Clock, MapPin, Plus, Trash2, Navigation } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +26,7 @@ import {
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import EventDetailDialog from "@/components/agenda/EventDetailDialog";
+import EventMapPicker from "@/components/agenda/EventMapPicker";
 import { eventSchema, validateInput } from "@/lib/validation";
 
 interface Event {
@@ -37,6 +38,10 @@ interface Event {
   start_time: string;
   end_time: string | null;
   location: string | null;
+  address: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  location_type: string | null;
 }
 
 const getTypeColor = (type: string) => {
@@ -63,6 +68,7 @@ const Agenda = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isMapPickerOpen, setIsMapPickerOpen] = useState(false);
   const [newEvent, setNewEvent] = useState({
     title: "",
     description: "",
@@ -71,28 +77,26 @@ const Agenda = () => {
     start_time: "",
     end_time: "",
     location: "",
+    address: "",
+    latitude: null as number | null,
+    longitude: null as number | null,
+    location_type: "igreja",
   });
 
   useEffect(() => {
     if (!authLoading) {
-      if (!user) {
-        navigate("/auth");
-      } else if (!isApproved) {
-        navigate("/pending");
-      }
+      if (!user) navigate("/auth");
+      else if (!isApproved) navigate("/pending");
     }
   }, [user, isApproved, authLoading, navigate]);
 
   useEffect(() => {
-    if (isApproved) {
-      fetchEvents();
-    }
+    if (isApproved) fetchEvents();
   }, [isApproved]);
 
   const fetchEvents = async () => {
     setIsLoading(true);
     const today = new Date().toISOString().split("T")[0];
-    
     const { data, error } = await supabase
       .from("events")
       .select("*")
@@ -101,11 +105,7 @@ const Agenda = () => {
       .order("start_time", { ascending: true });
 
     if (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar os eventos.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: "Não foi possível carregar os eventos.", variant: "destructive" });
     } else {
       setEvents(data || []);
     }
@@ -114,13 +114,8 @@ const Agenda = () => {
 
   const handleCreateEvent = async () => {
     const validation = validateInput(eventSchema, newEvent);
-    
     if (!validation.success) {
-      toast({
-        title: "Erro de validação",
-        description: validation.error,
-        variant: "destructive",
-      });
+      toast({ title: "Erro de validação", description: validation.error, variant: "destructive" });
       return;
     }
 
@@ -133,29 +128,22 @@ const Agenda = () => {
       start_time: validatedData.start_time,
       end_time: validatedData.end_time || null,
       location: validatedData.location || null,
+      address: newEvent.address || null,
+      latitude: newEvent.latitude,
+      longitude: newEvent.longitude,
+      location_type: newEvent.location_type || "igreja",
       created_by: user?.id,
     });
 
     if (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível criar o evento.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: "Não foi possível criar o evento.", variant: "destructive" });
     } else {
-      toast({
-        title: "Evento criado! 🎉",
-        description: "O evento foi adicionado à agenda.",
-      });
+      toast({ title: "Evento criado! 🎉", description: "O evento foi adicionado à agenda." });
       setIsDialogOpen(false);
       setNewEvent({
-        title: "",
-        description: "",
-        event_type: "culto",
-        event_date: "",
-        start_time: "",
-        end_time: "",
-        location: "",
+        title: "", description: "", event_type: "culto", event_date: "",
+        start_time: "", end_time: "", location: "", address: "",
+        latitude: null, longitude: null, location_type: "igreja",
       });
       fetchEvents();
     }
@@ -163,18 +151,10 @@ const Agenda = () => {
 
   const handleDeleteEvent = async (eventId: string) => {
     const { error } = await supabase.from("events").delete().eq("id", eventId);
-
     if (error) {
-      toast({
-        title: "Erro",
-        description: "Não foi possível excluir o evento.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: "Não foi possível excluir o evento.", variant: "destructive" });
     } else {
-      toast({
-        title: "Evento excluído",
-        description: "O evento foi removido da agenda.",
-      });
+      toast({ title: "Evento excluído", description: "O evento foi removido da agenda." });
       fetchEvents();
     }
   };
@@ -223,7 +203,7 @@ const Agenda = () => {
                   <Plus className="h-5 w-5" />
                 </Button>
               </DialogTrigger>
-              <DialogContent className="rounded-2xl">
+              <DialogContent className="rounded-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="font-serif">Novo Evento</DialogTitle>
                 </DialogHeader>
@@ -276,14 +256,37 @@ const Agenda = () => {
                     </div>
                   </div>
                   <div>
-                    <Label>Local</Label>
+                    <Label>Local (nome)</Label>
                     <Input
                       value={newEvent.location}
                       onChange={(e) => setNewEvent({ ...newEvent, location: e.target.value })}
-                      placeholder="Local do evento"
+                      placeholder="Ex: Igreja Vida em Cristo"
                       className="rounded-xl"
                     />
                   </div>
+
+                  {/* Map location picker */}
+                  <div className="space-y-2">
+                    <Label>📍 Localização no Mapa</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full rounded-xl gap-2"
+                      onClick={() => setIsMapPickerOpen(true)}
+                    >
+                      <MapPin className="h-4 w-4" />
+                      {newEvent.latitude
+                        ? "✅ Local selecionado — Alterar"
+                        : "Selecionar no Mapa"
+                      }
+                    </Button>
+                    {newEvent.address && (
+                      <p className="text-xs text-muted-foreground px-1 truncate">
+                        {newEvent.address}
+                      </p>
+                    )}
+                  </div>
+
                   <div>
                     <Label>Descrição (opcional)</Label>
                     <Textarea
@@ -302,7 +305,7 @@ const Agenda = () => {
           )}
         </motion.div>
 
-        {/* Calendário Resumo */}
+        {/* Calendar summary */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -320,14 +323,12 @@ const Agenda = () => {
               <h3 className="font-serif text-lg font-semibold">
                 {events.length} evento{events.length !== 1 && "s"} próximo{events.length !== 1 && "s"}
               </h3>
-              <p className="text-sm opacity-80">
-                Continue firme na caminhada!
-              </p>
+              <p className="text-sm opacity-80">Continue firme na caminhada!</p>
             </div>
           </div>
         </motion.div>
 
-        {/* Lista de Eventos */}
+        {/* Events list */}
         <div className="space-y-3">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
@@ -342,9 +343,7 @@ const Agenda = () => {
               <Calendar className="mx-auto mb-3 h-12 w-12 text-muted-foreground/50" />
               <p className="text-muted-foreground">Nenhum evento agendado.</p>
               {canManage && (
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Clique no + para criar um evento.
-                </p>
+                <p className="mt-2 text-sm text-muted-foreground">Clique no + para criar um evento.</p>
               )}
             </motion.div>
           ) : (
@@ -354,16 +353,12 @@ const Agenda = () => {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 + index * 0.05 }}
-                onClick={() => {
-                  setSelectedEvent(evento);
-                  setIsDetailOpen(true);
-                }}
+                onClick={() => { setSelectedEvent(evento); setIsDetailOpen(true); }}
                 className="flex w-full text-left items-center gap-4 rounded-2xl bg-card p-4 shadow-md hover:shadow-lg transition-shadow"
               >
                 <div className={`rounded-xl p-3 ${getTypeColor(evento.event_type)}`}>
                   <Calendar className="h-6 w-6" />
                 </div>
-                
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-foreground truncate">{evento.title}</h3>
                   <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
@@ -371,23 +366,26 @@ const Agenda = () => {
                       <Clock className="h-3.5 w-3.5" />
                       {formatDate(evento.event_date)}, {evento.start_time.slice(0, 5)}
                     </span>
-                    {evento.location && (
-                      <span className="flex items-center gap-1">
-                        <MapPin className="h-3.5 w-3.5" />
-                        {evento.location}
+                    {(evento.location || evento.address) && (
+                      <span className="flex items-center gap-1 truncate">
+                        <MapPin className="h-3.5 w-3.5 shrink-0" />
+                        {evento.location || evento.address}
                       </span>
                     )}
                   </div>
+                  {evento.latitude && (
+                    <span className="inline-flex items-center gap-1 mt-1 text-xs text-primary font-medium">
+                      <Navigation className="h-3 w-3" />
+                      GPS disponível
+                    </span>
+                  )}
                 </div>
 
                 {canManage && (
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteEvent(evento.id);
-                    }}
+                    onClick={(e) => { e.stopPropagation(); handleDeleteEvent(evento.id); }}
                     className="text-muted-foreground hover:text-destructive"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -398,7 +396,7 @@ const Agenda = () => {
           )}
         </div>
 
-        {/* Versículo motivacional */}
+        {/* Verse */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -416,6 +414,24 @@ const Agenda = () => {
         event={selectedEvent}
         open={isDetailOpen}
         onOpenChange={setIsDetailOpen}
+      />
+
+      <EventMapPicker
+        open={isMapPickerOpen}
+        onOpenChange={setIsMapPickerOpen}
+        onLocationSelect={(data) => {
+          setNewEvent((prev) => ({
+            ...prev,
+            address: data.address,
+            latitude: data.latitude,
+            longitude: data.longitude,
+            location_type: data.location_type,
+          }));
+        }}
+        initialLat={newEvent.latitude}
+        initialLng={newEvent.longitude}
+        initialAddress={newEvent.address}
+        initialLocationType={newEvent.location_type}
       />
 
       <BottomNavigation />
