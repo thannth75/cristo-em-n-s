@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Calendar, Clock, MapPin, Info, X } from "lucide-react";
+import { Calendar, Clock, MapPin, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import EventMapPreview from "@/components/agenda/EventMapPreview";
 
 interface Event {
   id: string;
@@ -18,6 +19,10 @@ interface Event {
   start_time: string;
   end_time: string | null;
   location: string | null;
+  address?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  location_type?: string | null;
 }
 
 interface EventDetailDialogProps {
@@ -62,13 +67,13 @@ const EventDetailDialog = ({ event, open, onOpenChange }: EventDetailDialogProps
     return `${days[date.getDay()]}, ${date.getDate()} de ${months[date.getMonth()]}`;
   };
 
-  const formatTime = (time: string) => {
-    return time.slice(0, 5);
-  };
+  const formatTime = (time: string) => time.slice(0, 5);
+
+  const hasCoordinates = event.latitude && event.longitude;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="rounded-2xl">
+      <DialogContent className="rounded-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-start justify-between">
             <div className="flex-1">
@@ -81,7 +86,7 @@ const EventDetailDialog = ({ event, open, onOpenChange }: EventDetailDialogProps
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Data e Hora */}
+          {/* Date & Time */}
           <motion.div
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -100,7 +105,7 @@ const EventDetailDialog = ({ event, open, onOpenChange }: EventDetailDialogProps
             </div>
           </motion.div>
 
-          {/* Local */}
+          {/* Location name */}
           {event.location && (
             <motion.div
               initial={{ opacity: 0, x: -10 }}
@@ -118,7 +123,24 @@ const EventDetailDialog = ({ event, open, onOpenChange }: EventDetailDialogProps
             </motion.div>
           )}
 
-          {/* Descrição */}
+          {/* Map with navigation */}
+          {hasCoordinates && (
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.25 }}
+            >
+              <EventMapPreview
+                latitude={event.latitude!}
+                longitude={event.longitude!}
+                address={event.address}
+                locationType={event.location_type}
+                title={event.title}
+              />
+            </motion.div>
+          )}
+
+          {/* Description */}
           {event.description && (
             <motion.div
               initial={{ opacity: 0, x: -10 }}

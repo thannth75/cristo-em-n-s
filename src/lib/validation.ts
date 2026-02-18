@@ -45,6 +45,10 @@ export const eventSchema = z.object({
   start_time: z.string().min(1, { message: "Horário obrigatório" }),
   end_time: z.string(),
   location: z.string().trim().max(LIMITS.LOCATION, { message: `Máximo ${LIMITS.LOCATION} caracteres` }),
+  address: z.string().trim().max(500, { message: "Máximo 500 caracteres" }).optional(),
+  latitude: z.number().min(-90).max(90).optional().nullable(),
+  longitude: z.number().min(-180).max(180).optional().nullable(),
+  location_type: z.string().optional(),
 });
 
 export const songSchema = z.object({
