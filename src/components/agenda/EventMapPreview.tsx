@@ -81,10 +81,10 @@ const EventMapPreview = ({
       (map as any)._streetLayer = streetLayer;
       (map as any)._satelliteLayer = satelliteLayer;
 
-      setTimeout(() => map.invalidateSize(), 100);
+      setTimeout(() => map.invalidateSize(), 150);
     };
 
-    const timer = setTimeout(initMap, 100);
+    const timer = setTimeout(initMap, 150);
     return () => {
       clearTimeout(timer);
       if (mapInstanceRef.current) {
@@ -130,33 +130,33 @@ const EventMapPreview = ({
   const TypeIcon = typeInfo?.icon || MapPin;
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-2">
       {/* Map */}
       <div className="relative rounded-xl overflow-hidden border border-border">
-        <div ref={mapRef} className={compact ? "h-[120px]" : "h-[160px] sm:h-[200px]"} />
+        <div ref={mapRef} className={compact ? "h-[100px]" : "h-[140px] sm:h-[180px]"} />
         {!compact && (
           <Button
             variant="secondary"
             size="sm"
-            className="absolute top-2 right-2 z-[1000] rounded-lg text-xs shadow-md h-7 px-2"
+            className="absolute top-2 right-2 z-[1000] rounded-lg text-[10px] shadow-md h-6 px-1.5"
             onClick={() => setIsSatellite(!isSatellite)}
           >
-            {isSatellite ? "🗺️ Mapa" : "🛰️ Satélite"}
+            {isSatellite ? "🗺️" : "🛰️"}
           </Button>
         )}
       </div>
 
       {/* Location info */}
       {(address || typeInfo) && (
-        <div className="rounded-xl bg-muted/50 p-2.5 sm:p-3">
+        <div className="rounded-xl bg-muted/50 p-2.5">
           <div className="flex items-start gap-2">
-            <TypeIcon className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+            <TypeIcon className="h-3.5 w-3.5 text-primary mt-0.5 shrink-0" />
             <div className="min-w-0">
               {typeInfo && (
-                <span className="text-[10px] sm:text-xs font-medium text-primary">{typeInfo.label}</span>
+                <span className="text-[10px] font-medium text-primary">{typeInfo.label}</span>
               )}
               {address && (
-                <p className="text-xs sm:text-sm text-foreground mt-0.5 break-words line-clamp-2">{address}</p>
+                <p className="text-xs text-foreground mt-0.5 break-words line-clamp-2">{address}</p>
               )}
             </div>
           </div>
@@ -167,19 +167,19 @@ const EventMapPreview = ({
       <div className="flex gap-2">
         <Button
           onClick={openNavigation}
-          className="flex-1 rounded-xl gap-2 text-xs sm:text-sm h-9 sm:h-10"
+          className="flex-1 rounded-xl gap-1.5 text-xs h-9"
           variant="default"
         >
-          <Navigation className="h-4 w-4" />
+          <Navigation className="h-3.5 w-3.5" />
           Ir para o Local
         </Button>
         <Button
           onClick={shareLocation}
           variant="outline"
           size="icon"
-          className="rounded-xl h-9 w-9 sm:h-10 sm:w-10"
+          className="rounded-xl h-9 w-9"
         >
-          <ExternalLink className="h-4 w-4" />
+          <ExternalLink className="h-3.5 w-3.5" />
         </Button>
       </div>
     </div>
