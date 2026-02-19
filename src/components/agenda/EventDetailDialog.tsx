@@ -73,32 +73,34 @@ const EventDetailDialog = ({ event, open, onOpenChange }: EventDetailDialogProps
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="rounded-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100%-1.5rem)] max-w-lg max-h-[92vh] overflow-y-auto rounded-2xl p-4 sm:p-6">
         <DialogHeader>
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <Badge className={`mb-2 ${getTypeColor(event.event_type)}`}>
+          <div className="flex items-start gap-2">
+            <div className="flex-1 min-w-0">
+              <Badge className={`mb-2 text-[10px] sm:text-xs ${getTypeColor(event.event_type)}`}>
                 {getTypeLabel(event.event_type)}
               </Badge>
-              <DialogTitle className="font-serif text-xl">{event.title}</DialogTitle>
+              <DialogTitle className="font-serif text-base sm:text-xl leading-tight">
+                {event.title}
+              </DialogTitle>
             </div>
           </div>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Date & Time */}
           <motion.div
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.1 }}
-            className="flex items-center gap-3 rounded-xl bg-muted/50 p-4"
+            className="flex items-center gap-3 rounded-xl bg-muted/50 p-3 sm:p-4"
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-              <Calendar className="h-6 w-6 text-primary" />
+            <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+              <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
             </div>
-            <div>
-              <p className="font-medium text-foreground">{formatDate(event.event_date)}</p>
-              <p className="text-sm text-muted-foreground">
+            <div className="min-w-0">
+              <p className="font-medium text-foreground text-sm sm:text-base truncate">{formatDate(event.event_date)}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 {formatTime(event.start_time)}
                 {event.end_time && ` - ${formatTime(event.end_time)}`}
               </p>
@@ -110,15 +112,15 @@ const EventDetailDialog = ({ event, open, onOpenChange }: EventDetailDialogProps
             <motion.div
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              className="flex items-center gap-3 rounded-xl bg-muted/50 p-4"
+              transition={{ delay: 0.15 }}
+              className="flex items-center gap-3 rounded-xl bg-muted/50 p-3 sm:p-4"
             >
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
-                <MapPin className="h-6 w-6 text-primary" />
+              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+                <MapPin className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Local</p>
-                <p className="font-medium text-foreground">{event.location}</p>
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground">Local</p>
+                <p className="font-medium text-foreground text-sm sm:text-base truncate">{event.location}</p>
               </div>
             </motion.div>
           )}
@@ -126,9 +128,9 @@ const EventDetailDialog = ({ event, open, onOpenChange }: EventDetailDialogProps
           {/* Map with navigation */}
           {hasCoordinates && (
             <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.25 }}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
             >
               <EventMapPreview
                 latitude={event.latitude!}
@@ -145,21 +147,21 @@ const EventDetailDialog = ({ event, open, onOpenChange }: EventDetailDialogProps
             <motion.div
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
-              className="rounded-xl bg-accent/50 p-4"
+              transition={{ delay: 0.25 }}
+              className="rounded-xl bg-accent/50 p-3 sm:p-4"
             >
-              <div className="flex items-center gap-2 mb-2">
-                <Info className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-medium text-muted-foreground">Descrição</span>
+              <div className="flex items-center gap-2 mb-1.5">
+                <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground">Descrição</span>
               </div>
-              <p className="text-foreground">{event.description}</p>
+              <p className="text-sm text-foreground">{event.description}</p>
             </motion.div>
           )}
 
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="w-full rounded-xl"
+            className="w-full rounded-xl text-sm"
           >
             Fechar
           </Button>

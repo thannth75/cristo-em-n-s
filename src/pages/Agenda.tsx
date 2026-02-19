@@ -203,27 +203,27 @@ const Agenda = () => {
                   <Plus className="h-5 w-5" />
                 </Button>
               </DialogTrigger>
-              <DialogContent className="rounded-2xl max-h-[90vh] overflow-y-auto">
+              <DialogContent className="w-[calc(100%-1.5rem)] max-w-lg max-h-[92vh] overflow-y-auto rounded-2xl p-4 sm:p-6">
                 <DialogHeader>
                   <DialogTitle className="font-serif">Novo Evento</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div>
-                    <Label>Título</Label>
+                    <Label className="text-xs sm:text-sm">Título</Label>
                     <Input
                       value={newEvent.title}
                       onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
                       placeholder="Nome do evento"
-                      className="rounded-xl"
+                      className="rounded-xl text-sm"
                     />
                   </div>
                   <div>
-                    <Label>Tipo</Label>
+                    <Label className="text-xs sm:text-sm">Tipo</Label>
                     <Select
                       value={newEvent.event_type}
                       onValueChange={(value) => setNewEvent({ ...newEvent, event_type: value })}
                     >
-                      <SelectTrigger className="rounded-xl">
+                      <SelectTrigger className="rounded-xl text-sm">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -235,68 +235,68 @@ const Agenda = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <Label>Data</Label>
+                      <Label className="text-xs sm:text-sm">Data</Label>
                       <Input
                         type="date"
                         value={newEvent.event_date}
                         onChange={(e) => setNewEvent({ ...newEvent, event_date: e.target.value })}
-                        className="rounded-xl"
+                        className="rounded-xl text-sm"
                       />
                     </div>
                     <div>
-                      <Label>Horário</Label>
+                      <Label className="text-xs sm:text-sm">Horário</Label>
                       <Input
                         type="time"
                         value={newEvent.start_time}
                         onChange={(e) => setNewEvent({ ...newEvent, start_time: e.target.value })}
-                        className="rounded-xl"
+                        className="rounded-xl text-sm"
                       />
                     </div>
                   </div>
                   <div>
-                    <Label>Local (nome)</Label>
+                    <Label className="text-xs sm:text-sm">Local (nome)</Label>
                     <Input
                       value={newEvent.location}
                       onChange={(e) => setNewEvent({ ...newEvent, location: e.target.value })}
                       placeholder="Ex: Igreja Vida em Cristo"
-                      className="rounded-xl"
+                      className="rounded-xl text-sm"
                     />
                   </div>
 
                   {/* Map location picker */}
-                  <div className="space-y-2">
-                    <Label>📍 Localização no Mapa</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs sm:text-sm">📍 Localização no Mapa</Label>
                     <Button
                       type="button"
                       variant="outline"
-                      className="w-full rounded-xl gap-2"
+                      className="w-full rounded-xl gap-2 text-xs sm:text-sm h-9"
                       onClick={() => setIsMapPickerOpen(true)}
                     >
-                      <MapPin className="h-4 w-4" />
+                      <MapPin className="h-4 w-4 shrink-0" />
                       {newEvent.latitude
                         ? "✅ Local selecionado — Alterar"
                         : "Selecionar no Mapa"
                       }
                     </Button>
                     {newEvent.address && (
-                      <p className="text-xs text-muted-foreground px-1 truncate">
+                      <p className="text-[10px] sm:text-xs text-muted-foreground px-1 line-clamp-2">
                         {newEvent.address}
                       </p>
                     )}
                   </div>
 
                   <div>
-                    <Label>Descrição (opcional)</Label>
+                    <Label className="text-xs sm:text-sm">Descrição (opcional)</Label>
                     <Textarea
                       value={newEvent.description}
                       onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
                       placeholder="Detalhes do evento"
-                      className="rounded-xl"
+                      className="rounded-xl text-sm min-h-[60px]"
                     />
                   </div>
-                  <Button onClick={handleCreateEvent} className="w-full rounded-xl">
+                  <Button onClick={handleCreateEvent} className="w-full rounded-xl text-sm">
                     Criar Evento
                   </Button>
                 </div>

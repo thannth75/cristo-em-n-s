@@ -44,10 +44,15 @@ const EventMapPreview = ({
       const map = L.default.map(mapRef.current!, {
         center: [latitude, longitude],
         zoom: 16,
-        zoomControl: !compact,
+        zoomControl: false,
         dragging: !compact,
-        scrollWheelZoom: !compact,
+        scrollWheelZoom: false,
+        touchZoom: !compact,
       });
+
+      if (!compact) {
+        L.default.control.zoom({ position: "bottomright" }).addTo(map);
+      }
 
       const streetLayer = L.default.tileLayer(
         "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -62,7 +67,7 @@ const EventMapPreview = ({
       streetLayer.addTo(map);
 
       const icon = L.default.divIcon({
-        html: `<div style="background:#1a472a;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3)">
+        html: `<div style="background:hsl(142, 40%, 20%);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3)">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
         </div>`,
         className: "",
@@ -125,15 +130,15 @@ const EventMapPreview = ({
   const TypeIcon = typeInfo?.icon || MapPin;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5">
       {/* Map */}
       <div className="relative rounded-xl overflow-hidden border border-border">
-        <div ref={mapRef} className={compact ? "h-[140px]" : "h-[200px]"} />
+        <div ref={mapRef} className={compact ? "h-[120px]" : "h-[160px] sm:h-[200px]"} />
         {!compact && (
           <Button
             variant="secondary"
             size="sm"
-            className="absolute top-2 right-2 z-[1000] rounded-lg text-xs shadow-md"
+            className="absolute top-2 right-2 z-[1000] rounded-lg text-xs shadow-md h-7 px-2"
             onClick={() => setIsSatellite(!isSatellite)}
           >
             {isSatellite ? "🗺️ Mapa" : "🛰️ Satélite"}
@@ -143,15 +148,15 @@ const EventMapPreview = ({
 
       {/* Location info */}
       {(address || typeInfo) && (
-        <div className="rounded-xl bg-muted/50 p-3">
+        <div className="rounded-xl bg-muted/50 p-2.5 sm:p-3">
           <div className="flex items-start gap-2">
             <TypeIcon className="h-4 w-4 text-primary mt-0.5 shrink-0" />
             <div className="min-w-0">
               {typeInfo && (
-                <span className="text-xs font-medium text-primary">{typeInfo.label}</span>
+                <span className="text-[10px] sm:text-xs font-medium text-primary">{typeInfo.label}</span>
               )}
               {address && (
-                <p className="text-sm text-foreground mt-0.5 break-words">{address}</p>
+                <p className="text-xs sm:text-sm text-foreground mt-0.5 break-words line-clamp-2">{address}</p>
               )}
             </div>
           </div>
@@ -162,8 +167,8 @@ const EventMapPreview = ({
       <div className="flex gap-2">
         <Button
           onClick={openNavigation}
-          className="flex-1 rounded-xl gap-2"
-          variant="hope"
+          className="flex-1 rounded-xl gap-2 text-xs sm:text-sm h-9 sm:h-10"
+          variant="default"
         >
           <Navigation className="h-4 w-4" />
           Ir para o Local
@@ -172,7 +177,7 @@ const EventMapPreview = ({
           onClick={shareLocation}
           variant="outline"
           size="icon"
-          className="rounded-xl"
+          className="rounded-xl h-9 w-9 sm:h-10 sm:w-10"
         >
           <ExternalLink className="h-4 w-4" />
         </Button>
