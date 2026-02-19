@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { MapPin, Search, Church, Home, Globe, MoreHorizontal } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { MapPin, Search, Church, Home, Globe, MoreHorizontal, Locate, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -29,9 +29,15 @@ interface EventMapPickerProps {
 const LOCATION_TYPES = [
   { value: "igreja", label: "Igreja", icon: Church },
   { value: "casa", label: "Casa", icon: Home },
-  { value: "externo", label: "Evento Externo", icon: Globe },
+  { value: "externo", label: "Externo", icon: Globe },
   { value: "outro", label: "Outro", icon: MoreHorizontal },
 ];
+
+interface SearchResult {
+  lat: string;
+  lon: string;
+  display_name: string;
+}
 
 const EventMapPicker = ({
   open,
@@ -52,6 +58,43 @@ const EventMapPicker = ({
   const [locationType, setLocationType] = useState(initialLocationType);
   const [isSearching, setIsSearching] = useState(false);
   const [isSatellite, setIsSatellite] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+
+  // Reset state when dialog opens
+  useEffect(() => {
+    if (open) {
+      setLat(initialLat || -15.7801);
+      setLng(initialLng || -47.9292);
+      setAddress(initialAddress);
+      setLocationType(initialLocationType);
+      setSearchQuery("");
+      setSearchResults([]);
+    }
+  }, [open, initialLat, initialLng, initialAddress, initialLocationType]);
+
+  const updateMapPosition = useCallback((newLat: number, newLng: number, zoom?: number) => {
+    if (mapInstanceRef.current && markerRef.current) {
+      mapInstanceRef.current.setView([newLat, newLng], zoom || mapInstanceRef.current.getZoom());
+      markerRef.current.setLatLng([newLat, newLng]);
+    }
+    setLat(newLat);
+    setLng(newLng);
+  }, []);
+
+  const reverseGeocode = useCallback(async (lat: number, lng: number) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=pt-BR&addressdetails=1`
+      );
+      const data = await res.json();
+      if (data.display_name) {
+        setAddress(data.display_name);
+      }
+    } catch {
+      // silent
+    }
+  }, []);
 
   useEffect(() => {
     if (!open || !mapRef.current) return;
@@ -62,17 +105,21 @@ const EventMapPicker = ({
 
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
       }
 
       const map = L.default.map(mapRef.current!, {
         center: [lat, lng],
         zoom: 15,
-        zoomControl: true,
+        zoomControl: false,
       });
+
+      // Add zoom control in a better position for mobile
+      L.default.control.zoom({ position: "bottomright" }).addTo(map);
 
       const streetLayer = L.default.tileLayer(
         "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        { attribution: "© OpenStreetMap contributors", maxZoom: 19 }
+        { attribution: "© OSM", maxZoom: 19 }
       );
 
       const satelliteLayer = L.default.tileLayer(
@@ -80,20 +127,15 @@ const EventMapPicker = ({
         { attribution: "© Esri", maxZoom: 19 }
       );
 
-      if (isSatellite) {
-        satelliteLayer.addTo(map);
-      } else {
-        streetLayer.addTo(map);
-      }
+      streetLayer.addTo(map);
 
-      // Custom icon
       const icon = L.default.divIcon({
-        html: `<div style="background:#1a472a;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.3)">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        html: `<div style="background:hsl(var(--primary));border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 10px rgba(0,0,0,0.4)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
         </div>`,
         className: "",
-        iconSize: [32, 32],
-        iconAnchor: [16, 32],
+        iconSize: [36, 36],
+        iconAnchor: [18, 36],
       });
 
       const marker = L.default.marker([lat, lng], { icon, draggable: true }).addTo(map);
@@ -115,22 +157,26 @@ const EventMapPicker = ({
 
       mapInstanceRef.current = map;
       markerRef.current = marker;
-
-      // Layer toggle
       (map as any)._streetLayer = streetLayer;
       (map as any)._satelliteLayer = satelliteLayer;
 
-      setTimeout(() => map.invalidateSize(), 100);
+      setTimeout(() => map.invalidateSize(), 150);
     };
 
-    const timer = setTimeout(initMap, 200);
-    return () => clearTimeout(timer);
+    const timer = setTimeout(initMap, 250);
+    return () => {
+      clearTimeout(timer);
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
-
     const streetLayer = map._streetLayer;
     const satelliteLayer = map._satelliteLayer;
     if (!streetLayer || !satelliteLayer) return;
@@ -144,45 +190,48 @@ const EventMapPicker = ({
     }
   }, [isSatellite]);
 
-  const reverseGeocode = async (lat: number, lng: number) => {
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=pt-BR`
-      );
-      const data = await res.json();
-      if (data.display_name) {
-        setAddress(data.display_name);
-      }
-    } catch (e) {
-      // silent fail
-    }
+  const handleLocateMe = () => {
+    if (!navigator.geolocation) return;
+    setIsLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        updateMapPosition(latitude, longitude, 17);
+        reverseGeocode(latitude, longitude);
+        setIsLocating(false);
+      },
+      () => setIsLocating(false),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
   };
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     setIsSearching(true);
+    setSearchResults([]);
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&accept-language=pt-BR`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5&accept-language=pt-BR&countrycodes=br`
       );
-      const data = await res.json();
-      if (data.length > 0) {
-        const { lat: newLat, lon: newLng, display_name } = data[0];
-        const nLat = parseFloat(newLat);
-        const nLng = parseFloat(newLng);
-        setLat(nLat);
-        setLng(nLng);
-        setAddress(display_name);
-
-        if (mapInstanceRef.current && markerRef.current) {
-          mapInstanceRef.current.setView([nLat, nLng], 16);
-          markerRef.current.setLatLng([nLat, nLng]);
-        }
+      const data: SearchResult[] = await res.json();
+      if (data.length === 1) {
+        selectSearchResult(data[0]);
+      } else if (data.length > 1) {
+        setSearchResults(data);
       }
-    } catch (e) {
-      // silent fail
+    } catch {
+      // silent
     }
     setIsSearching(false);
+  };
+
+  const selectSearchResult = (result: SearchResult) => {
+    const nLat = parseFloat(result.lat);
+    const nLng = parseFloat(result.lon);
+    setAddress(result.display_name);
+    updateMapPosition(nLat, nLng, 16);
+    setSearchResults([]);
+    setSearchQuery("");
   };
 
   const handleConfirm = () => {
@@ -197,23 +246,23 @@ const EventMapPicker = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="rounded-2xl max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100%-1.5rem)] max-w-lg max-h-[92vh] overflow-y-auto rounded-2xl p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="font-serif flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-primary" />
-            Selecionar Local no Mapa
+          <DialogTitle className="font-serif flex items-center gap-2 text-base sm:text-lg">
+            <MapPin className="h-5 w-5 text-primary shrink-0" />
+            Selecionar Local
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4">
-          {/* Search */}
-          <div className="flex gap-2">
+        <div className="space-y-3">
+          {/* Search + Locate */}
+          <div className="flex gap-1.5">
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               placeholder="Pesquisar endereço..."
-              className="rounded-xl"
+              className="rounded-xl text-sm"
             />
             <Button
               onClick={handleSearch}
@@ -221,61 +270,85 @@ const EventMapPicker = ({
               className="rounded-xl shrink-0"
               disabled={isSearching}
             >
-              <Search className="h-4 w-4" />
+              {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+            </Button>
+            <Button
+              onClick={handleLocateMe}
+              size="icon"
+              variant="outline"
+              className="rounded-xl shrink-0"
+              disabled={isLocating}
+            >
+              {isLocating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Locate className="h-4 w-4" />}
             </Button>
           </div>
 
+          {/* Search results dropdown */}
+          {searchResults.length > 0 && (
+            <div className="rounded-xl border border-border bg-card shadow-lg max-h-40 overflow-y-auto">
+              {searchResults.map((result, i) => (
+                <button
+                  key={i}
+                  onClick={() => selectSearchResult(result)}
+                  className="w-full text-left px-3 py-2.5 text-xs sm:text-sm hover:bg-muted/50 border-b border-border last:border-b-0 transition-colors"
+                >
+                  {result.display_name}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* Map */}
           <div className="relative rounded-xl overflow-hidden border border-border">
-            <div ref={mapRef} className="h-[280px] w-full" />
+            <div ref={mapRef} className="h-[220px] sm:h-[280px] w-full" />
             <Button
               variant="secondary"
               size="sm"
-              className="absolute top-2 right-2 z-[1000] rounded-lg text-xs shadow-md"
+              className="absolute top-2 right-2 z-[1000] rounded-lg text-xs shadow-md h-7 px-2"
               onClick={() => setIsSatellite(!isSatellite)}
             >
               {isSatellite ? "🗺️ Mapa" : "🛰️ Satélite"}
             </Button>
           </div>
 
-          <p className="text-xs text-muted-foreground text-center">
-            Toque no mapa ou arraste o marcador para ajustar a posição
+          <p className="text-[11px] sm:text-xs text-muted-foreground text-center">
+            Toque no mapa ou arraste o marcador para ajustar
           </p>
 
           {/* Address preview */}
           {address && (
-            <div className="rounded-xl bg-muted/50 p-3">
-              <p className="text-xs text-muted-foreground mb-1">Endereço selecionado:</p>
-              <p className="text-sm font-medium text-foreground">{address}</p>
+            <div className="rounded-xl bg-muted/50 p-2.5 sm:p-3">
+              <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5">Endereço:</p>
+              <p className="text-xs sm:text-sm font-medium text-foreground break-words line-clamp-3">{address}</p>
             </div>
           )}
 
           {/* Location type */}
           <div>
-            <Label className="text-sm font-medium mb-2 block">Tipo de local</Label>
+            <Label className="text-xs sm:text-sm font-medium mb-1.5 block">Tipo de local</Label>
             <RadioGroup
               value={locationType}
               onValueChange={setLocationType}
-              className="grid grid-cols-2 gap-2"
+              className="grid grid-cols-2 gap-1.5 sm:gap-2"
             >
               {LOCATION_TYPES.map((type) => (
                 <label
                   key={type.value}
-                  className={`flex items-center gap-2 rounded-xl border p-3 cursor-pointer transition-colors ${
+                  className={`flex items-center gap-1.5 sm:gap-2 rounded-xl border p-2 sm:p-3 cursor-pointer transition-colors ${
                     locationType === type.value
                       ? "border-primary bg-primary/5"
                       : "border-border hover:bg-muted/50"
                   }`}
                 >
                   <RadioGroupItem value={type.value} className="sr-only" />
-                  <type.icon className="h-4 w-4 text-primary" />
-                  <span className="text-sm">{type.label}</span>
+                  <type.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary shrink-0" />
+                  <span className="text-xs sm:text-sm">{type.label}</span>
                 </label>
               ))}
             </RadioGroup>
           </div>
 
-          <Button onClick={handleConfirm} className="w-full rounded-xl">
+          <Button onClick={handleConfirm} className="w-full rounded-xl text-sm">
             ✅ Confirmar Local
           </Button>
         </div>
