@@ -60,6 +60,7 @@ const EventMapPicker = ({
   const [isSatellite, setIsSatellite] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [autoLocated, setAutoLocated] = useState(false);
 
   // Reset state when dialog opens
   useEffect(() => {
@@ -70,6 +71,7 @@ const EventMapPicker = ({
       setLocationType(initialLocationType);
       setSearchQuery("");
       setSearchResults([]);
+      setAutoLocated(false);
     }
   }, [open, initialLat, initialLng, initialAddress, initialLocationType]);
 
@@ -82,10 +84,10 @@ const EventMapPicker = ({
     setLng(newLng);
   }, []);
 
-  const reverseGeocode = useCallback(async (lat: number, lng: number) => {
+  const reverseGeocode = useCallback(async (latitude: number, longitude: number) => {
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=pt-BR&addressdetails=1`
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=pt-BR&addressdetails=1`
       );
       const data = await res.json();
       if (data.display_name) {
@@ -95,6 +97,25 @@ const EventMapPicker = ({
       // silent
     }
   }, []);
+
+  // Auto-locate user when opening without initial coordinates
+  useEffect(() => {
+    if (!open || autoLocated || initialLat) return;
+    if (!navigator.geolocation) return;
+
+    setAutoLocated(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        updateMapPosition(latitude, longitude, 16);
+        reverseGeocode(latitude, longitude);
+      },
+      () => {
+        // Use default (Brasília) if geolocation fails
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  }, [open, autoLocated, initialLat, updateMapPosition, reverseGeocode]);
 
   useEffect(() => {
     if (!open || !mapRef.current) return;
@@ -114,7 +135,6 @@ const EventMapPicker = ({
         zoomControl: false,
       });
 
-      // Add zoom control in a better position for mobile
       L.default.control.zoom({ position: "bottomright" }).addTo(map);
 
       const streetLayer = L.default.tileLayer(
@@ -160,10 +180,10 @@ const EventMapPicker = ({
       (map as any)._streetLayer = streetLayer;
       (map as any)._satelliteLayer = satelliteLayer;
 
-      setTimeout(() => map.invalidateSize(), 150);
+      setTimeout(() => map.invalidateSize(), 200);
     };
 
-    const timer = setTimeout(initMap, 250);
+    const timer = setTimeout(initMap, 300);
     return () => {
       clearTimeout(timer);
       if (mapInstanceRef.current) {
@@ -246,7 +266,7 @@ const EventMapPicker = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100%-1.5rem)] max-w-lg max-h-[92vh] overflow-y-auto rounded-2xl p-4 sm:p-6">
+      <DialogContent className="w-[calc(100%-1rem)] sm:w-[calc(100%-1.5rem)] max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl p-3 sm:p-5">
         <DialogHeader>
           <DialogTitle className="font-serif flex items-center gap-2 text-base sm:text-lg">
             <MapPin className="h-5 w-5 text-primary shrink-0" />
@@ -262,12 +282,12 @@ const EventMapPicker = ({
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               placeholder="Pesquisar endereço..."
-              className="rounded-xl text-sm"
+              className="rounded-xl text-sm flex-1 min-w-0"
             />
             <Button
               onClick={handleSearch}
               size="icon"
-              className="rounded-xl shrink-0"
+              className="rounded-xl shrink-0 h-10 w-10"
               disabled={isSearching}
             >
               {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
@@ -276,7 +296,7 @@ const EventMapPicker = ({
               onClick={handleLocateMe}
               size="icon"
               variant="outline"
-              className="rounded-xl shrink-0"
+              className="rounded-xl shrink-0 h-10 w-10"
               disabled={isLocating}
             >
               {isLocating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Locate className="h-4 w-4" />}
@@ -285,14 +305,14 @@ const EventMapPicker = ({
 
           {/* Search results dropdown */}
           {searchResults.length > 0 && (
-            <div className="rounded-xl border border-border bg-card shadow-lg max-h-40 overflow-y-auto">
+            <div className="rounded-xl border border-border bg-card shadow-lg max-h-36 overflow-y-auto">
               {searchResults.map((result, i) => (
                 <button
                   key={i}
                   onClick={() => selectSearchResult(result)}
-                  className="w-full text-left px-3 py-2.5 text-xs sm:text-sm hover:bg-muted/50 border-b border-border last:border-b-0 transition-colors"
+                  className="w-full text-left px-3 py-2.5 text-xs hover:bg-muted/50 border-b border-border last:border-b-0 transition-colors"
                 >
-                  {result.display_name}
+                  <span className="line-clamp-2">{result.display_name}</span>
                 </button>
               ))}
             </div>
@@ -300,55 +320,55 @@ const EventMapPicker = ({
 
           {/* Map */}
           <div className="relative rounded-xl overflow-hidden border border-border">
-            <div ref={mapRef} className="h-[220px] sm:h-[280px] w-full" />
+            <div ref={mapRef} className="h-[200px] sm:h-[260px] w-full" />
             <Button
               variant="secondary"
               size="sm"
-              className="absolute top-2 right-2 z-[1000] rounded-lg text-xs shadow-md h-7 px-2"
+              className="absolute top-2 right-2 z-[1000] rounded-lg text-[10px] sm:text-xs shadow-md h-7 px-2"
               onClick={() => setIsSatellite(!isSatellite)}
             >
               {isSatellite ? "🗺️ Mapa" : "🛰️ Satélite"}
             </Button>
           </div>
 
-          <p className="text-[11px] sm:text-xs text-muted-foreground text-center">
+          <p className="text-[10px] text-muted-foreground text-center">
             Toque no mapa ou arraste o marcador para ajustar
           </p>
 
           {/* Address preview */}
           {address && (
-            <div className="rounded-xl bg-muted/50 p-2.5 sm:p-3">
-              <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5">Endereço:</p>
-              <p className="text-xs sm:text-sm font-medium text-foreground break-words line-clamp-3">{address}</p>
+            <div className="rounded-xl bg-muted/50 p-2.5">
+              <p className="text-[10px] text-muted-foreground mb-0.5">Endereço:</p>
+              <p className="text-xs font-medium text-foreground break-words line-clamp-3">{address}</p>
             </div>
           )}
 
           {/* Location type */}
           <div>
-            <Label className="text-xs sm:text-sm font-medium mb-1.5 block">Tipo de local</Label>
+            <Label className="text-xs font-medium mb-1.5 block">Tipo de local</Label>
             <RadioGroup
               value={locationType}
               onValueChange={setLocationType}
-              className="grid grid-cols-2 gap-1.5 sm:gap-2"
+              className="grid grid-cols-2 gap-1.5"
             >
               {LOCATION_TYPES.map((type) => (
                 <label
                   key={type.value}
-                  className={`flex items-center gap-1.5 sm:gap-2 rounded-xl border p-2 sm:p-3 cursor-pointer transition-colors ${
+                  className={`flex items-center gap-1.5 rounded-xl border p-2.5 cursor-pointer transition-colors ${
                     locationType === type.value
                       ? "border-primary bg-primary/5"
                       : "border-border hover:bg-muted/50"
                   }`}
                 >
                   <RadioGroupItem value={type.value} className="sr-only" />
-                  <type.icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary shrink-0" />
-                  <span className="text-xs sm:text-sm">{type.label}</span>
+                  <type.icon className="h-3.5 w-3.5 text-primary shrink-0" />
+                  <span className="text-xs">{type.label}</span>
                 </label>
               ))}
             </RadioGroup>
           </div>
 
-          <Button onClick={handleConfirm} className="w-full rounded-xl text-sm">
+          <Button onClick={handleConfirm} className="w-full rounded-xl text-sm h-10">
             ✅ Confirmar Local
           </Button>
         </div>

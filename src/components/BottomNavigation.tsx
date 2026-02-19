@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Home, BookOpen, Calendar, User, Users } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -11,18 +12,19 @@ const navItems = [
   { icon: User, label: "Perfil", href: "/perfil" },
 ];
 
-const BottomNavigation = () => {
+const BottomNavigation = forwardRef<HTMLElement>(function BottomNavigation(_, ref) {
   const location = useLocation();
   const navigate = useNavigate();
 
   return (
-    <nav 
+    <nav
+      ref={ref}
       className={cn(
         "fixed bottom-0 left-0 right-0 z-50",
         "border-t border-border bg-card/95 backdrop-blur-xl",
         "shadow-[0_-2px_10px_rgba(0,0,0,0.05)]"
       )}
-      style={{ 
+      style={{
         paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 8px))',
         paddingLeft: 'env(safe-area-inset-left, 0px)',
         paddingRight: 'env(safe-area-inset-right, 0px)',
@@ -74,6 +76,6 @@ const BottomNavigation = () => {
       </div>
     </nav>
   );
-};
+});
 
 export default BottomNavigation;

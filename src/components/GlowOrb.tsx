@@ -1,15 +1,17 @@
-import { useRef } from "react";
+import { forwardRef, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Sphere, MeshDistortMaterial } from "@react-three/drei";
 import * as THREE from "three";
 
-function AnimatedOrb() {
+const AnimatedOrb = forwardRef<THREE.Mesh>(function AnimatedOrb(_, ref) {
   const meshRef = useRef<THREE.Mesh>(null);
+  const actualRef = (ref as React.RefObject<THREE.Mesh>) || meshRef;
 
   useFrame((state) => {
-    if (meshRef.current) {
-      meshRef.current.rotation.x = state.clock.elapsedTime * 0.2;
-      meshRef.current.rotation.y = state.clock.elapsedTime * 0.3;
+    const mesh = actualRef.current || meshRef.current;
+    if (mesh) {
+      mesh.rotation.x = state.clock.elapsedTime * 0.2;
+      mesh.rotation.y = state.clock.elapsedTime * 0.3;
     }
   });
 
@@ -27,7 +29,7 @@ function AnimatedOrb() {
       />
     </Sphere>
   );
-}
+});
 
 interface GlowOrbProps {
   className?: string;
