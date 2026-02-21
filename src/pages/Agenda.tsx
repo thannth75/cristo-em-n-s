@@ -207,23 +207,23 @@ const Agenda = () => {
                 <DialogHeader>
                   <DialogTitle className="font-serif">Novo Evento</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-3">
-                  <div>
-                    <Label className="text-xs sm:text-sm">Título</Label>
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs sm:text-sm font-medium">Título</Label>
                     <Input
                       value={newEvent.title}
                       onChange={(e) => setNewEvent({ ...newEvent, title: e.target.value })}
                       placeholder="Nome do evento"
-                      className="rounded-xl text-sm"
+                      className="rounded-xl text-sm border border-border bg-background"
                     />
                   </div>
-                  <div>
-                    <Label className="text-xs sm:text-sm">Tipo</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs sm:text-sm font-medium">Tipo</Label>
                     <Select
                       value={newEvent.event_type}
                       onValueChange={(value) => setNewEvent({ ...newEvent, event_type: value })}
                     >
-                      <SelectTrigger className="rounded-xl text-sm">
+                      <SelectTrigger className="rounded-xl text-sm border border-border bg-background">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -235,33 +235,33 @@ const Agenda = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <Label className="text-xs sm:text-sm">Data</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs sm:text-sm font-medium">Data</Label>
                       <Input
                         type="date"
                         value={newEvent.event_date}
                         onChange={(e) => setNewEvent({ ...newEvent, event_date: e.target.value })}
-                        className="rounded-xl text-sm"
+                        className="rounded-xl text-sm border border-border bg-background"
                       />
                     </div>
-                    <div>
-                      <Label className="text-xs sm:text-sm">Horário</Label>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs sm:text-sm font-medium">Horário</Label>
                       <Input
                         type="time"
                         value={newEvent.start_time}
                         onChange={(e) => setNewEvent({ ...newEvent, start_time: e.target.value })}
-                        className="rounded-xl text-sm"
+                        className="rounded-xl text-sm border border-border bg-background"
                       />
                     </div>
                   </div>
-                  <div>
-                    <Label className="text-xs sm:text-sm">Local (nome)</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs sm:text-sm font-medium">Local (nome)</Label>
                     <Input
                       value={newEvent.location}
                       onChange={(e) => setNewEvent({ ...newEvent, location: e.target.value })}
                       placeholder="Ex: Igreja Vida em Cristo"
-                      className="rounded-xl text-sm"
+                      className="rounded-xl text-sm border border-border bg-background"
                     />
                   </div>
 
@@ -287,13 +287,13 @@ const Agenda = () => {
                     )}
                   </div>
 
-                  <div>
-                    <Label className="text-xs sm:text-sm">Descrição (opcional)</Label>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs sm:text-sm font-medium">Descrição (opcional)</Label>
                     <Textarea
                       value={newEvent.description}
                       onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })}
                       placeholder="Detalhes do evento"
-                      className="rounded-xl text-sm min-h-[60px]"
+                      className="rounded-xl text-sm min-h-[60px] border border-border bg-background"
                     />
                   </div>
                   <Button onClick={handleCreateEvent} className="w-full rounded-xl text-sm">

@@ -180,10 +180,11 @@ const EventMapPicker = ({
       (map as any)._streetLayer = streetLayer;
       (map as any)._satelliteLayer = satelliteLayer;
 
-      setTimeout(() => map.invalidateSize(), 200);
+      setTimeout(() => map.invalidateSize(), 300);
+      setTimeout(() => map.invalidateSize(), 800);
     };
 
-    const timer = setTimeout(initMap, 300);
+    const timer = setTimeout(initMap, 500);
     return () => {
       clearTimeout(timer);
       if (mapInstanceRef.current) {
