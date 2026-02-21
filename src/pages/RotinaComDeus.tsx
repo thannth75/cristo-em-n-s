@@ -281,7 +281,7 @@ const RotinaComDeus = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background" style={{ paddingBottom: 'calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))' }}>
       <AppHeader userName={userName} />
 
       <main className="px-4 py-6">
