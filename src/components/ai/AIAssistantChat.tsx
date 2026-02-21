@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bot, Send, X, Loader2, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,13 +15,8 @@ interface AIAssistantChatProps {
   initialMessage?: string;
 }
 
-const AIAssistantChat = ({
-  isOpen,
-  onClose,
-  type = "general",
-  context,
-  initialMessage,
-}: AIAssistantChatProps) => {
+const AIAssistantChat = forwardRef<HTMLDivElement, AIAssistantChatProps>(
+  function AIAssistantChat({ isOpen, onClose, type = "general", context, initialMessage }, ref) {
   const { messages, isLoading, error, sendMessage, clearMessages } = useAIAssistant({
     type,
     context,
@@ -235,6 +230,7 @@ const AIAssistantChat = ({
       )}
     </AnimatePresence>
   );
-};
+  }
+);
 
 export default AIAssistantChat;
