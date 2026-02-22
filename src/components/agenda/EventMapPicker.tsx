@@ -117,19 +117,40 @@ const EventMapPicker = ({
     );
   }, [open, autoLocated, initialLat, updateMapPosition, reverseGeocode]);
 
+  // Inject Leaflet CSS globally once
+  useEffect(() => {
+    if (document.getElementById('leaflet-css-global')) return;
+    const link = document.createElement('link');
+    link.id = 'leaflet-css-global';
+    link.rel = 'stylesheet';
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    link.crossOrigin = '';
+    document.head.appendChild(link);
+  }, []);
+
   useEffect(() => {
     if (!open || !mapRef.current) return;
 
+    let cancelled = false;
+
     const initMap = async () => {
       const L = await import("leaflet");
-      await import("leaflet/dist/leaflet.css");
+
+      if (cancelled) return;
 
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
       }
 
-      const map = L.default.map(mapRef.current!, {
+      const container = mapRef.current!;
+      // Ensure container has dimensions before init
+      if (container.clientHeight === 0) {
+        await new Promise(r => setTimeout(r, 200));
+        if (cancelled) return;
+      }
+
+      const map = L.default.map(container, {
         center: [lat, lng],
         zoom: 15,
         zoomControl: false,
@@ -180,12 +201,20 @@ const EventMapPicker = ({
       (map as any)._streetLayer = streetLayer;
       (map as any)._satelliteLayer = satelliteLayer;
 
-      setTimeout(() => map.invalidateSize(), 300);
-      setTimeout(() => map.invalidateSize(), 800);
+      // Aggressive invalidateSize to fix blank tiles in dialogs
+      const intervals = [100, 300, 600, 1000, 1500, 2000];
+      intervals.forEach(ms => {
+        setTimeout(() => {
+          if (!cancelled && mapInstanceRef.current) {
+            mapInstanceRef.current.invalidateSize();
+          }
+        }, ms);
+      });
     };
 
-    const timer = setTimeout(initMap, 500);
+    const timer = setTimeout(initMap, 300);
     return () => {
+      cancelled = true;
       clearTimeout(timer);
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();

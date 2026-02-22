@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bell, Check, Award, Calendar, MessageSquare, Info } from "lucide-react";
+import { Bell, Check, Award, Calendar, MessageSquare, Info, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -94,6 +94,19 @@ const NotificationCenter = () => {
     setUnreadCount(0);
   };
 
+  const clearAllNotifications = async () => {
+    if (notifications.length === 0) return;
+
+    const ids = notifications.map((n) => n.id);
+    await supabase
+      .from("notifications")
+      .delete()
+      .in("id", ids);
+
+    setNotifications([]);
+    setUnreadCount(0);
+  };
+
   const getIcon = (type: string) => {
     switch (type) {
       case "achievement":
@@ -148,12 +161,20 @@ const NotificationCenter = () => {
         <SheetHeader className="px-4 py-4 border-b border-border">
           <div className="flex items-center justify-between">
             <SheetTitle className="font-serif">Notificações</SheetTitle>
-            {unreadCount > 0 && (
-              <Button variant="ghost" size="sm" onClick={markAllAsRead}>
-                <Check className="h-4 w-4 mr-1" />
-                Marcar todas
-              </Button>
-            )}
+            <div className="flex items-center gap-1">
+              {notifications.length > 0 && (
+                <Button variant="ghost" size="sm" onClick={clearAllNotifications} className="text-destructive hover:text-destructive">
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Limpar
+                </Button>
+              )}
+              {unreadCount > 0 && (
+                <Button variant="ghost" size="sm" onClick={markAllAsRead}>
+                  <Check className="h-4 w-4 mr-1" />
+                  Ler todas
+                </Button>
+              )}
+            </div>
           </div>
         </SheetHeader>
         <div className="overflow-y-auto max-h-[calc(100vh-100px)]">
