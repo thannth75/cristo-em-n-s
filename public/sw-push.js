@@ -95,7 +95,30 @@ self.addEventListener('notificationclick', function(event) {
 
 // Handle notification close
 self.addEventListener('notificationclose', function(event) {
-  console.log('[SW] Notification closed');
+  // silent
+});
+
+// Handle push subscription change (auto-resubscribe)
+self.addEventListener('pushsubscriptionchange', function(event) {
+  console.log('[SW] Push subscription changed, resubscribing...');
+  event.waitUntil(
+    self.registration.pushManager.subscribe(event.oldSubscription.options)
+      .then(function(subscription) {
+        console.log('[SW] Resubscribed successfully');
+        // Notify the app to update the stored subscription
+        return self.clients.matchAll().then(function(clients) {
+          clients.forEach(function(client) {
+            client.postMessage({
+              type: 'PUSH_SUBSCRIPTION_CHANGED',
+              subscription: subscription.toJSON()
+            });
+          });
+        });
+      })
+      .catch(function(error) {
+        console.error('[SW] Failed to resubscribe:', error);
+      })
+  );
 });
 
 // Handle service worker install
@@ -110,14 +133,9 @@ self.addEventListener('activate', function(event) {
   event.waitUntil(self.clients.claim());
 });
 
-// Handle fetch for offline support (optional)
+// Handle fetch for offline support
 self.addEventListener('fetch', function(event) {
-  // Let the browser do its default thing for non-GET requests
-  if (event.request.method !== 'GET') {
-    return;
-  }
-  
-  // For GET requests, try network first, then cache
+  if (event.request.method !== 'GET') return;
   event.respondWith(
     fetch(event.request).catch(function() {
       return caches.match(event.request);
