@@ -10,7 +10,7 @@ import { decode as base64Decode, encode as base64Encode } from "https://deno.lan
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 interface PushPayload {
@@ -182,6 +182,7 @@ Deno.serve(async (req) => {
   }
 
   try {
+    console.log("[send-push-notification] Request received");
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -189,6 +190,7 @@ Deno.serve(async (req) => {
     // Authenticate the caller - accept service role key OR valid user token
     const authHeader = req.headers.get("Authorization");
     if (!authHeader?.startsWith("Bearer ")) {
+      console.log("[send-push-notification] No auth header");
       return new Response(
         JSON.stringify({ error: "Unauthorized" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -203,13 +205,17 @@ Deno.serve(async (req) => {
         global: { headers: { Authorization: authHeader } },
       });
 
-      const { data: userData, error: userError } = await userClient.auth.getUser(token);
+      const { data: userData, error: userError } = await userClient.auth.getUser();
       if (userError || !userData?.user) {
+        console.log("[send-push-notification] Auth failed:", userError?.message);
         return new Response(
           JSON.stringify({ error: "Invalid token" }),
           { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+      console.log("[send-push-notification] Authenticated user:", userData.user.id);
+    } else {
+      console.log("[send-push-notification] Service role auth");
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
