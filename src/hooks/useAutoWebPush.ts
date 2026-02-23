@@ -4,9 +4,8 @@ import { useAuth } from './useAuth';
 import { Capacitor } from '@capacitor/core';
 
 /**
- * Auto-subscribe users to Web Push notifications on login
- * This hook runs once when the user logs in and automatically
- * subscribes them to push notifications if not already subscribed
+ * Auto-subscribe users to Web Push notifications on login.
+ * Always validates and refreshes the push subscription to prevent stale endpoints.
  */
 export function useAutoWebPush() {
   const { user, isApproved } = useAuth();
@@ -26,17 +25,14 @@ export function useAutoWebPush() {
   }, []);
 
   const autoSubscribe = useCallback(async () => {
-    // Skip if already attempted or on native platform
     if (hasAttemptedRef.current || Capacitor.isNativePlatform()) return;
     if (!user?.id || !isApproved) return;
 
-    // Check browser support
     if (!('serviceWorker' in navigator) || !('PushManager' in window) || !('Notification' in window)) {
       console.log('[AutoWebPush] Browser does not support push notifications');
       return;
     }
 
-    // Check if permission already denied
     if (Notification.permission === 'denied') {
       console.log('[AutoWebPush] Notifications are blocked by user');
       return;
@@ -45,18 +41,6 @@ export function useAutoWebPush() {
     hasAttemptedRef.current = true;
 
     try {
-      // Check if already subscribed in database
-      const { data: existingSub } = await supabase
-        .from('push_subscriptions')
-        .select('id')
-        .eq('user_id', user.id)
-        .limit(1);
-
-      if (existingSub && existingSub.length > 0) {
-        console.log('[AutoWebPush] User already has a push subscription');
-        return;
-      }
-
       // Get VAPID key
       const { data: vapidData, error: vapidError } = await supabase.functions.invoke('get-vapid-key');
       if (vapidError || !vapidData?.publicKey) {
@@ -69,27 +53,37 @@ export function useAutoWebPush() {
       await navigator.serviceWorker.ready;
       console.log('[AutoWebPush] Service worker ready');
 
-      // Check if already subscribed in browser
+      // Always get or create a fresh subscription
       let subscription = await registration.pushManager.getSubscription();
 
-      if (!subscription) {
-        // Request permission if not granted
-        if (Notification.permission !== 'granted') {
-          const permission = await Notification.requestPermission();
-          if (permission !== 'granted') {
-            console.log('[AutoWebPush] User denied notification permission');
-            return;
-          }
+      // If there's an existing subscription, unsubscribe and create fresh one
+      // This ensures the endpoint is always current and not expired
+      if (subscription) {
+        try {
+          await subscription.unsubscribe();
+          console.log('[AutoWebPush] Unsubscribed stale subscription');
+        } catch (e) {
+          console.warn('[AutoWebPush] Failed to unsubscribe old:', e);
         }
-
-        // Subscribe to push
-        const applicationServerKey = urlBase64ToUint8Array(vapidData.publicKey);
-        subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: applicationServerKey as BufferSource,
-        });
-        console.log('[AutoWebPush] New subscription created');
+        subscription = null;
       }
+
+      // Request permission if not granted
+      if (Notification.permission !== 'granted') {
+        const permission = await Notification.requestPermission();
+        if (permission !== 'granted') {
+          console.log('[AutoWebPush] User denied notification permission');
+          return;
+        }
+      }
+
+      // Create fresh subscription
+      const applicationServerKey = urlBase64ToUint8Array(vapidData.publicKey);
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: applicationServerKey as BufferSource,
+      });
+      console.log('[AutoWebPush] New fresh subscription created');
 
       // Save to database
       const subscriptionJson = subscription.toJSON();
@@ -101,20 +95,23 @@ export function useAutoWebPush() {
         return;
       }
 
-      const { error: saveError } = await supabase.from('push_subscriptions').upsert(
-        {
-          user_id: user.id,
-          endpoint: subscription.endpoint,
-          p256dh,
-          auth,
-        },
-        { onConflict: 'user_id,endpoint' }
-      );
+      // Delete old subscriptions for this user first, then insert new one
+      await supabase
+        .from('push_subscriptions')
+        .delete()
+        .eq('user_id', user.id);
+
+      const { error: saveError } = await supabase.from('push_subscriptions').insert({
+        user_id: user.id,
+        endpoint: subscription.endpoint,
+        p256dh,
+        auth,
+      });
 
       if (saveError) {
         console.error('[AutoWebPush] Failed to save subscription:', saveError);
       } else {
-        console.log('[AutoWebPush] ✅ Push subscription saved successfully');
+        console.log('[AutoWebPush] ✅ Fresh push subscription saved successfully');
       }
     } catch (error) {
       console.error('[AutoWebPush] Error during auto-subscribe:', error);
@@ -122,7 +119,6 @@ export function useAutoWebPush() {
   }, [user?.id, isApproved, urlBase64ToUint8Array]);
 
   useEffect(() => {
-    // Auto-subscribe after a short delay to not block initial render
     const timer = setTimeout(() => {
       autoSubscribe();
     }, 3000);
