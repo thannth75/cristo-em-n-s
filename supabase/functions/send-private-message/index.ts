@@ -8,6 +8,8 @@ const corsHeaders = {
 type Body = {
   receiver_id: string;
   content: string;
+  message_type?: string;
+  image_url?: string;
 };
 
 function json(status: number, body: unknown) {
@@ -27,6 +29,8 @@ function isValidUUID(str: string): boolean {
   return uuidRegex.test(str);
 }
 
+const VALID_MESSAGE_TYPES = ["text", "image", "sticker", "text_sticker", "gif"];
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
   if (req.method !== "POST") return json(405, { error: "Method not allowed" });
@@ -36,7 +40,7 @@ Deno.serve(async (req) => {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // 1) Authenticate caller (end-user)
+    // 1) Authenticate caller
     const authHeader = req.headers.get("Authorization") ?? "";
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
@@ -51,16 +55,25 @@ Deno.serve(async (req) => {
     const body: Body = await req.json();
     const receiverId = (body.receiver_id ?? "").trim();
     const content = clamp(body.content ?? "", 1000);
+    const messageType = VALID_MESSAGE_TYPES.includes(body.message_type ?? "") 
+      ? body.message_type! 
+      : "text";
+    const imageUrl = (body.image_url ?? "").trim() || null;
 
     if (!receiverId) return json(400, { error: "receiver_id is required" });
     if (!isValidUUID(receiverId)) return json(400, { error: "Invalid receiver_id format" });
     if (!content) return json(400, { error: "content is required" });
     if (receiverId === senderId) return json(400, { error: "Cannot message yourself" });
 
-    // 3) Service client for DB operations
+    // Validate image_url if provided
+    if (imageUrl && !imageUrl.startsWith("https://")) {
+      return json(400, { error: "Invalid image URL" });
+    }
+
+    // 3) Service client
     const service = createClient(supabaseUrl, serviceKey);
 
-    // 4) Rate limiting - max 20 messages per minute
+    // 4) Rate limiting
     const oneMinuteAgo = new Date(Date.now() - 60000).toISOString();
     const { count: recentCount } = await service
       .from("private_messages")
@@ -72,25 +85,31 @@ Deno.serve(async (req) => {
       return json(429, { error: "Limite de mensagens: máximo 20 por minuto" });
     }
 
-    // 5) Validate receiver exists and is approved
+    // 5) Validate receiver
     const { data: receiverProfile } = await service
       .from("profiles")
       .select("is_approved")
       .eq("user_id", receiverId)
       .single();
 
-    if (!receiverProfile) {
-      return json(400, { error: "Destinatário não encontrado" });
+    if (!receiverProfile) return json(400, { error: "Destinatário não encontrado" });
+    if (!receiverProfile.is_approved) return json(400, { error: "Destinatário não está aprovado" });
+
+    // 6) Insert message with media support
+    const insertData: Record<string, unknown> = {
+      sender_id: senderId,
+      receiver_id: receiverId,
+      content,
+      message_type: messageType,
+    };
+
+    if (imageUrl) {
+      insertData.image_url = imageUrl;
     }
 
-    if (!receiverProfile.is_approved) {
-      return json(400, { error: "Destinatário não está aprovado" });
-    }
-
-    // 6) Insert message
     const { data: inserted, error: insertError } = await service
       .from("private_messages")
-      .insert({ sender_id: senderId, receiver_id: receiverId, content })
+      .insert(insertData)
       .select()
       .single();
 
@@ -99,7 +118,7 @@ Deno.serve(async (req) => {
       return json(500, { error: "Failed to send message" });
     }
 
-    // 7) Send push to receiver
+    // 7) Push notification
     const { data: senderProfile } = await service
       .from("profiles")
       .select("full_name")
@@ -108,10 +127,16 @@ Deno.serve(async (req) => {
 
     const senderName = (senderProfile?.full_name ?? "Alguém").split(" ")[0];
 
+    const pushBody = messageType === "image" 
+      ? `${senderName}: 📷 Foto`
+      : messageType === "sticker"
+        ? `${senderName}: ${content}`
+        : `${senderName}: ${clamp(content, 120)}`;
+
     const pushPayload = {
       user_id: receiverId,
       title: "💬 Nova mensagem",
-      body: `${senderName}: ${clamp(content, 120)}`,
+      body: pushBody,
       url: "/mensagens",
       tag: `dm-${senderId}`,
       type: "message",
