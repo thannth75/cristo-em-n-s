@@ -131,7 +131,9 @@ Deno.serve(async (req) => {
       ? `${senderName}: 📷 Foto`
       : messageType === "sticker"
         ? `${senderName}: ${content}`
-        : `${senderName}: ${clamp(content, 120)}`;
+        : messageType === "gif"
+          ? `${senderName}: 🎬 GIF`
+          : `${senderName}: ${clamp(content, 120)}`;
 
     const pushPayload = {
       user_id: receiverId,

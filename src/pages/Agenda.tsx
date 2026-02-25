@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Calendar, Clock, MapPin, Plus, Trash2, Navigation } from "lucide-react";
+import { Calendar, Clock, MapPin, Plus, Trash2, Navigation, Repeat } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -81,6 +81,10 @@ const Agenda = () => {
     latitude: null as number | null,
     longitude: null as number | null,
     location_type: "igreja",
+    // Recurrence fields
+    is_recurring: false,
+    recurrence_day: "" as string, // 0-6 (Sunday-Saturday)
+    recurrence_end_date: "",
   });
 
   useEffect(() => {
@@ -112,6 +116,25 @@ const Agenda = () => {
     setIsLoading(false);
   };
 
+  const generateRecurringDates = (startDate: string, endDate: string, dayOfWeek: number): string[] => {
+    const dates: string[] = [];
+    const start = new Date(startDate + "T00:00:00");
+    const end = new Date(endDate + "T00:00:00");
+    
+    // Find the first occurrence of the target day on or after start
+    const current = new Date(start);
+    while (current.getDay() !== dayOfWeek) {
+      current.setDate(current.getDate() + 1);
+    }
+    
+    while (current <= end) {
+      dates.push(current.toISOString().split("T")[0]);
+      current.setDate(current.getDate() + 7);
+    }
+    
+    return dates;
+  };
+
   const handleCreateEvent = async () => {
     const validation = validateInput(eventSchema, newEvent);
     if (!validation.success) {
@@ -120,11 +143,10 @@ const Agenda = () => {
     }
 
     const validatedData = validation.data;
-    const { error } = await supabase.from("events").insert({
+    const baseEvent = {
       title: validatedData.title,
       description: validatedData.description || null,
       event_type: validatedData.event_type,
-      event_date: validatedData.event_date,
       start_time: validatedData.start_time,
       end_time: validatedData.end_time || null,
       location: validatedData.location || null,
@@ -133,17 +155,50 @@ const Agenda = () => {
       longitude: newEvent.longitude,
       location_type: newEvent.location_type || "igreja",
       created_by: user?.id,
-    });
+    };
+
+    let eventsToInsert: any[];
+
+    if (newEvent.is_recurring && newEvent.recurrence_day && newEvent.recurrence_end_date) {
+      const dates = generateRecurringDates(
+        validatedData.event_date,
+        newEvent.recurrence_end_date,
+        parseInt(newEvent.recurrence_day)
+      );
+      
+      if (dates.length === 0) {
+        toast({ title: "Erro", description: "Nenhuma data encontrada para a recorrência.", variant: "destructive" });
+        return;
+      }
+      
+      if (dates.length > 52) {
+        toast({ title: "Erro", description: "Máximo de 52 eventos recorrentes por vez.", variant: "destructive" });
+        return;
+      }
+      
+      eventsToInsert = dates.map((date) => ({ ...baseEvent, event_date: date }));
+    } else {
+      eventsToInsert = [{ ...baseEvent, event_date: validatedData.event_date }];
+    }
+
+    const { error } = await supabase.from("events").insert(eventsToInsert);
 
     if (error) {
       toast({ title: "Erro", description: "Não foi possível criar o evento.", variant: "destructive" });
     } else {
-      toast({ title: "Evento criado! 🎉", description: "O evento foi adicionado à agenda." });
+      const count = eventsToInsert.length;
+      toast({ 
+        title: "Evento criado! 🎉", 
+        description: count > 1 
+          ? `${count} eventos foram adicionados à agenda.` 
+          : "O evento foi adicionado à agenda." 
+      });
       setIsDialogOpen(false);
       setNewEvent({
         title: "", description: "", event_type: "culto", event_date: "",
         start_time: "", end_time: "", location: "", address: "",
         latitude: null, longitude: null, location_type: "igreja",
+        is_recurring: false, recurrence_day: "", recurrence_end_date: "",
       });
       fetchEvents();
     }
@@ -254,6 +309,74 @@ const Agenda = () => {
                         className="rounded-xl text-sm border border-border bg-background"
                       />
                     </div>
+                  </div>
+                  
+                  {/* Recurring event toggle */}
+                  <div className="space-y-2 rounded-xl border border-border p-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs sm:text-sm font-medium flex items-center gap-1.5">
+                        <Repeat className="h-4 w-4" />
+                        Evento recorrente
+                      </Label>
+                      <button
+                        type="button"
+                        onClick={() => setNewEvent({ ...newEvent, is_recurring: !newEvent.is_recurring })}
+                        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
+                          newEvent.is_recurring ? "bg-primary" : "bg-muted"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-3.5 w-3.5 transform rounded-full bg-primary-foreground transition-transform ${
+                            newEvent.is_recurring ? "translate-x-4" : "translate-x-0.5"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                    
+                    {newEvent.is_recurring && (
+                      <div className="space-y-2 pt-1">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-muted-foreground">Dia da semana</Label>
+                          <Select
+                            value={newEvent.recurrence_day}
+                            onValueChange={(v) => setNewEvent({ ...newEvent, recurrence_day: v })}
+                          >
+                            <SelectTrigger className="rounded-xl text-xs h-8 border border-border bg-background">
+                              <SelectValue placeholder="Selecione o dia" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="0">Domingo</SelectItem>
+                              <SelectItem value="1">Segunda-feira</SelectItem>
+                              <SelectItem value="2">Terça-feira</SelectItem>
+                              <SelectItem value="3">Quarta-feira</SelectItem>
+                              <SelectItem value="4">Quinta-feira</SelectItem>
+                              <SelectItem value="5">Sexta-feira</SelectItem>
+                              <SelectItem value="6">Sábado</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-muted-foreground">Até quando?</Label>
+                          <Input
+                            type="date"
+                            value={newEvent.recurrence_end_date}
+                            onChange={(e) => setNewEvent({ ...newEvent, recurrence_end_date: e.target.value })}
+                            className="rounded-xl text-xs h-8 border border-border bg-background"
+                          />
+                        </div>
+                        {newEvent.recurrence_day && newEvent.event_date && newEvent.recurrence_end_date && (
+                          <p className="text-[10px] text-muted-foreground bg-muted rounded-lg px-2 py-1">
+                            📅 Serão criados{" "}
+                            {generateRecurringDates(
+                              newEvent.event_date,
+                              newEvent.recurrence_end_date,
+                              parseInt(newEvent.recurrence_day)
+                            ).length}{" "}
+                            eventos
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-1.5">
                     <Label className="text-xs sm:text-sm font-medium">Local (nome)</Label>
