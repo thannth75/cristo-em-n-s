@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, Send, ArrowLeft, Search, Check, CheckCheck, Plus, Smile, Paperclip, Loader2 } from "lucide-react";
+import { MessageCircle, Send, ArrowLeft, Search, Check, CheckCheck, Plus, Smile, Paperclip, Loader2, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -9,9 +9,11 @@ import OnlineStatusBadge from "@/components/comunidade/OnlineStatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BottomNavigation from "@/components/BottomNavigation";
 import { privateMessageSchema, validateInput } from "@/lib/validation";
 import ChatMediaPicker from "@/components/chat/ChatMediaPicker";
+import { GroupList, GroupChat } from "@/components/comunidade/GroupList";
 
 interface Profile {
   user_id: string;
@@ -57,6 +59,8 @@ const Mensagens = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
+  const [selectedGroup, setSelectedGroup] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<'conversas' | 'grupos'>('conversas');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -438,7 +442,10 @@ const Mensagens = () => {
   return (
     <div className="min-h-screen bg-background">
       <AnimatePresence mode="wait">
-        {selectedConversation ? (
+        {/* Group Chat View */}
+        {selectedGroup ? (
+          <GroupChat group={selectedGroup} onClose={() => setSelectedGroup(null)} />
+        ) : selectedConversation ? (
           <motion.div
             key="chat"
             initial={{ opacity: 0, x: 20 }}
@@ -611,14 +618,16 @@ const Mensagens = () => {
                 <h1 className="font-serif text-xl font-semibold text-primary-foreground">
                   Mensagens
                 </h1>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setShowNewChat(true)}
-                  className="text-primary-foreground hover:bg-primary-foreground/10"
-                >
-                  <Plus className="h-5 w-5" />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowNewChat(true)}
+                    className="text-primary-foreground hover:bg-primary-foreground/10"
+                  >
+                    <Plus className="h-5 w-5" />
+                  </Button>
+                </div>
               </div>
               
               {/* Search */}
@@ -627,136 +636,169 @@ const Mensagens = () => {
                 <Input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Pesquisar conversas..."
+                  placeholder="Pesquisar..."
                   className="pl-10 rounded-full bg-background/90 border-0"
                 />
               </div>
+
+              {/* Tabs */}
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={() => setActiveTab('conversas')}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    activeTab === 'conversas' 
+                      ? 'bg-primary-foreground text-primary' 
+                      : 'bg-primary-foreground/20 text-primary-foreground'
+                  }`}
+                >
+                  Conversas
+                </button>
+                <button
+                  onClick={() => setActiveTab('grupos')}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    activeTab === 'grupos' 
+                      ? 'bg-primary-foreground text-primary' 
+                      : 'bg-primary-foreground/20 text-primary-foreground'
+                  }`}
+                >
+                  <Users className="h-3.5 w-3.5 inline mr-1" />
+                  Grupos
+                </button>
+              </div>
             </header>
 
-            {/* New Chat Modal */}
-            <AnimatePresence>
-              {showNewChat && (
-                <motion.div
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className="mx-4 mt-4 rounded-2xl bg-card p-4 shadow-lg border border-border"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold">Nova conversa</h3>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setShowNewChat(false);
-                        setSearchQuery("");
-                      }}
-                    >
-                      Cancelar
-                    </Button>
-                  </div>
-                  <div className="max-h-60 overflow-y-auto space-y-1">
-                    {filteredProfiles.slice(0, 15).map((p) => (
-                      <button
-                        key={p.user_id}
-                        onClick={() => startNewConversation(p.user_id)}
-                        className="flex w-full items-center gap-3 rounded-xl p-3 hover:bg-muted transition-colors"
+            {/* New Chat Modal - only in conversas tab */}
+            {activeTab === 'conversas' && (
+              <AnimatePresence>
+                {showNewChat && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="mx-4 mt-4 rounded-2xl bg-card p-4 shadow-lg border border-border"
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold">Nova conversa</h3>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setShowNewChat(false);
+                          setSearchQuery("");
+                        }}
                       >
-                        <Avatar className="h-11 w-11">
-                          <AvatarImage src={p.avatar_url || ""} />
-                          <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
-                            {getInitials(p.full_name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 text-left">
-                          <span className="font-medium text-foreground">{p.full_name}</span>
-                        </div>
-                      </button>
-                    ))}
-                    {filteredProfiles.length === 0 && (
-                      <p className="text-center text-sm text-muted-foreground py-6">
-                        Nenhuma pessoa encontrada
-                      </p>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                        Cancelar
+                      </Button>
+                    </div>
+                    <div className="max-h-60 overflow-y-auto space-y-1">
+                      {filteredProfiles.slice(0, 15).map((p) => (
+                        <button
+                          key={p.user_id}
+                          onClick={() => startNewConversation(p.user_id)}
+                          className="flex w-full items-center gap-3 rounded-xl p-3 hover:bg-muted transition-colors"
+                        >
+                          <Avatar className="h-11 w-11">
+                            <AvatarImage src={p.avatar_url || ""} />
+                            <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+                              {getInitials(p.full_name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 text-left">
+                            <span className="font-medium text-foreground">{p.full_name}</span>
+                          </div>
+                        </button>
+                      ))}
+                      {filteredProfiles.length === 0 && (
+                        <p className="text-center text-sm text-muted-foreground py-6">
+                          Nenhuma pessoa encontrada
+                        </p>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            )}
 
-            {/* Conversations List */}
             <main className="px-4 py-4">
-              {isLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                </div>
-              ) : conversations.length === 0 ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="rounded-2xl bg-card p-8 text-center shadow-md mt-4"
-                >
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-                    <MessageCircle className="h-8 w-8 text-primary" />
-                  </div>
-                  <h3 className="font-semibold text-lg mb-2">Nenhuma conversa</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Comece uma conversa com alguém da comunidade
-                  </p>
-                  <Button onClick={() => setShowNewChat(true)} className="rounded-full">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Nova conversa
-                  </Button>
-                </motion.div>
-              ) : (
-                <div className="space-y-1">
-                  {conversations
-                    .filter(conv => 
-                      !searchQuery || 
-                      conv.partnerName.toLowerCase().includes(searchQuery.toLowerCase())
-                    )
-                    .map((conv, index) => (
-                    <motion.button
-                      key={conv.partnerId}
-                      initial={{ opacity: 0, y: 10 }}
+              {activeTab === 'conversas' ? (
+                <>
+                  {isLoading ? (
+                    <div className="flex items-center justify-center py-12">
+                      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                    </div>
+                  ) : conversations.length === 0 ? (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.03 }}
-                      onClick={() => setSelectedConversation(conv.partnerId)}
-                      className="flex w-full items-center gap-3 rounded-xl p-3 hover:bg-muted/50 transition-colors"
+                      className="rounded-2xl bg-card p-8 text-center shadow-md mt-4"
                     >
-                      <div className="relative">
-                        <Avatar className="h-12 w-12">
-                          <AvatarImage src={conv.partnerAvatar || ""} />
-                          <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                            {getInitials(conv.partnerName)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="absolute -bottom-0.5 -right-0.5">
-                          <OnlineStatusBadge lastSeen={conv.partnerLastSeen} />
-                        </div>
+                      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                        <MessageCircle className="h-8 w-8 text-primary" />
                       </div>
-                      <div className="flex-1 min-w-0 text-left">
-                        <div className="flex items-center justify-between gap-2">
-                          <h3 className="font-semibold text-foreground truncate">
-                            {conv.partnerName || "Usuário"}
-                          </h3>
-                          <span className={`text-xs shrink-0 ${conv.unreadCount > 0 ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
-                            {formatTime(conv.lastMessageAt)}
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between gap-2 mt-0.5">
-                          <p className="text-sm text-muted-foreground truncate">
-                            {getLastMessagePreview(conv)}
-                          </p>
-                          {conv.unreadCount > 0 && (
-                            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground px-1.5 font-medium shrink-0">
-                              {conv.unreadCount}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </motion.button>
-                  ))}
-                </div>
+                      <h3 className="font-semibold text-lg mb-2">Nenhuma conversa</h3>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Comece uma conversa com alguém da comunidade
+                      </p>
+                      <Button onClick={() => setShowNewChat(true)} className="rounded-full">
+                        <Plus className="h-4 w-4 mr-2" />
+                        Nova conversa
+                      </Button>
+                    </motion.div>
+                  ) : (
+                    <div className="space-y-1">
+                      {conversations
+                        .filter(conv => 
+                          !searchQuery || 
+                          conv.partnerName.toLowerCase().includes(searchQuery.toLowerCase())
+                        )
+                        .map((conv, index) => (
+                        <motion.button
+                          key={conv.partnerId}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.03 }}
+                          onClick={() => setSelectedConversation(conv.partnerId)}
+                          className="flex w-full items-center gap-3 rounded-xl p-3 hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="relative">
+                            <Avatar className="h-12 w-12">
+                              <AvatarImage src={conv.partnerAvatar || ""} />
+                              <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                                {getInitials(conv.partnerName)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="absolute -bottom-0.5 -right-0.5">
+                              <OnlineStatusBadge lastSeen={conv.partnerLastSeen} />
+                            </div>
+                          </div>
+                          <div className="flex-1 min-w-0 text-left">
+                            <div className="flex items-center justify-between gap-2">
+                              <h3 className="font-semibold text-foreground truncate">
+                                {conv.partnerName || "Usuário"}
+                              </h3>
+                              <span className={`text-xs shrink-0 ${conv.unreadCount > 0 ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>
+                                {formatTime(conv.lastMessageAt)}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between gap-2 mt-0.5">
+                              <p className="text-sm text-muted-foreground truncate">
+                                {getLastMessagePreview(conv)}
+                              </p>
+                              {conv.unreadCount > 0 && (
+                                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground px-1.5 font-medium shrink-0">
+                                  {conv.unreadCount}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </motion.button>
+                      ))}
+                    </div>
+                  )}
+                </>
+              ) : (
+                /* GRUPOS TAB */
+                <GroupList onGroupSelect={setSelectedGroup} />
               )}
             </main>
 

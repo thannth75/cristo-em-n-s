@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useXpAward } from "@/hooks/useXpAward";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// Tabs removed - groups moved to Mensagens
 import { Textarea } from "@/components/ui/textarea";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
@@ -18,7 +18,7 @@ import CreatePostCard from "@/components/comunidade/CreatePostCard";
 import { EnhancedStoryViewer } from "@/components/comunidade/EnhancedStoryViewer";
 import { EnhancedCreateStoryDialog } from "@/components/comunidade/EnhancedCreateStoryDialog";
 import { EnhancedCreatePostDialog } from "@/components/comunidade/EnhancedCreatePostDialog";
-import { GroupList, GroupChat } from "@/components/comunidade/GroupList";
+// Groups moved to Mensagens page
 import { PostLikersDialog } from "@/components/comunidade/PostLikersDialog";
 import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
 import { AdFeed, shouldShowAdAtIndex } from "@/components/ads/AdBanner";
@@ -74,17 +74,7 @@ interface Story {
   profile?: { full_name: string; avatar_url: string | null };
 }
 
-interface Group {
-  id: string;
-  name: string;
-  description: string | null;
-  image_url: string | null;
-  is_public: boolean;
-  member_count: number;
-  created_by: string;
-  created_at: string;
-  is_member?: boolean;
-}
+// Group interface moved to Mensagens
 
 const Comunidade = () => {
   const navigate = useNavigate();
@@ -111,8 +101,7 @@ const Comunidade = () => {
   const [viewLikersPostId, setViewLikersPostId] = useState<string | null>(null);
   const [viewLikersCount, setViewLikersCount] = useState(0);
   
-  // Groups
-  const [selectedGroup, setSelectedGroup] = useState<Group | null>(null);
+  // Groups removed - now in Mensagens
 
   useEffect(() => {
     if (!authLoading) {
@@ -303,20 +292,6 @@ const Comunidade = () => {
     );
   }
 
-  // Group Chat View
-  if (selectedGroup) {
-    return (
-      <div className="min-h-screen bg-background" style={{ paddingBottom: 'calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))' }}>
-        <AppHeader userName={userName} />
-        <main className="py-4">
-          <ResponsiveContainer>
-            <GroupChat group={selectedGroup} onClose={() => setSelectedGroup(null)} />
-          </ResponsiveContainer>
-        </main>
-        <BottomNavigation />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background" style={{ paddingBottom: 'calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))' }}>
@@ -351,58 +326,46 @@ const Comunidade = () => {
             onViewStory={openStories}
           />
 
-          <Tabs defaultValue="feed" className="w-full mt-4">
-            <TabsList className="grid w-full grid-cols-2 mb-3 sm:mb-4 h-auto rounded-none sm:rounded-xl">
-              <TabsTrigger value="feed" className="text-xs sm:text-sm py-2.5 rounded-none sm:rounded-lg">Mural</TabsTrigger>
-              <TabsTrigger value="groups" className="text-xs sm:text-sm py-2.5 rounded-none sm:rounded-lg">Grupos</TabsTrigger>
-            </TabsList>
+          {/* MURAL DE POSTS - Facebook Style */}
+          <div className="space-y-3 sm:space-y-4 mt-4">
+            {/* Create Post Card */}
+            <CreatePostCard
+              userName={profile?.full_name}
+              avatarUrl={profile?.avatar_url}
+              onClick={() => setIsPostDialogOpen(true)}
+            />
 
-            {/* MURAL DE POSTS - Facebook Style */}
-            <TabsContent value="feed" className="space-y-3 sm:space-y-4 mt-0">
-              {/* Create Post Card */}
-              <CreatePostCard
-                userName={profile?.full_name}
-                avatarUrl={profile?.avatar_url}
-                onClick={() => setIsPostDialogOpen(true)}
-              />
-
-              {isLoading ? (
-                <div className="flex justify-center py-12">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            {isLoading ? (
+              <div className="flex justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : posts.length === 0 ? (
+              <div className="rounded-none sm:rounded-2xl bg-card border-y sm:border border-border p-8 text-center">
+                <MessageSquare className="mx-auto mb-3 h-12 w-12 text-muted-foreground/50" />
+                <p className="text-muted-foreground">Nenhum post ainda. Seja o primeiro!</p>
+              </div>
+            ) : (
+              posts.map((post, index) => (
+                <div key={post.id}>
+                  <ModernFeedPost
+                    post={post}
+                    currentUserId={user?.id || ""}
+                    onLike={handleLikePost}
+                    onEdit={(p) => { setEditingPost(p); setEditContent(p.content); }}
+                    onDelete={(p) => setDeletingPost(p)}
+                    onViewLikers={(id, count) => { setViewLikersPostId(id); setViewLikersCount(count); }}
+                    onCommentsChange={(postId, count) => {
+                      setPosts(prev => prev.map(p => 
+                        p.id === postId ? { ...p, comments_count: count } : p
+                      ));
+                    }}
+                    onRepostSuccess={fetchPosts}
+                  />
+                  {shouldShowAdAtIndex(index, 6) && <AdFeed />}
                 </div>
-              ) : posts.length === 0 ? (
-                <div className="rounded-none sm:rounded-2xl bg-card border-y sm:border border-border p-8 text-center">
-                  <MessageSquare className="mx-auto mb-3 h-12 w-12 text-muted-foreground/50" />
-                  <p className="text-muted-foreground">Nenhum post ainda. Seja o primeiro!</p>
-                </div>
-              ) : (
-                posts.map((post, index) => (
-                  <div key={post.id}>
-                    <ModernFeedPost
-                      post={post}
-                      currentUserId={user?.id || ""}
-                      onLike={handleLikePost}
-                      onEdit={(p) => { setEditingPost(p); setEditContent(p.content); }}
-                      onDelete={(p) => setDeletingPost(p)}
-                      onViewLikers={(id, count) => { setViewLikersPostId(id); setViewLikersCount(count); }}
-                      onCommentsChange={(postId, count) => {
-                        setPosts(prev => prev.map(p => 
-                          p.id === postId ? { ...p, comments_count: count } : p
-                        ));
-                      }}
-                      onRepostSuccess={fetchPosts}
-                    />
-                    {shouldShowAdAtIndex(index, 6) && <AdFeed />}
-                  </div>
-                ))
-              )}
-            </TabsContent>
-
-            {/* GRUPOS */}
-            <TabsContent value="groups">
-              <GroupList onGroupSelect={setSelectedGroup} />
-            </TabsContent>
-          </Tabs>
+              ))
+            )}
+          </div>
 
           {/* Create Story Dialog */}
           <EnhancedCreateStoryDialog
