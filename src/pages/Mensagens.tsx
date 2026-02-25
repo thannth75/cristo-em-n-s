@@ -251,7 +251,7 @@ const Mensagens = () => {
     inputRef.current?.focus();
   };
 
-  const handleSendSticker = async (content: string, type: "sticker" | "text_sticker") => {
+  const handleSendSticker = async (content: string, type: "sticker" | "text_sticker" | "gif") => {
     if (!selectedConversation || isSending) return;
 
     setIsSending(true);
@@ -367,6 +367,7 @@ const Mensagens = () => {
   const getLastMessagePreview = (conv: Conversation) => {
     if (conv.lastMessageType === "image") return "📷 Foto";
     if (conv.lastMessageType === "sticker") return "😊 Figurinha";
+    if (conv.lastMessageType === "gif") return "🎬 GIF";
     return conv.lastMessage;
   };
 
@@ -375,7 +376,30 @@ const Mensagens = () => {
     const msgType = msg.message_type || "text";
 
     if (msgType === "sticker") {
+      // Check if it's a single emoji (short content) or a URL (gif/sticker from Klipy)
+      if (msg.content.startsWith("http")) {
+        return (
+          <img
+            src={msg.content}
+            alt="Sticker"
+            className="max-w-[120px] w-full object-contain"
+            loading="lazy"
+          />
+        );
+      }
       return <span className="text-5xl block text-center py-1">{msg.content}</span>;
+    }
+
+    if (msgType === "gif") {
+      return (
+        <img
+          src={msg.content}
+          alt="GIF"
+          className="rounded-lg max-w-[240px] w-full object-cover cursor-pointer"
+          onClick={() => window.open(msg.content, "_blank")}
+          loading="lazy"
+        />
+      );
     }
 
     if (msgType === "image" && msg.image_url) {

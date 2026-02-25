@@ -1,84 +1,43 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Smile, Image, X, Camera, Loader2 } from "lucide-react";
+import { Image, X, Camera, Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-// ─── Curated Christian Stickers (emoji-based) ───
-const STICKER_CATEGORIES = [
+// ─── Full Emoji Set ───
+const EMOJI_CATEGORIES = [
   {
     name: "Fé",
     icon: "✝️",
-    stickers: [
-      { emoji: "✝️", label: "Cruz" },
-      { emoji: "🙏", label: "Oração" },
-      { emoji: "📖", label: "Bíblia" },
-      { emoji: "⛪", label: "Igreja" },
-      { emoji: "🕊️", label: "Pomba" },
-      { emoji: "👑", label: "Coroa" },
-      { emoji: "🔥", label: "Fogo" },
-      { emoji: "💧", label: "Batismo" },
-      { emoji: "🍞", label: "Pão" },
-      { emoji: "🍷", label: "Cálice" },
-      { emoji: "🌿", label: "Ramo" },
-      { emoji: "⭐", label: "Estrela" },
-    ],
+    emojis: ["✝️","🙏","📖","⛪","🕊️","👑","🔥","💧","🍞","🍷","🌿","⭐","😇","🕯️","📿","🛐","☦️","✡️","🤲","🫶"],
+  },
+  {
+    name: "Rostos",
+    icon: "😊",
+    emojis: ["😀","😃","😄","😁","😆","😅","🤣","😂","🙂","😊","😇","🥰","😍","🤩","😘","😗","😚","😙","🥲","😋","😛","😜","🤪","😝","🤑","🤗","🤭","🫢","🤫","🤔","🫡","🤐","🤨","😐","😑","😶","🫥","😏","😒","🙄","😬","🤥","😌","😔","😪","🤤","😴","😷","🤒","🤕","🤢","🤮","🥵","🥶","🥴","😵","🤯","🤠","🥳","🥸","😎","🤓","🧐","😕","🫤","😟","🙁","☹️","😮","😯","😲","😳","🥺","🥹","😦","😧","😨","😰","😥","😢","😭","😱","😖","😣","😞","😓","😩","😫","🥱","😤","😡","😠","🤬","😈","👿","💀","☠️","💩","🤡","👹","👺","👻","👽","👾","🤖"],
+  },
+  {
+    name: "Mãos",
+    icon: "👋",
+    emojis: ["👋","🤚","🖐️","✋","🖖","🫱","🫲","🫳","🫴","👌","🤌","🤏","✌️","🤞","🫰","🤟","🤘","🤙","👈","👉","👆","🖕","👇","☝️","🫵","👍","👎","✊","👊","🤛","🤜","👏","🙌","🫶","👐","🤲","🤝","🙏","💪","🦾"],
   },
   {
     name: "Amor",
     icon: "❤️",
-    stickers: [
-      { emoji: "❤️", label: "Amor" },
-      { emoji: "💕", label: "Corações" },
-      { emoji: "🤗", label: "Abraço" },
-      { emoji: "😇", label: "Anjo" },
-      { emoji: "🥰", label: "Carinho" },
-      { emoji: "💝", label: "Presente" },
-      { emoji: "🫂", label: "Acolhimento" },
-      { emoji: "💖", label: "Coração brilhante" },
-      { emoji: "🌹", label: "Rosa" },
-      { emoji: "🌻", label: "Girassol" },
-      { emoji: "🌈", label: "Aliança" },
-      { emoji: "☀️", label: "Luz" },
-    ],
+    emojis: ["❤️","🧡","💛","💚","💙","💜","🖤","🤍","🤎","💔","❤️‍🔥","❤️‍🩹","❣️","💕","💞","💓","💗","💖","💘","💝","💟","♥️","🫀","💐","🌹","🥀","🌺","🌸","🌷","🌻","💒","💍","💎"],
   },
   {
-    name: "Louvor",
+    name: "Natureza",
+    icon: "🌿",
+    emojis: ["🌍","🌎","🌏","🌐","🗺️","🏔️","⛰️","🌋","🗻","🏕️","🏖️","🏜️","🏝️","🌅","🌄","🌠","🎇","🎆","🌇","🌆","🏙️","🌃","🌌","🌉","🌁","🌊","🌈","☀️","🌤️","⛅","🌥️","☁️","🌦️","🌧️","⛈️","🌩️","🌨️","❄️","☃️","⛄","🌬️","💨","🌪️","🌫️","🌈","☔","💧","💦","🌊"],
+  },
+  {
+    name: "Música",
     icon: "🎵",
-    stickers: [
-      { emoji: "🎵", label: "Música" },
-      { emoji: "🎶", label: "Notas" },
-      { emoji: "🙌", label: "Mãos ao alto" },
-      { emoji: "👏", label: "Palmas" },
-      { emoji: "🎸", label: "Violão" },
-      { emoji: "🎤", label: "Microfone" },
-      { emoji: "💃", label: "Dança" },
-      { emoji: "🎼", label: "Partitura" },
-      { emoji: "🥁", label: "Tambor" },
-      { emoji: "🎹", label: "Teclado" },
-      { emoji: "📯", label: "Trombeta" },
-      { emoji: "🪘", label: "Pandeiro" },
-    ],
-  },
-  {
-    name: "Bênção",
-    icon: "🌟",
-    stickers: [
-      { emoji: "🌟", label: "Brilho" },
-      { emoji: "✨", label: "Bênção" },
-      { emoji: "🙏🏽", label: "Oração" },
-      { emoji: "💫", label: "Glória" },
-      { emoji: "🕯️", label: "Vela" },
-      { emoji: "🌅", label: "Amanhecer" },
-      { emoji: "🌄", label: "Montanha" },
-      { emoji: "🌊", label: "Mar" },
-      { emoji: "🌸", label: "Flor" },
-      { emoji: "🦋", label: "Borboleta" },
-      { emoji: "🌾", label: "Trigo" },
-      { emoji: "🫒", label: "Oliveira" },
-    ],
+    emojis: ["🎵","🎶","🎼","🎤","🎧","🎸","🎹","🥁","🪘","🎺","🎷","🪗","🎻","🪕","🎶","🔔","🔕","📯","🎙️","📻","🔊","🔉","🔈","🔇","📢","📣"],
   },
 ];
 
@@ -102,9 +61,21 @@ const TEXT_STICKERS = [
   "Obrigado Deus! 🙏🌟",
 ];
 
+interface KlipyResult {
+  id: string;
+  title: string;
+  media: {
+    tinygif?: { url: string };
+    gif?: { url: string };
+    mediumgif?: { url: string };
+    tinysticker?: { url: string };
+    sticker?: { url: string };
+  };
+}
+
 interface ChatMediaPickerProps {
   userId: string;
-  onSendSticker: (content: string, type: "sticker" | "text_sticker") => void;
+  onSendSticker: (content: string, type: "sticker" | "text_sticker" | "gif") => void;
   onSendImage: (imageUrl: string) => void;
   isOpen: boolean;
   onClose: () => void;
@@ -113,8 +84,87 @@ interface ChatMediaPickerProps {
 const ChatMediaPicker = ({ userId, onSendSticker, onSendImage, isOpen, onClose }: ChatMediaPickerProps) => {
   const { toast } = useToast();
   const [isUploading, setIsUploading] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState(0);
+  const [selectedEmojiCategory, setSelectedEmojiCategory] = useState(0);
+  const [gifSearch, setGifSearch] = useState("");
+  const [stickerSearch, setStickerSearch] = useState("");
+  const [gifResults, setGifResults] = useState<KlipyResult[]>([]);
+  const [stickerResults, setStickerResults] = useState<KlipyResult[]>([]);
+  const [isLoadingGifs, setIsLoadingGifs] = useState(false);
+  const [isLoadingStickers, setIsLoadingStickers] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const fetchKlipy = useCallback(async (query: string, type: "gifs" | "stickers") => {
+    const setLoading = type === "gifs" ? setIsLoadingGifs : setIsLoadingStickers;
+    const setResults = type === "gifs" ? setGifResults : setStickerResults;
+    
+    setLoading(true);
+    try {
+      const action = query.trim() ? "search" : "trending";
+      const params = new URLSearchParams({
+        type,
+        action,
+        limit: "20",
+        locale: "pt_BR",
+      });
+      if (query.trim()) params.set("q", query.trim());
+
+      const { data, error } = await supabase.functions.invoke("klipy-search", {
+        body: null,
+        headers: {},
+      });
+
+      // Use GET with query params via direct fetch
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const session = (await supabase.auth.getSession()).data.session;
+      
+      const res = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/klipy-search?${params.toString()}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${session?.access_token || anonKey}`,
+            'apikey': anonKey,
+          },
+        }
+      );
+
+      const result = await res.json();
+      setResults(result.results || []);
+    } catch (err) {
+      console.error("Klipy fetch error:", err);
+      setResults([]);
+    }
+    setLoading(false);
+  }, []);
+
+  // Load trending on open
+  useEffect(() => {
+    if (isOpen) {
+      fetchKlipy("", "gifs");
+      fetchKlipy("", "stickers");
+    }
+  }, [isOpen, fetchKlipy]);
+
+  const handleGifSearch = (value: string) => {
+    setGifSearch(value);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(() => fetchKlipy(value, "gifs"), 500);
+  };
+
+  const handleStickerSearch = (value: string) => {
+    setStickerSearch(value);
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(() => fetchKlipy(value, "stickers"), 500);
+  };
+
+  const getGifUrl = (result: KlipyResult): string => {
+    return result.media?.tinygif?.url || result.media?.mediumgif?.url || result.media?.gif?.url || "";
+  };
+
+  const getStickerUrl = (result: KlipyResult): string => {
+    return result.media?.tinysticker?.url || result.media?.sticker?.url || result.media?.tinygif?.url || "";
+  };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -163,7 +213,7 @@ const ChatMediaPicker = ({ userId, onSendSticker, onSendImage, isOpen, onClose }
           className="border-t border-border bg-card overflow-hidden"
         >
           <div className="p-2">
-            {/* Close & Photo buttons */}
+            {/* Top bar */}
             <div className="flex items-center justify-between mb-2 px-1">
               <div className="flex gap-2">
                 <Button
@@ -173,11 +223,7 @@ const ChatMediaPicker = ({ userId, onSendSticker, onSendImage, isOpen, onClose }
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploading}
                 >
-                  {isUploading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Camera className="h-4 w-4" />
-                  )}
+                  {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
                   Foto
                 </Button>
               </div>
@@ -194,21 +240,23 @@ const ChatMediaPicker = ({ userId, onSendSticker, onSendImage, isOpen, onClose }
               onChange={handleImageUpload}
             />
 
-            <Tabs defaultValue="stickers" className="w-full">
-              <TabsList className="w-full h-8 rounded-lg mb-2">
-                <TabsTrigger value="stickers" className="text-xs flex-1 rounded-md">😊 Figurinhas</TabsTrigger>
-                <TabsTrigger value="text" className="text-xs flex-1 rounded-md">💬 Mensagens</TabsTrigger>
+            <Tabs defaultValue="emojis" className="w-full">
+              <TabsList className="w-full h-8 rounded-lg mb-2 grid grid-cols-4">
+                <TabsTrigger value="emojis" className="text-xs rounded-md">😊</TabsTrigger>
+                <TabsTrigger value="gifs" className="text-xs rounded-md">GIF</TabsTrigger>
+                <TabsTrigger value="stickers" className="text-xs rounded-md">🎨</TabsTrigger>
+                <TabsTrigger value="text" className="text-xs rounded-md">💬</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="stickers" className="mt-0">
-                {/* Category tabs */}
+              {/* ── Emojis Tab ── */}
+              <TabsContent value="emojis" className="mt-0">
                 <div className="flex gap-1 mb-2 overflow-x-auto pb-1">
-                  {STICKER_CATEGORIES.map((cat, i) => (
+                  {EMOJI_CATEGORIES.map((cat, i) => (
                     <button
                       key={cat.name}
-                      onClick={() => setSelectedCategory(i)}
-                      className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs whitespace-nowrap transition-colors ${
-                        selectedCategory === i
+                      onClick={() => setSelectedEmojiCategory(i)}
+                      className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs whitespace-nowrap transition-colors ${
+                        selectedEmojiCategory === i
                           ? "bg-primary text-primary-foreground"
                           : "bg-muted text-muted-foreground hover:bg-muted/80"
                       }`}
@@ -218,34 +266,114 @@ const ChatMediaPicker = ({ userId, onSendSticker, onSendImage, isOpen, onClose }
                     </button>
                   ))}
                 </div>
-
-                {/* Sticker grid */}
-                <div className="grid grid-cols-6 gap-1 max-h-[200px] overflow-y-auto">
-                  {STICKER_CATEGORIES[selectedCategory].stickers.map((sticker) => (
+                <div className="grid grid-cols-8 gap-0.5 max-h-[200px] overflow-y-auto">
+                  {EMOJI_CATEGORIES[selectedEmojiCategory].emojis.map((emoji, i) => (
                     <button
-                      key={sticker.label}
-                      onClick={() => {
-                        onSendSticker(sticker.emoji, "sticker");
-                        onClose();
-                      }}
-                      className="flex flex-col items-center justify-center p-2 rounded-xl hover:bg-muted/80 transition-colors active:scale-90"
-                      title={sticker.label}
+                      key={`${emoji}-${i}`}
+                      onClick={() => { onSendSticker(emoji, "sticker"); onClose(); }}
+                      className="flex items-center justify-center p-1.5 rounded-lg hover:bg-muted/80 transition-colors active:scale-90"
                     >
-                      <span className="text-3xl">{sticker.emoji}</span>
+                      <span className="text-2xl">{emoji}</span>
                     </button>
                   ))}
                 </div>
               </TabsContent>
 
+              {/* ── GIFs Tab ── */}
+              <TabsContent value="gifs" className="mt-0">
+                <div className="relative mb-2">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    value={gifSearch}
+                    onChange={(e) => handleGifSearch(e.target.value)}
+                    placeholder="Buscar GIFs..."
+                    className="pl-8 h-8 text-xs rounded-lg"
+                  />
+                </div>
+                <div className="grid grid-cols-3 gap-1 max-h-[200px] overflow-y-auto">
+                  {isLoadingGifs ? (
+                    <div className="col-span-3 flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : gifResults.length === 0 ? (
+                    <div className="col-span-3 text-center py-8 text-xs text-muted-foreground">
+                      {gifSearch ? "Nenhum GIF encontrado" : "GIFs em destaque aparecerão aqui"}
+                    </div>
+                  ) : (
+                    gifResults.map((gif) => {
+                      const url = getGifUrl(gif);
+                      if (!url) return null;
+                      return (
+                        <button
+                          key={gif.id}
+                          onClick={() => { onSendSticker(url, "gif"); onClose(); }}
+                          className="rounded-lg overflow-hidden hover:ring-2 ring-primary transition-all aspect-square"
+                        >
+                          <img
+                            src={url}
+                            alt={gif.title || "GIF"}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+                <p className="text-[9px] text-muted-foreground text-center mt-1">Powered by KLIPY</p>
+              </TabsContent>
+
+              {/* ── Stickers Tab ── */}
+              <TabsContent value="stickers" className="mt-0">
+                <div className="relative mb-2">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    value={stickerSearch}
+                    onChange={(e) => handleStickerSearch(e.target.value)}
+                    placeholder="Buscar figurinhas..."
+                    className="pl-8 h-8 text-xs rounded-lg"
+                  />
+                </div>
+                <div className="grid grid-cols-4 gap-1.5 max-h-[200px] overflow-y-auto">
+                  {isLoadingStickers ? (
+                    <div className="col-span-4 flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : stickerResults.length === 0 ? (
+                    <div className="col-span-4 text-center py-8 text-xs text-muted-foreground">
+                      {stickerSearch ? "Nenhuma figurinha encontrada" : "Figurinhas em destaque"}
+                    </div>
+                  ) : (
+                    stickerResults.map((sticker) => {
+                      const url = getStickerUrl(sticker);
+                      if (!url) return null;
+                      return (
+                        <button
+                          key={sticker.id}
+                          onClick={() => { onSendSticker(url, "gif"); onClose(); }}
+                          className="rounded-xl p-1 hover:bg-muted/80 transition-all"
+                        >
+                          <img
+                            src={url}
+                            alt={sticker.title || "Sticker"}
+                            className="w-full aspect-square object-contain"
+                            loading="lazy"
+                          />
+                        </button>
+                      );
+                    })
+                  )}
+                </div>
+                <p className="text-[9px] text-muted-foreground text-center mt-1">Powered by KLIPY</p>
+              </TabsContent>
+
+              {/* ── Text Stickers Tab ── */}
               <TabsContent value="text" className="mt-0">
                 <div className="grid grid-cols-2 gap-1.5 max-h-[200px] overflow-y-auto">
                   {TEXT_STICKERS.map((text) => (
                     <button
                       key={text}
-                      onClick={() => {
-                        onSendSticker(text, "text_sticker");
-                        onClose();
-                      }}
+                      onClick={() => { onSendSticker(text, "text_sticker"); onClose(); }}
                       className="text-left text-xs px-3 py-2.5 rounded-xl bg-muted hover:bg-primary/10 transition-colors leading-tight"
                     >
                       {text}
