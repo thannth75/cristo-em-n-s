@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Image, X, Camera, Loader2, Search } from "lucide-react";
+import { X, Camera, Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -64,13 +64,8 @@ const TEXT_STICKERS = [
 interface KlipyResult {
   id: string;
   title: string;
-  media: {
-    tinygif?: { url: string };
-    gif?: { url: string };
-    mediumgif?: { url: string };
-    tinysticker?: { url: string };
-    sticker?: { url: string };
-  };
+  preview_url: string;
+  full_url: string;
 }
 
 interface ChatMediaPickerProps {
@@ -105,22 +100,16 @@ const ChatMediaPicker = ({ userId, onSendSticker, onSendImage, isOpen, onClose }
         type,
         action,
         limit: "20",
-        locale: "pt_BR",
+        locale: "br",
       });
       if (query.trim()) params.set("q", query.trim());
 
-      const { data, error } = await supabase.functions.invoke("klipy-search", {
-        body: null,
-        headers: {},
-      });
-
-      // Use GET with query params via direct fetch
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       const session = (await supabase.auth.getSession()).data.session;
       
       const res = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/klipy-search?${params.toString()}`,
+        `${supabaseUrl}/functions/v1/klipy-search?${params.toString()}`,
         {
           headers: {
             'Authorization': `Bearer ${session?.access_token || anonKey}`,
@@ -156,14 +145,6 @@ const ChatMediaPicker = ({ userId, onSendSticker, onSendImage, isOpen, onClose }
     setStickerSearch(value);
     if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
     searchTimeoutRef.current = setTimeout(() => fetchKlipy(value, "stickers"), 500);
-  };
-
-  const getGifUrl = (result: KlipyResult): string => {
-    return result.media?.tinygif?.url || result.media?.mediumgif?.url || result.media?.gif?.url || "";
-  };
-
-  const getStickerUrl = (result: KlipyResult): string => {
-    return result.media?.tinysticker?.url || result.media?.sticker?.url || result.media?.tinygif?.url || "";
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -300,24 +281,20 @@ const ChatMediaPicker = ({ userId, onSendSticker, onSendImage, isOpen, onClose }
                       {gifSearch ? "Nenhum GIF encontrado" : "GIFs em destaque aparecerão aqui"}
                     </div>
                   ) : (
-                    gifResults.map((gif) => {
-                      const url = getGifUrl(gif);
-                      if (!url) return null;
-                      return (
-                        <button
-                          key={gif.id}
-                          onClick={() => { onSendSticker(url, "gif"); onClose(); }}
-                          className="rounded-lg overflow-hidden hover:ring-2 ring-primary transition-all aspect-square"
-                        >
-                          <img
-                            src={url}
-                            alt={gif.title || "GIF"}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
-                          />
-                        </button>
-                      );
-                    })
+                    gifResults.map((gif) => (
+                      <button
+                        key={gif.id}
+                        onClick={() => { onSendSticker(gif.full_url || gif.preview_url, "gif"); onClose(); }}
+                        className="rounded-lg overflow-hidden hover:ring-2 ring-primary transition-all aspect-square"
+                      >
+                        <img
+                          src={gif.preview_url}
+                          alt={gif.title || "GIF"}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      </button>
+                    ))
                   )}
                 </div>
                 <p className="text-[9px] text-muted-foreground text-center mt-1">Powered by KLIPY</p>
@@ -344,24 +321,20 @@ const ChatMediaPicker = ({ userId, onSendSticker, onSendImage, isOpen, onClose }
                       {stickerSearch ? "Nenhuma figurinha encontrada" : "Figurinhas em destaque"}
                     </div>
                   ) : (
-                    stickerResults.map((sticker) => {
-                      const url = getStickerUrl(sticker);
-                      if (!url) return null;
-                      return (
-                        <button
-                          key={sticker.id}
-                          onClick={() => { onSendSticker(url, "gif"); onClose(); }}
-                          className="rounded-xl p-1 hover:bg-muted/80 transition-all"
-                        >
-                          <img
-                            src={url}
-                            alt={sticker.title || "Sticker"}
-                            className="w-full aspect-square object-contain"
-                            loading="lazy"
-                          />
-                        </button>
-                      );
-                    })
+                    stickerResults.map((sticker) => (
+                      <button
+                        key={sticker.id}
+                        onClick={() => { onSendSticker(sticker.full_url || sticker.preview_url, "gif"); onClose(); }}
+                        className="rounded-xl p-1 hover:bg-muted/80 transition-all"
+                      >
+                        <img
+                          src={sticker.preview_url}
+                          alt={sticker.title || "Sticker"}
+                          className="w-full aspect-square object-contain"
+                          loading="lazy"
+                        />
+                      </button>
+                    ))
                   )}
                 </div>
                 <p className="text-[9px] text-muted-foreground text-center mt-1">Powered by KLIPY</p>

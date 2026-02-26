@@ -23,6 +23,8 @@ interface Event {
   latitude?: number | null;
   longitude?: number | null;
   location_type?: string | null;
+  display_date?: string;
+  is_recurring?: boolean;
 }
 
 interface EventDetailDialogProps {
@@ -99,7 +101,7 @@ const EventDetailDialog = ({ event, open, onOpenChange }: EventDetailDialogProps
               <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
             </div>
             <div className="min-w-0">
-              <p className="font-medium text-foreground text-sm sm:text-base truncate">{formatDate(event.event_date)}</p>
+              <p className="font-medium text-foreground text-sm sm:text-base truncate">{formatDate(event.display_date || event.event_date)}</p>
               <p className="text-xs sm:text-sm text-muted-foreground">
                 {formatTime(event.start_time)}
                 {event.end_time && ` - ${formatTime(event.end_time)}`}
