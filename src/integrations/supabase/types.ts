@@ -783,10 +783,13 @@ export type Database = {
           event_date: string
           event_type: string
           id: string
+          is_recurring: boolean | null
           latitude: number | null
           location: string | null
           location_type: string | null
           longitude: number | null
+          recurrence_day: number | null
+          recurrence_end_date: string | null
           start_time: string
           title: string
           updated_at: string
@@ -801,10 +804,13 @@ export type Database = {
           event_date: string
           event_type?: string
           id?: string
+          is_recurring?: boolean | null
           latitude?: number | null
           location?: string | null
           location_type?: string | null
           longitude?: number | null
+          recurrence_day?: number | null
+          recurrence_end_date?: string | null
           start_time: string
           title: string
           updated_at?: string
@@ -819,10 +825,13 @@ export type Database = {
           event_date?: string
           event_type?: string
           id?: string
+          is_recurring?: boolean | null
           latitude?: number | null
           location?: string | null
           location_type?: string | null
           longitude?: number | null
+          recurrence_day?: number | null
+          recurrence_end_date?: string | null
           start_time?: string
           title?: string
           updated_at?: string

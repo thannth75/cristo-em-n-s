@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Calendar, Clock, MapPin, Plus, Trash2, Navigation, Repeat } from "lucide-react";
@@ -42,6 +42,15 @@ interface Event {
   latitude: number | null;
   longitude: number | null;
   location_type: string | null;
+  is_recurring?: boolean;
+  recurrence_day?: number | null;
+  recurrence_end_date?: string | null;
+}
+
+// Virtual event = a displayed occurrence derived from a recurring event
+interface DisplayEvent extends Event {
+  display_date: string; // The actual date to show (may differ from event_date for recurring)
+  is_virtual?: boolean; // True if this is a generated occurrence
 }
 
 const getTypeColor = (type: string) => {
@@ -59,6 +68,8 @@ const getTypeColor = (type: string) => {
   }
 };
 
+const DAY_NAMES = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
 const Agenda = () => {
   const navigate = useNavigate();
   const { user, profile, isApproved, isAdmin, isLeader, isLoading: authLoading } = useAuth();
@@ -66,7 +77,7 @@ const Agenda = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<DisplayEvent | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isMapPickerOpen, setIsMapPickerOpen] = useState(false);
   const [newEvent, setNewEvent] = useState({
@@ -81,9 +92,8 @@ const Agenda = () => {
     latitude: null as number | null,
     longitude: null as number | null,
     location_type: "igreja",
-    // Recurrence fields
     is_recurring: false,
-    recurrence_day: "" as string, // 0-6 (Sunday-Saturday)
+    recurrence_day: "" as string,
     recurrence_end_date: "",
   });
 
@@ -101,10 +111,12 @@ const Agenda = () => {
   const fetchEvents = async () => {
     setIsLoading(true);
     const today = new Date().toISOString().split("T")[0];
+    
+    // Fetch non-recurring events from today forward + all recurring events that haven't ended
     const { data, error } = await supabase
       .from("events")
       .select("*")
-      .gte("event_date", today)
+      .or(`and(is_recurring.is.null,event_date.gte.${today}),and(is_recurring.eq.false,event_date.gte.${today}),and(is_recurring.eq.true,recurrence_end_date.gte.${today})`)
       .order("event_date", { ascending: true })
       .order("start_time", { ascending: true });
 
@@ -116,24 +128,63 @@ const Agenda = () => {
     setIsLoading(false);
   };
 
-  const generateRecurringDates = (startDate: string, endDate: string, dayOfWeek: number): string[] => {
-    const dates: string[] = [];
-    const start = new Date(startDate + "T00:00:00");
-    const end = new Date(endDate + "T00:00:00");
+  // Expand recurring events into virtual display events
+  const displayEvents = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split("T")[0];
     
-    // Find the first occurrence of the target day on or after start
-    const current = new Date(start);
-    while (current.getDay() !== dayOfWeek) {
-      current.setDate(current.getDate() + 1);
+    // Look ahead 90 days for recurring events
+    const lookAhead = new Date(today);
+    lookAhead.setDate(lookAhead.getDate() + 90);
+    const lookAheadStr = lookAhead.toISOString().split("T")[0];
+    
+    const result: DisplayEvent[] = [];
+    
+    for (const event of events) {
+      if (event.is_recurring && event.recurrence_day != null && event.recurrence_end_date) {
+        // Generate virtual occurrences
+        const startDate = new Date(Math.max(today.getTime(), new Date(event.event_date + "T00:00:00").getTime()));
+        const endDate = new Date(Math.min(lookAhead.getTime(), new Date(event.recurrence_end_date + "T00:00:00").getTime()));
+        
+        const current = new Date(startDate);
+        // Find first occurrence of recurrence_day
+        while (current.getDay() !== event.recurrence_day) {
+          current.setDate(current.getDate() + 1);
+        }
+        
+        while (current <= endDate) {
+          const dateStr = current.toISOString().split("T")[0];
+          if (dateStr >= todayStr) {
+            result.push({
+              ...event,
+              display_date: dateStr,
+              is_virtual: true,
+            });
+          }
+          current.setDate(current.getDate() + 7);
+        }
+      } else {
+        // Normal event
+        if (event.event_date >= todayStr) {
+          result.push({
+            ...event,
+            display_date: event.event_date,
+            is_virtual: false,
+          });
+        }
+      }
     }
     
-    while (current <= end) {
-      dates.push(current.toISOString().split("T")[0]);
-      current.setDate(current.getDate() + 7);
-    }
+    // Sort by display_date then start_time
+    result.sort((a, b) => {
+      const dateCompare = a.display_date.localeCompare(b.display_date);
+      if (dateCompare !== 0) return dateCompare;
+      return a.start_time.localeCompare(b.start_time);
+    });
     
-    return dates;
-  };
+    return result;
+  }, [events]);
 
   const handleCreateEvent = async () => {
     const validation = validateInput(eventSchema, newEvent);
@@ -143,10 +194,11 @@ const Agenda = () => {
     }
 
     const validatedData = validation.data;
-    const baseEvent = {
+    const eventToInsert: any = {
       title: validatedData.title,
       description: validatedData.description || null,
       event_type: validatedData.event_type,
+      event_date: validatedData.event_date,
       start_time: validatedData.start_time,
       end_time: validatedData.end_time || null,
       location: validatedData.location || null,
@@ -155,43 +207,26 @@ const Agenda = () => {
       longitude: newEvent.longitude,
       location_type: newEvent.location_type || "igreja",
       created_by: user?.id,
+      is_recurring: newEvent.is_recurring,
+      recurrence_day: newEvent.is_recurring ? parseInt(newEvent.recurrence_day) : null,
+      recurrence_end_date: newEvent.is_recurring ? newEvent.recurrence_end_date : null,
     };
 
-    let eventsToInsert: any[];
-
-    if (newEvent.is_recurring && newEvent.recurrence_day && newEvent.recurrence_end_date) {
-      const dates = generateRecurringDates(
-        validatedData.event_date,
-        newEvent.recurrence_end_date,
-        parseInt(newEvent.recurrence_day)
-      );
-      
-      if (dates.length === 0) {
-        toast({ title: "Erro", description: "Nenhuma data encontrada para a recorrência.", variant: "destructive" });
-        return;
-      }
-      
-      if (dates.length > 52) {
-        toast({ title: "Erro", description: "Máximo de 52 eventos recorrentes por vez.", variant: "destructive" });
-        return;
-      }
-      
-      eventsToInsert = dates.map((date) => ({ ...baseEvent, event_date: date }));
-    } else {
-      eventsToInsert = [{ ...baseEvent, event_date: validatedData.event_date }];
+    if (newEvent.is_recurring && (!newEvent.recurrence_day || !newEvent.recurrence_end_date)) {
+      toast({ title: "Erro", description: "Selecione o dia da semana e a data final da recorrência.", variant: "destructive" });
+      return;
     }
 
-    const { error } = await supabase.from("events").insert(eventsToInsert);
+    const { error } = await supabase.from("events").insert([eventToInsert]);
 
     if (error) {
       toast({ title: "Erro", description: "Não foi possível criar o evento.", variant: "destructive" });
     } else {
-      const count = eventsToInsert.length;
       toast({ 
         title: "Evento criado! 🎉", 
-        description: count > 1 
-          ? `${count} eventos foram adicionados à agenda.` 
-          : "O evento foi adicionado à agenda." 
+        description: newEvent.is_recurring 
+          ? `Evento recorrente criado (toda ${DAY_NAMES[parseInt(newEvent.recurrence_day)]}).`
+          : "O evento foi adicionado à agenda."
       });
       setIsDialogOpen(false);
       setNewEvent({
@@ -216,9 +251,8 @@ const Agenda = () => {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr + "T00:00:00");
-    const days = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
     const months = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
-    return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]}`;
+    return `${DAY_NAMES[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]}`;
   };
 
   const userName = profile?.full_name?.split(" ")[0] || "Jovem";
@@ -292,7 +326,7 @@ const Agenda = () => {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <Label className="text-xs sm:text-sm font-medium">Data</Label>
+                      <Label className="text-xs sm:text-sm font-medium">Data início</Label>
                       <Input
                         type="date"
                         value={newEvent.event_date}
@@ -345,13 +379,9 @@ const Agenda = () => {
                               <SelectValue placeholder="Selecione o dia" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="0">Domingo</SelectItem>
-                              <SelectItem value="1">Segunda-feira</SelectItem>
-                              <SelectItem value="2">Terça-feira</SelectItem>
-                              <SelectItem value="3">Quarta-feira</SelectItem>
-                              <SelectItem value="4">Quinta-feira</SelectItem>
-                              <SelectItem value="5">Sexta-feira</SelectItem>
-                              <SelectItem value="6">Sábado</SelectItem>
+                              {DAY_NAMES.map((day, i) => (
+                                <SelectItem key={i} value={String(i)}>{day}</SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </div>
@@ -364,15 +394,9 @@ const Agenda = () => {
                             className="rounded-xl text-xs h-8 border border-border bg-background"
                           />
                         </div>
-                        {newEvent.recurrence_day && newEvent.event_date && newEvent.recurrence_end_date && (
+                        {newEvent.recurrence_day && newEvent.recurrence_end_date && (
                           <p className="text-[10px] text-muted-foreground bg-muted rounded-lg px-2 py-1">
-                            📅 Serão criados{" "}
-                            {generateRecurringDates(
-                              newEvent.event_date,
-                              newEvent.recurrence_end_date,
-                              parseInt(newEvent.recurrence_day)
-                            ).length}{" "}
-                            eventos
+                            🔁 Repete toda {DAY_NAMES[parseInt(newEvent.recurrence_day)]} até {formatDate(newEvent.recurrence_end_date)}
                           </p>
                         )}
                       </div>
@@ -444,7 +468,7 @@ const Agenda = () => {
             </div>
             <div>
               <h3 className="font-serif text-lg font-semibold">
-                {events.length} evento{events.length !== 1 && "s"} próximo{events.length !== 1 && "s"}
+                {displayEvents.length} evento{displayEvents.length !== 1 && "s"} próximo{displayEvents.length !== 1 && "s"}
               </h3>
               <p className="text-sm opacity-80">Continue firme na caminhada!</p>
             </div>
@@ -457,7 +481,7 @@ const Agenda = () => {
             <div className="flex items-center justify-center py-12">
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
             </div>
-          ) : events.length === 0 ? (
+          ) : displayEvents.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -470,9 +494,9 @@ const Agenda = () => {
               )}
             </motion.div>
           ) : (
-            events.map((evento, index) => (
+            displayEvents.map((evento, index) => (
               <motion.button
-                key={evento.id}
+                key={`${evento.id}-${evento.display_date}`}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 + index * 0.05 }}
@@ -487,7 +511,7 @@ const Agenda = () => {
                   <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1">
                       <Clock className="h-3.5 w-3.5" />
-                      {formatDate(evento.event_date)}, {evento.start_time.slice(0, 5)}
+                      {formatDate(evento.display_date)}, {evento.start_time.slice(0, 5)}
                     </span>
                     {(evento.location || evento.address) && (
                       <span className="flex items-center gap-1 truncate">
@@ -496,15 +520,23 @@ const Agenda = () => {
                       </span>
                     )}
                   </div>
-                  {evento.latitude && (
-                    <span className="inline-flex items-center gap-1 mt-1 text-xs text-primary font-medium">
-                      <Navigation className="h-3 w-3" />
-                      GPS disponível
-                    </span>
-                  )}
+                  <div className="flex items-center gap-2 mt-1">
+                    {evento.is_recurring && (
+                      <span className="inline-flex items-center gap-1 text-xs text-muted-foreground font-medium">
+                        <Repeat className="h-3 w-3" />
+                        Recorrente
+                      </span>
+                    )}
+                    {evento.latitude && (
+                      <span className="inline-flex items-center gap-1 text-xs text-primary font-medium">
+                        <Navigation className="h-3 w-3" />
+                        GPS
+                      </span>
+                    )}
+                  </div>
                 </div>
 
-                {canManage && (
+                {canManage && !evento.is_virtual && (
                   <Button
                     variant="ghost"
                     size="icon"
