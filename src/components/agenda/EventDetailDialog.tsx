@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Calendar, Clock, MapPin, Info } from "lucide-react";
+import { Calendar, Clock, MapPin, Info, Pencil, Trash2, Repeat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -25,41 +25,37 @@ interface Event {
   location_type?: string | null;
   display_date?: string;
   is_recurring?: boolean;
+  recurrence_day?: number | null;
+  recurrence_end_date?: string | null;
 }
 
 interface EventDetailDialogProps {
   event: Event | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  canManage?: boolean;
+  onEdit?: (event: Event) => void;
+  onDelete?: (event: Event) => void;
 }
 
+const DAY_NAMES = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
+
 const getTypeLabel = (type: string) => {
-  const labels: Record<string, string> = {
-    culto: "Culto",
-    ensaio: "Ensaio",
-    estudo: "Estudo Bíblico",
-    reuniao: "Reunião",
-    outro: "Outro",
-  };
+  const labels: Record<string, string> = { culto: "Culto", ensaio: "Ensaio", estudo: "Estudo Bíblico", reuniao: "Reunião", outro: "Outro" };
   return labels[type] || type;
 };
 
 const getTypeColor = (type: string) => {
   switch (type) {
-    case "culto":
-      return "bg-primary/10 text-primary";
-    case "ensaio":
-      return "bg-gold/20 text-gold";
-    case "estudo":
-      return "bg-accent text-accent-foreground";
-    case "reuniao":
-      return "bg-secondary text-secondary-foreground";
-    default:
-      return "bg-muted text-muted-foreground";
+    case "culto": return "bg-primary/10 text-primary";
+    case "ensaio": return "bg-gold/20 text-gold";
+    case "estudo": return "bg-accent text-accent-foreground";
+    case "reuniao": return "bg-secondary text-secondary-foreground";
+    default: return "bg-muted text-muted-foreground";
   }
 };
 
-const EventDetailDialog = ({ event, open, onOpenChange }: EventDetailDialogProps) => {
+const EventDetailDialog = ({ event, open, onOpenChange, canManage, onEdit, onDelete }: EventDetailDialogProps) => {
   if (!event) return null;
 
   const formatDate = (dateStr: string) => {
@@ -70,7 +66,6 @@ const EventDetailDialog = ({ event, open, onOpenChange }: EventDetailDialogProps
   };
 
   const formatTime = (time: string) => time.slice(0, 5);
-
   const hasCoordinates = event.latitude && event.longitude;
 
   return (
@@ -91,12 +86,8 @@ const EventDetailDialog = ({ event, open, onOpenChange }: EventDetailDialogProps
 
         <div className="space-y-3">
           {/* Date & Time */}
-          <motion.div
-            initial={{ opacity: 0, x: -10 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-            className="flex items-center gap-3 rounded-xl bg-muted/50 p-3 sm:p-4"
-          >
+          <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}
+            className="flex items-center gap-3 rounded-xl bg-muted/50 p-3 sm:p-4">
             <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-primary/10 shrink-0">
               <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
             </div>
@@ -109,14 +100,22 @@ const EventDetailDialog = ({ event, open, onOpenChange }: EventDetailDialogProps
             </div>
           </motion.div>
 
-          {/* Location name */}
+          {/* Recurring info */}
+          {event.is_recurring && event.recurrence_day != null && (
+            <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.12 }}
+              className="flex items-center gap-3 rounded-xl bg-primary/5 p-3">
+              <Repeat className="h-4 w-4 text-primary shrink-0" />
+              <p className="text-xs text-foreground">
+                Repete toda <strong>{DAY_NAMES[event.recurrence_day]}</strong>
+                {event.recurrence_end_date && ` até ${formatDate(event.recurrence_end_date)}`}
+              </p>
+            </motion.div>
+          )}
+
+          {/* Location */}
           {event.location && (
-            <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.15 }}
-              className="flex items-center gap-3 rounded-xl bg-muted/50 p-3 sm:p-4"
-            >
+            <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 }}
+              className="flex items-center gap-3 rounded-xl bg-muted/50 p-3 sm:p-4">
               <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-primary/10 shrink-0">
                 <MapPin className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               </div>
@@ -127,31 +126,17 @@ const EventDetailDialog = ({ event, open, onOpenChange }: EventDetailDialogProps
             </motion.div>
           )}
 
-          {/* Map with navigation */}
+          {/* Map */}
           {hasCoordinates && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <EventMapPreview
-                latitude={event.latitude!}
-                longitude={event.longitude!}
-                address={event.address}
-                locationType={event.location_type}
-                title={event.title}
-              />
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+              <EventMapPreview latitude={event.latitude!} longitude={event.longitude!} address={event.address} locationType={event.location_type} title={event.title} />
             </motion.div>
           )}
 
           {/* Description */}
           {event.description && (
-            <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.25 }}
-              className="rounded-xl bg-accent/50 p-3 sm:p-4"
-            >
+            <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25 }}
+              className="rounded-xl bg-accent/50 p-3 sm:p-4">
               <div className="flex items-center gap-2 mb-1.5">
                 <Info className="h-3.5 w-3.5 text-muted-foreground" />
                 <span className="text-xs font-medium text-muted-foreground">Descrição</span>
@@ -160,11 +145,19 @@ const EventDetailDialog = ({ event, open, onOpenChange }: EventDetailDialogProps
             </motion.div>
           )}
 
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            className="w-full rounded-xl text-sm"
-          >
+          {/* Actions */}
+          {canManage && (
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => onEdit?.(event)} className="flex-1 rounded-xl text-sm gap-1.5">
+                <Pencil className="h-3.5 w-3.5" /> Editar
+              </Button>
+              <Button variant="outline" onClick={() => onDelete?.(event)} className="flex-1 rounded-xl text-sm gap-1.5 text-destructive hover:text-destructive">
+                <Trash2 className="h-3.5 w-3.5" /> Excluir
+              </Button>
+            </div>
+          )}
+
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full rounded-xl text-sm">
             Fechar
           </Button>
         </div>

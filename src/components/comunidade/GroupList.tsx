@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Users, Plus, Lock, Globe, MessageCircle, Loader2, ChevronRight, Smile, Paperclip, Send } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { Users, Plus, Lock, Globe, Loader2, ChevronRight, Camera } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import ChatMediaPicker from '@/components/chat/ChatMediaPicker';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Dialog,
   DialogContent,
@@ -17,12 +17,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 
 interface Group {
   id: string;
@@ -34,15 +28,6 @@ interface Group {
   created_by: string;
   created_at: string;
   is_member?: boolean;
-}
-
-interface GroupMessage {
-  id: string;
-  content: string;
-  user_id: string;
-  created_at: string;
-  image_url: string | null;
-  profile?: { full_name: string; avatar_url: string | null };
 }
 
 interface GroupListProps {
@@ -79,11 +64,7 @@ export const GroupList = ({ onGroupSelect }: GroupListProps) => {
       .eq('is_active', true)
       .order('created_at', { ascending: false });
     if (allGroups) {
-      const groupsWithMembership = allGroups.map(g => ({
-        ...g,
-        is_member: memberGroupIds.has(g.id),
-      }));
-      setGroups(groupsWithMembership);
+      setGroups(allGroups.map(g => ({ ...g, is_member: memberGroupIds.has(g.id) })));
     }
     setIsLoading(false);
   };
@@ -128,47 +109,43 @@ export const GroupList = ({ onGroupSelect }: GroupListProps) => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-8">
+      <div className="flex justify-center py-12">
         <Loader2 className="w-6 h-6 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-foreground">Grupos</h3>
+    <div className="space-y-3">
+      <div className="flex items-center justify-between px-1">
+        <h3 className="font-semibold text-foreground text-sm">Seus Grupos</h3>
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogTrigger asChild>
-            <Button size="sm" variant="outline" className="rounded-xl">
-              <Plus className="w-4 h-4 mr-1" />
-              Criar
+            <Button size="sm" variant="ghost" className="rounded-full h-8 w-8 p-0">
+              <Plus className="w-4 h-4" />
             </Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="rounded-2xl">
             <DialogHeader>
               <DialogTitle className="font-serif">Criar Grupo</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label>Nome do Grupo</Label>
-                <Input value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)} placeholder="Ex: Jovens de São Paulo" maxLength={50} />
+                <Label className="text-xs">Nome do Grupo</Label>
+                <Input value={newGroupName} onChange={(e) => setNewGroupName(e.target.value)} placeholder="Ex: Jovens de São Paulo" maxLength={50} className="rounded-xl" />
               </div>
               <div>
-                <Label>Descrição (opcional)</Label>
-                <Textarea value={newGroupDescription} onChange={(e) => setNewGroupDescription(e.target.value)} placeholder="Sobre o que é esse grupo?" maxLength={200} />
+                <Label className="text-xs">Descrição (opcional)</Label>
+                <Textarea value={newGroupDescription} onChange={(e) => setNewGroupDescription(e.target.value)} placeholder="Sobre o que é esse grupo?" maxLength={200} className="rounded-xl" />
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   {newGroupIsPublic ? <Globe className="w-4 h-4 text-muted-foreground" /> : <Lock className="w-4 h-4 text-muted-foreground" />}
-                  <Label>Grupo Público</Label>
+                  <Label className="text-sm">{newGroupIsPublic ? 'Público' : 'Privado'}</Label>
                 </div>
                 <Switch checked={newGroupIsPublic} onCheckedChange={setNewGroupIsPublic} />
               </div>
-              <p className="text-xs text-muted-foreground">
-                {newGroupIsPublic ? 'Qualquer membro pode ver e entrar' : 'Apenas com convite'}
-              </p>
-              <Button onClick={handleCreateGroup} disabled={isCreating || !newGroupName.trim()} className="w-full">
+              <Button onClick={handleCreateGroup} disabled={isCreating || !newGroupName.trim()} className="w-full rounded-xl">
                 {isCreating ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Criando...</>) : 'Criar Grupo'}
               </Button>
             </div>
@@ -177,34 +154,43 @@ export const GroupList = ({ onGroupSelect }: GroupListProps) => {
       </div>
 
       {groups.length === 0 ? (
-        <div className="text-center py-8 bg-card rounded-2xl">
-          <Users className="w-12 h-12 mx-auto text-muted-foreground/50 mb-2" />
-          <p className="text-muted-foreground">Nenhum grupo ainda</p>
-          <p className="text-xs text-muted-foreground">Crie o primeiro!</p>
+        <div className="text-center py-12 bg-card rounded-2xl border border-border">
+          <Users className="w-12 h-12 mx-auto text-muted-foreground/30 mb-3" />
+          <p className="text-muted-foreground text-sm">Nenhum grupo ainda</p>
+          <p className="text-xs text-muted-foreground mt-1">Crie o primeiro grupo!</p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1">
           {groups.map((group) => (
             <motion.div
               key={group.id}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 5 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-card rounded-xl p-4 flex items-center gap-3 cursor-pointer hover:bg-accent/50 transition-colors"
+              className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-muted/50 active:bg-muted transition-colors"
               onClick={() => group.is_member && onGroupSelect(group)}
             >
-              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                {group.is_public ? <Globe className="w-5 h-5 text-primary" /> : <Lock className="w-5 h-5 text-primary" />}
-              </div>
+              <Avatar className="h-12 w-12 shrink-0">
+                {group.image_url ? (
+                  <AvatarImage src={group.image_url} />
+                ) : null}
+                <AvatarFallback className="bg-primary/10 text-primary font-bold text-sm">
+                  {group.name.slice(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-foreground truncate">{group.name}</p>
-                <p className="text-xs text-muted-foreground truncate">
+                <div className="flex items-center gap-1.5">
+                  <p className="font-semibold text-foreground text-sm truncate">{group.name}</p>
+                  {!group.is_public && <Lock className="w-3 h-3 text-muted-foreground shrink-0" />}
+                </div>
+                <p className="text-xs text-muted-foreground">
                   {group.member_count} membro{group.member_count !== 1 ? 's' : ''}
+                  {group.description && ` · ${group.description.slice(0, 30)}...`}
                 </p>
               </div>
               {group.is_member ? (
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
               ) : (
-                <Button size="sm" onClick={(e) => { e.stopPropagation(); handleJoinGroup(group.id); }}>
+                <Button size="sm" variant="outline" className="rounded-full text-xs" onClick={(e) => { e.stopPropagation(); handleJoinGroup(group.id); }}>
                   Entrar
                 </Button>
               )}
@@ -216,220 +202,4 @@ export const GroupList = ({ onGroupSelect }: GroupListProps) => {
   );
 };
 
-interface GroupChatProps {
-  group: Group;
-  onClose: () => void;
-}
-
-export const GroupChat = ({ group, onClose }: GroupChatProps) => {
-  const { user } = useAuth();
-  const { toast } = useToast();
-  
-  const [messages, setMessages] = useState<GroupMessage[]>([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSending, setIsSending] = useState(false);
-  const [showMediaPicker, setShowMediaPicker] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    fetchMessages();
-    const channel = supabase
-      .channel(`group_messages_${group.id}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'group_messages', filter: `group_id=eq.${group.id}` }, () => fetchMessages())
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [group.id]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const fetchMessages = async () => {
-    const { data: messagesData } = await supabase
-      .from('group_messages')
-      .select('*')
-      .eq('group_id', group.id)
-      .order('created_at', { ascending: true })
-      .limit(100);
-
-    if (messagesData) {
-      const userIds = [...new Set(messagesData.map(m => m.user_id))];
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('user_id, full_name, avatar_url')
-        .in('user_id', userIds);
-
-      const messagesWithProfiles = messagesData.map(msg => ({
-        ...msg,
-        profile: profiles?.find(p => p.user_id === msg.user_id),
-      }));
-
-      setMessages(messagesWithProfiles);
-    }
-    setIsLoading(false);
-  };
-
-  const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
-    setIsSending(true);
-    const { error } = await supabase.from('group_messages').insert({
-      group_id: group.id,
-      user_id: user?.id,
-      content: newMessage.trim(),
-    });
-    if (error) {
-      toast({ title: 'Erro ao enviar', variant: 'destructive' });
-    } else {
-      setNewMessage('');
-    }
-    setIsSending(false);
-  };
-
-  const handleSendSticker = async (content: string, _type: "sticker" | "text_sticker") => {
-    setIsSending(true);
-    const { error } = await supabase.from('group_messages').insert({
-      group_id: group.id,
-      user_id: user?.id,
-      content,
-    });
-    if (error) {
-      toast({ title: 'Erro ao enviar figurinha', variant: 'destructive' });
-    }
-    setIsSending(false);
-  };
-
-  const handleSendImage = async (imageUrl: string) => {
-    setIsSending(true);
-    const { error } = await supabase.from('group_messages').insert({
-      group_id: group.id,
-      user_id: user?.id,
-      content: '📷 Foto',
-      image_url: imageUrl,
-    });
-    if (error) {
-      toast({ title: 'Erro ao enviar foto', variant: 'destructive' });
-    }
-    setIsSending(false);
-  };
-
-  const formatTime = (dateStr: string) => {
-    return new Date(dateStr).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const isEmojiOnly = (text: string) => {
-    const emojiRegex = /^[\p{Emoji}\s]+$/u;
-    return emojiRegex.test(text) && text.trim().length <= 4;
-  };
-
-  return (
-    <Sheet open={true} onOpenChange={() => onClose()}>
-      <SheetContent side="right" className="w-full sm:max-w-md p-0 flex flex-col">
-        <SheetHeader className="p-4 border-b">
-          <SheetTitle className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-              {group.is_public ? <Globe className="w-5 h-5 text-primary" /> : <Lock className="w-5 h-5 text-primary" />}
-            </div>
-            <div>
-              <p className="font-semibold">{group.name}</p>
-              <p className="text-xs text-muted-foreground font-normal">{group.member_count} membros</p>
-            </div>
-          </SheetTitle>
-        </SheetHeader>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-primary" />
-            </div>
-          ) : messages.length === 0 ? (
-            <div className="text-center py-8">
-              <MessageCircle className="w-12 h-12 mx-auto text-muted-foreground/50 mb-2" />
-              <p className="text-muted-foreground">Nenhuma mensagem ainda</p>
-            </div>
-          ) : (
-            messages.map((msg) => {
-              const isOwn = msg.user_id === user?.id;
-              const isEmoji = isEmojiOnly(msg.content);
-
-              return (
-                <div key={msg.id} className={`flex gap-2 ${isOwn ? 'flex-row-reverse' : ''}`}>
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-sm font-semibold text-primary">
-                    {msg.profile?.full_name?.charAt(0) || '?'}
-                  </div>
-                  <div className={`max-w-[70%] rounded-2xl px-3 py-2 ${
-                    isEmoji 
-                      ? 'bg-transparent' 
-                      : isOwn 
-                        ? 'bg-primary text-primary-foreground' 
-                        : 'bg-muted'
-                  }`}>
-                    {!isOwn && !isEmoji && (
-                      <p className="text-xs font-semibold mb-1 opacity-70">
-                        {msg.profile?.full_name?.split(' ')[0]}
-                      </p>
-                    )}
-                    {msg.image_url ? (
-                      <img
-                        src={msg.image_url}
-                        alt="Foto"
-                        className="rounded-lg max-w-[200px] w-full object-cover cursor-pointer"
-                        onClick={() => window.open(msg.image_url!, "_blank")}
-                        loading="lazy"
-                      />
-                    ) : isEmoji ? (
-                      <span className="text-4xl block text-center">{msg.content}</span>
-                    ) : (
-                      <p className="text-sm">{msg.content}</p>
-                    )}
-                    <p className="text-[10px] opacity-60 mt-1 text-right">
-                      {formatTime(msg.created_at)}
-                    </p>
-                  </div>
-                </div>
-              );
-            })
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-
-        {/* Media Picker */}
-        <ChatMediaPicker
-          userId={user?.id || ""}
-          onSendSticker={handleSendSticker}
-          onSendImage={handleSendImage}
-          isOpen={showMediaPicker}
-          onClose={() => setShowMediaPicker(false)}
-        />
-
-        {/* Input */}
-        <div className="p-3 border-t flex items-center gap-2">
-          <button
-            onClick={() => setShowMediaPicker(!showMediaPicker)}
-            className="text-muted-foreground hover:text-primary transition-colors shrink-0"
-          >
-            <Smile className="h-5 w-5" />
-          </button>
-          <Input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Mensagem..."
-            className="flex-1 rounded-xl"
-            maxLength={500}
-            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-            onFocus={() => setShowMediaPicker(false)}
-          />
-          <Button
-            onClick={handleSendMessage}
-            disabled={!newMessage.trim() || isSending}
-            size="icon"
-            className="rounded-xl shrink-0"
-          >
-            {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-          </Button>
-        </div>
-      </SheetContent>
-    </Sheet>
-  );
-};
+export type { Group };
