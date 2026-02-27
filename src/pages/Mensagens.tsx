@@ -13,7 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BottomNavigation from "@/components/BottomNavigation";
 import { privateMessageSchema, validateInput } from "@/lib/validation";
 import ChatMediaPicker from "@/components/chat/ChatMediaPicker";
-import { GroupList, GroupChat } from "@/components/comunidade/GroupList";
+import { GroupList } from "@/components/comunidade/GroupList";
+import { GroupChat } from "@/components/comunidade/GroupChat";
 
 interface Profile {
   user_id: string;
