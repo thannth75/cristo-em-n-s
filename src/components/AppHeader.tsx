@@ -7,6 +7,7 @@ import logo from "@/assets/logo-vida-em-cristo.png";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import NotificationCenter from "@/components/NotificationCenter";
+import ThemeToggle from "@/components/ThemeToggle";
 
 interface AppHeaderProps {
   userName?: string;
@@ -96,7 +97,8 @@ const AppHeader = ({ userName = "Jovem", onMenuClick }: AppHeaderProps) => {
           </motion.button>
         </div>
 
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <ThemeToggle />
           <NotificationCenter />
         </div>
       </div>
