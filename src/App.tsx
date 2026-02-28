@@ -2,7 +2,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
+import { ThemeProvider } from "@/components/ThemeProvider";
 import NotificationPermissionBanner from "@/components/NotificationPermissionBanner";
 import PresenceTracker from "@/components/PresenceTracker";
 import InAppNotificationToast from "@/components/InAppNotificationToast";
@@ -41,24 +43,26 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Component to initialize push notifications
 const PushInitializer = () => {
   useNativePushNotifications();
   useAutoWebPush();
   return null;
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <NotificationPermissionBanner />
-      <PresenceTracker />
-      <PushInitializer />
-      <InAppNotificationToast />
-      <BrowserRouter>
-        <Routes>
+const pageTransition = {
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0 },
+  exit: { opacity: 0, y: -8 },
+  transition: { duration: 0.2, ease: "easeOut" as const },
+};
+
+function AnimatedRoutes() {
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div key={location.pathname} {...pageTransition} className="min-h-screen">
+        <Routes location={location}>
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/pending" element={<PendingApproval />} />
@@ -88,12 +92,29 @@ const App = () => (
           <Route path="/mensagens" element={<Mensagens />} />
           <Route path="/rotina-com-deus" element={<RotinaComDeus />} />
           <Route path="/provas" element={<Provas />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+const App = () => (
+  <ThemeProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <NotificationPermissionBanner />
+        <PresenceTracker />
+        <PushInitializer />
+        <InAppNotificationToast />
+        <BrowserRouter>
+          <AnimatedRoutes />
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ThemeProvider>
 );
 
 export default App;

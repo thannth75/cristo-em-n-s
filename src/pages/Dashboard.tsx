@@ -2,26 +2,16 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  BookOpen,
-  Calendar,
-  Users,
-  Music,
-  Heart,
-  Award,
-  MessageSquare,
-  Shield,
-  ChevronRight,
-  Trophy,
-  Brain,
-  Target,
-  MessageCircle,
-  Sparkles,
-  ClipboardCheck,
+  BookOpen, Calendar, Users, Music, Heart, Award,
+  MessageSquare, Shield, ChevronRight, Trophy, Brain,
+  Target, MessageCircle, Sparkles, ClipboardCheck,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useAchievements } from "@/hooks/useAchievements";
 import { useGamification } from "@/hooks/useGamification";
+import { useStreaks } from "@/hooks/useStreaks";
+import { useWeeklySummary } from "@/hooks/useWeeklySummary";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import VerseCard from "@/components/VerseCard";
@@ -34,6 +24,9 @@ import { AdFeed } from "@/components/ads/AdBanner";
 import AIFloatingButton from "@/components/ai/AIFloatingButton";
 import AmbientSound from "@/components/AmbientSound";
 import JourneyCarousel, { type JourneyItem } from "@/components/dashboard/JourneyCarousel";
+import StreakCard from "@/components/dashboard/StreakCard";
+import WeeklySummaryCard from "@/components/dashboard/WeeklySummaryCard";
+import SpiritualSuggestion from "@/components/dashboard/SpiritualSuggestion";
 
 const dailyVerses = [
   { verse: "Buscai primeiro o Reino de Deus e a sua justiça, e todas as coisas vos serão acrescentadas.", reference: "Mateus 6:33" },
@@ -41,6 +34,8 @@ const dailyVerses = [
   { verse: "Não deixemos de congregar-nos, como é costume de alguns, mas encorajemo-nos uns aos outros.", reference: "Hebreus 10:25" },
   { verse: "Tudo quanto fizerdes, fazei-o de todo o coração, como para o Senhor e não para homens.", reference: "Colossenses 3:23" },
   { verse: "O Senhor é o meu pastor; nada me faltará.", reference: "Salmos 23:1" },
+  { verse: "Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito.", reference: "João 3:16" },
+  { verse: "Sede fortes e corajosos. Não temais, nem vos espanteis, pois o Senhor estará convosco.", reference: "Josué 1:9" },
 ];
 
 interface NextEvent {
@@ -53,20 +48,15 @@ interface NextEvent {
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { 
-    user, 
-    profile, 
-    isApproved, 
-    isAdmin, 
-    isLeader, 
-    isLoading,
-    isProfileComplete,
-    canAccessYouthContent,
-    canAccessMusicianContent,
+  const {
+    user, profile, isApproved, isAdmin, isLeader, isLoading,
+    canAccessYouthContent, canAccessMusicianContent,
   } = useAuth();
-  useAchievements(); // Verificar conquistas automáticas
+  useAchievements();
   const gamification = useGamification(user?.id);
-  
+  const streaks = useStreaks(user?.id);
+  const weeklySummary = useWeeklySummary(user?.id);
+
   const [nextEvent, setNextEvent] = useState<NextEvent | null>(null);
   const [todayVerse] = useState(() => {
     const dayIndex = new Date().getDate() % dailyVerses.length;
@@ -75,11 +65,8 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (!isLoading) {
-      if (!user) {
-        navigate("/auth");
-      } else if (!isApproved) {
-        navigate("/pending");
-      }
+      if (!user) navigate("/auth");
+      else if (!isApproved) navigate("/pending");
     }
   }, [user, isApproved, isLoading, navigate]);
 
@@ -94,20 +81,16 @@ const Dashboard = () => {
         .order("start_time", { ascending: true })
         .limit(1)
         .maybeSingle();
-
       setNextEvent(data);
     };
-
-    if (isApproved) {
-      fetchNextEvent();
-    }
+    if (isApproved) fetchNextEvent();
   }, [isApproved]);
 
-  // Features base para todos (comunidade + devocionais)
+  // Features
   const baseFeatures = [
     { title: "Devocional Diário", description: "Comece o dia com Deus", icon: BookOpen, href: "/devocional", badge: "Novo" },
-    { title: "Mensagens", description: "Chat privado", icon: MessageCircle, href: "/mensagens", badge: "Novo" },
-    { title: "Rotina com Deus", description: "Planos espirituais guiados", icon: Heart, href: "/rotina-com-deus", badge: "Novo" },
+    { title: "Mensagens", description: "Chat privado", icon: MessageCircle, href: "/mensagens" },
+    { title: "Rotina com Deus", description: "Planos espirituais guiados", icon: Heart, href: "/rotina-com-deus" },
     { title: "Versículos por Humor", description: "Palavra para seu momento", icon: Heart, href: "/versiculos" },
     { title: "Testemunhos", description: "Histórias de fé", icon: Heart, href: "/testemunhos" },
     { title: "Lembretes de Oração", description: "Momentos com Deus", icon: MessageSquare, href: "/lembretes-oracao" },
@@ -120,40 +103,22 @@ const Dashboard = () => {
     { title: "Pedidos de Oração", description: "Ore com os irmãos", icon: MessageSquare, href: "/oracoes" },
   ];
 
-  // Features exclusivas para jovens (estudos, provas, presença, notas)
   const youthFeatures = [
-    { title: "Provas e Notas", description: "Avaliações e frequência", icon: ClipboardCheck, href: "/provas", badge: "Novo" },
+    { title: "Provas e Notas", description: "Avaliações e frequência", icon: ClipboardCheck, href: "/provas" },
     { title: "Células", description: "Pequenos grupos", icon: Users, href: "/celulas" },
     { title: "Plano de Leitura", description: "Leia a Bíblia em 1 ano", icon: Target, href: "/plano-leitura" },
     { title: "Presença", description: "Registro de participação", icon: Users, href: "/presenca" },
   ];
 
-  // Feature de músicos
   const musicianFeatures = [
     { title: "Músicos", description: "Escalas e repertório", icon: Music, href: "/musicos" },
   ];
 
-  // Montar features baseado no papel
   const features = [...baseFeatures];
-  
-  // Adicionar features de jovens se tiver acesso
-  if (canAccessYouthContent) {
-    features.push(...youthFeatures);
-  }
-  
-  // Adicionar features de músicos se tiver acesso
-  if (canAccessMusicianContent) {
-    features.push(...musicianFeatures);
-  }
-
-  // Adicionar admin se for líder ou admin
+  if (canAccessYouthContent) features.push(...youthFeatures);
+  if (canAccessMusicianContent) features.push(...musicianFeatures);
   if (isAdmin || isLeader) {
-    features.push({
-      title: "Administração",
-      description: "Gerenciar usuários",
-      icon: Shield,
-      href: "/admin",
-    });
+    features.push({ title: "Administração", description: "Gerenciar usuários", icon: Shield, href: "/admin" });
   }
 
   if (isLoading) {
@@ -178,38 +143,44 @@ const Dashboard = () => {
   };
 
   return (
-    <div 
+    <div
       className="relative min-h-screen bg-background overflow-hidden"
       style={{ paddingBottom: 'calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))' }}
     >
-      {/* Parallax 3D Background */}
       <ParallaxBackground />
-
-      {/* Orb decorativo */}
       <GlowOrb className="absolute -top-20 -right-20 h-48 sm:h-64 w-48 sm:w-64 opacity-30" />
       <AppHeader userName={userName} />
 
-      <main className="relative z-10 px-4 py-4 sm:py-6 max-w-4xl mx-auto" style={{ paddingLeft: 'max(1rem, env(safe-area-inset-left, 16px))', paddingRight: 'max(1rem, env(safe-area-inset-right, 16px))' }}>
+      <main
+        className="relative z-10 px-4 py-4 sm:py-6 max-w-4xl mx-auto"
+        style={{
+          paddingLeft: 'max(1rem, env(safe-area-inset-left, 16px))',
+          paddingRight: 'max(1rem, env(safe-area-inset-right, 16px))',
+        }}
+      >
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="space-y-4 sm:space-y-6"
+          className="space-y-4 sm:space-y-5"
         >
           {/* Versículo do Dia */}
           <VerseCard verse={todayVerse.verse} reference={todayVerse.reference} />
 
-          {/* XP Progress Mini Card */}
+          {/* Sugestão Inteligente */}
+          <SpiritualSuggestion streaks={streaks} summary={weeklySummary} />
+
+          {/* XP Progress */}
           {gamification.currentLevelDef && (
             <motion.button
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
               onClick={() => navigate("/conquistas")}
-              className="w-full rounded-xl sm:rounded-2xl bg-gradient-to-r from-primary/15 via-primary/10 to-background p-3 sm:p-4 shadow-md border border-primary/20 text-left touch-feedback"
+              className="w-full rounded-2xl gradient-spiritual border border-primary/15 p-3.5 sm:p-4 shadow-md text-left touch-feedback"
             >
-              <div className="flex items-center justify-between mb-2 sm:mb-3">
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg sm:rounded-xl bg-primary/20 text-lg sm:text-xl">
+              <div className="flex items-center justify-between mb-2.5">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center rounded-xl bg-primary/15 text-lg">
                     {gamification.currentLevelDef.icon}
                   </div>
                   <div>
@@ -218,7 +189,7 @@ const Dashboard = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-1 text-primary">
-                  <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <Sparkles className="h-3.5 w-3.5" />
                   <span className="font-bold text-sm sm:text-base">{gamification.totalXp}</span>
                   <span className="text-[10px] sm:text-xs text-muted-foreground">XP</span>
                 </div>
@@ -226,12 +197,15 @@ const Dashboard = () => {
               <div className="space-y-1">
                 <div className="flex justify-between text-[10px] sm:text-xs">
                   <span className="text-muted-foreground">Próximo nível</span>
-                  <span className="text-primary">{gamification.progressPercent}%</span>
+                  <span className="text-primary font-medium">{gamification.progressPercent}%</span>
                 </div>
                 <Progress value={gamification.progressPercent} className="h-1.5 sm:h-2" />
               </div>
             </motion.button>
           )}
+
+          {/* Streaks */}
+          <StreakCard streaks={streaks} />
 
           {/* Próximo evento */}
           {nextEvent ? (
@@ -240,22 +214,22 @@ const Dashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
               onClick={() => navigate("/agenda")}
-              className="w-full overflow-hidden rounded-xl sm:rounded-2xl gradient-hope p-4 sm:p-5 text-primary-foreground shadow-lg text-left touch-feedback"
+              className="w-full overflow-hidden rounded-2xl gradient-hope p-4 sm:p-5 text-primary-foreground shadow-lg text-left touch-feedback"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
                   <p className="text-xs sm:text-sm font-medium opacity-90">Próximo Evento</p>
                   <h3 className="font-serif text-lg sm:text-xl font-semibold truncate">{nextEvent.title}</h3>
-                  <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm opacity-80">
+                  <p className="mt-0.5 text-xs sm:text-sm opacity-80">
                     {formatEventDate(nextEvent.event_date).weekday}, {nextEvent.start_time.slice(0, 5)}
                   </p>
                 </div>
-                <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-                  <div className="flex h-12 w-12 sm:h-16 sm:w-16 flex-col items-center justify-center rounded-lg sm:rounded-xl bg-primary-foreground/20">
-                    <span className="text-lg sm:text-2xl font-bold">{formatEventDate(nextEvent.event_date).day}</span>
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex h-14 w-14 sm:h-16 sm:w-16 flex-col items-center justify-center rounded-xl bg-primary-foreground/20">
+                    <span className="text-xl sm:text-2xl font-bold">{formatEventDate(nextEvent.event_date).day}</span>
                     <span className="text-[10px] sm:text-xs font-medium">{formatEventDate(nextEvent.event_date).month}</span>
                   </div>
-                  <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 opacity-70" />
+                  <ChevronRight className="h-5 w-5 opacity-70" />
                 </div>
               </div>
             </motion.button>
@@ -264,40 +238,37 @@ const Dashboard = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="overflow-hidden rounded-xl sm:rounded-2xl gradient-hope p-4 sm:p-5 text-primary-foreground shadow-lg"
+              className="overflow-hidden rounded-2xl gradient-hope p-4 sm:p-5 text-primary-foreground shadow-lg"
             >
-              <div className="flex items-center gap-3 sm:gap-4">
-                <Calendar className="h-6 w-6 sm:h-8 sm:w-8 opacity-80" />
+              <div className="flex items-center gap-3">
+                <Calendar className="h-7 w-7 opacity-80" />
                 <div>
-                  <p className="text-xs sm:text-sm font-medium opacity-90">Agenda</p>
+                  <p className="text-xs font-medium opacity-90">Agenda</p>
                   <h3 className="font-serif text-base sm:text-lg font-semibold">Nenhum evento próximo</h3>
                 </div>
               </div>
             </motion.div>
           )}
 
-          {/* Aniversariantes do Mês */}
+          {/* Resumo Semanal */}
+          <WeeklySummaryCard summary={weeklySummary} />
+
+          {/* Aniversariantes */}
           <BirthdaysCard />
 
-          {/* Anúncio integrado ao feed - estilo Facebook */}
           <AdFeed />
 
+          {/* Minha Jornada */}
           <div>
-            <h2 className="mb-3 sm:mb-4 font-serif text-base sm:text-lg font-semibold text-foreground">
+            <h2 className="mb-3 font-serif text-base sm:text-lg font-semibold text-foreground">
               Minha Jornada
             </h2>
-            {/* Mobile: carrossel horizontal (estilo Facebook/shortcuts) */}
             <div className="sm:hidden">
-              <JourneyCarousel
-                items={features as JourneyItem[]}
-                onNavigate={navigate}
-              />
+              <JourneyCarousel items={features as JourneyItem[]} onNavigate={navigate} />
             </div>
-
-            {/* Tablet/Desktop: grid */}
             <div className="hidden sm:grid grid-cols-2 gap-2 sm:gap-3 lg:grid-cols-3">
               {features.map((feature, index) => (
-                <FeatureCard key={feature.title} {...feature} delay={0.1 * index} />
+                <FeatureCard key={feature.title} {...feature} delay={0.05 * index} />
               ))}
             </div>
           </div>
@@ -306,10 +277,10 @@ const Dashboard = () => {
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="rounded-xl sm:rounded-2xl bg-accent/50 p-4 sm:p-5 text-center"
+            transition={{ delay: 0.4 }}
+            className="rounded-2xl gradient-spiritual border border-primary/10 p-4 sm:p-5 text-center"
           >
-            <p className="font-serif text-sm sm:text-base text-muted-foreground">
+            <p className="font-serif text-sm sm:text-base text-muted-foreground italic">
               "Cada dia é uma nova oportunidade de servir a Deus e crescer em fé."
             </p>
             <p className="mt-2 text-xs sm:text-sm font-medium text-primary">

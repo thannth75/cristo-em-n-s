@@ -4,41 +4,62 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CSS Variables for theming */
+/* ====== VIDA EM CRISTO — Design System v2 ====== */
+
 :root {
-  /* Core brand colors - Hope Green palette */
+  /* Core brand — Hope Green palette */
   --background: 120 10% 98%;
   --foreground: 120 25% 15%;
-  
+
   --card: 0 0% 100%;
   --card-foreground: 120 25% 15%;
-  
+
   --popover: 0 0% 100%;
   --popover-foreground: 120 25% 15%;
-  
-  /* Primary - Hope Green */
+
+  /* Primary — Hope Green */
   --primary: 120 35% 30%;
   --primary-foreground: 0 0% 98%;
-  
+
   /* Secondary */
   --secondary: 120 15% 92%;
   --secondary-foreground: 120 25% 25%;
-  
+
   --muted: 120 10% 94%;
   --muted-foreground: 120 10% 45%;
-  
+
   --accent: 120 25% 88%;
   --accent-foreground: 120 35% 20%;
-  
+
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 98%;
-  
+
   --border: 120 15% 88%;
   --input: 120 15% 88%;
   --ring: 120 35% 30%;
-  
+
   --radius: 0.75rem;
-  
+
+  /* Extended palette — spiritual golden accents */
+  --gold: 43 74% 49%;
+  --gold-foreground: 43 10% 10%;
+  --hope-green: 120 35% 40%;
+  --forest-green: 150 30% 20%;
+  --olive-green: 90 25% 45%;
+  --cream: 40 40% 96%;
+
+  /* Semantic tokens */
+  --success: 142 71% 45%;
+  --success-foreground: 0 0% 100%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 38 10% 10%;
+  --info: 210 75% 50%;
+  --info-foreground: 0 0% 100%;
+
+  /* Streak colors */
+  --streak-fire: 15 85% 55%;
+  --streak-glow: 43 90% 55%;
+
   /* Sidebar theme */
   --sidebar-background: 120 25% 20%;
   --sidebar-foreground: 0 0% 98%;
@@ -56,56 +77,72 @@
   --chart-4: 180 35% 40%;
   --chart-5: 200 40% 45%;
 
-  /* Gradients (used by .gradient-hope / .gradient-card utilities) */
-  --gradient-hope: linear-gradient(
-    135deg,
-    hsl(var(--primary) / 0.95) 0%,
-    hsl(var(--chart-2) / 0.85) 55%,
-    hsl(var(--primary) / 0.75) 100%
-  );
-  --gradient-card: linear-gradient(
-    135deg,
-    hsl(var(--card) / 0.98) 0%,
-    hsl(var(--background) / 0.98) 100%
-  );
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 hsl(120 15% 15% / 0.05);
+  --shadow-md: 0 4px 6px -1px hsl(120 15% 15% / 0.08), 0 2px 4px -2px hsl(120 15% 15% / 0.05);
+  --shadow-lg: 0 10px 15px -3px hsl(120 15% 15% / 0.08), 0 4px 6px -4px hsl(120 15% 15% / 0.05);
+  --shadow-glow: 0 0 30px -5px hsl(120 35% 35% / 0.25);
+
+  /* Gradients */
+  --gradient-hope: linear-gradient(135deg, hsl(var(--primary) / 0.95) 0%, hsl(var(--chart-2) / 0.85) 55%, hsl(var(--primary) / 0.75) 100%);
+  --gradient-card: linear-gradient(135deg, hsl(var(--card) / 0.98) 0%, hsl(var(--background) / 0.98) 100%);
+  --gradient-gold: linear-gradient(135deg, hsl(var(--gold) / 0.9) 0%, hsl(38 85% 58%) 100%);
+  --gradient-spiritual: linear-gradient(135deg, hsl(var(--primary) / 0.15) 0%, hsl(var(--gold) / 0.08) 50%, hsl(var(--primary) / 0.05) 100%);
 }
 
 .dark {
-  --background: 120 15% 8%;
+  --background: 120 12% 7%;
   --foreground: 0 0% 95%;
-  
-  --card: 120 15% 12%;
+
+  --card: 120 12% 11%;
   --card-foreground: 0 0% 95%;
-  
-  --popover: 120 15% 12%;
+
+  --popover: 120 12% 11%;
   --popover-foreground: 0 0% 95%;
-  
+
   --primary: 120 40% 45%;
   --primary-foreground: 120 15% 8%;
-  
-  --secondary: 120 15% 18%;
+
+  --secondary: 120 12% 16%;
   --secondary-foreground: 0 0% 95%;
-  
-  --muted: 120 10% 18%;
-  --muted-foreground: 120 10% 60%;
-  
-  --accent: 120 20% 22%;
+
+  --muted: 120 8% 16%;
+  --muted-foreground: 120 8% 55%;
+
+  --accent: 120 18% 18%;
   --accent-foreground: 0 0% 95%;
-  
+
   --destructive: 0 70% 50%;
   --destructive-foreground: 0 0% 98%;
-  
-  --border: 120 15% 20%;
-  --input: 120 15% 20%;
+
+  --border: 120 12% 18%;
+  --input: 120 12% 18%;
   --ring: 120 40% 45%;
-  
-  --sidebar-background: 120 20% 6%;
+
+  --gold: 43 74% 55%;
+  --gold-foreground: 43 10% 95%;
+  --hope-green: 120 40% 50%;
+  --forest-green: 150 25% 30%;
+  --olive-green: 90 30% 50%;
+  --cream: 40 15% 18%;
+
+  --success: 142 71% 45%;
+  --success-foreground: 0 0% 100%;
+  --warning: 38 92% 55%;
+  --warning-foreground: 38 10% 10%;
+  --info: 210 75% 55%;
+  --info-foreground: 0 0% 100%;
+
+  --streak-fire: 15 85% 60%;
+  --streak-glow: 43 90% 60%;
+
+  --sidebar-background: 120 18% 5%;
   --sidebar-foreground: 0 0% 98%;
   --sidebar-primary: 120 40% 50%;
   --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 120 25% 15%;
+  --sidebar-accent: 120 22% 14%;
   --sidebar-accent-foreground: 0 0% 98%;
-  --sidebar-border: 120 15% 15%;
+  --sidebar-border: 120 12% 14%;
   --sidebar-ring: 120 40% 50%;
 
   --chart-1: 120 40% 50%;
@@ -114,101 +151,76 @@
   --chart-4: 180 40% 50%;
   --chart-5: 200 45% 55%;
 
-  /* Gradients (dark mode) */
-  --gradient-hope: linear-gradient(
-    135deg,
-    hsl(var(--primary) / 0.95) 0%,
-    hsl(var(--chart-2) / 0.75) 55%,
-    hsl(var(--primary) / 0.55) 100%
-  );
-  --gradient-card: linear-gradient(
-    135deg,
-    hsl(var(--card) / 0.92) 0%,
-    hsl(var(--background) / 0.92) 100%
-  );
+  --shadow-sm: 0 1px 2px 0 hsl(0 0% 0% / 0.2);
+  --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.3), 0 2px 4px -2px hsl(0 0% 0% / 0.2);
+  --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.3), 0 4px 6px -4px hsl(0 0% 0% / 0.2);
+  --shadow-glow: 0 0 30px -5px hsl(120 40% 45% / 0.2);
+
+  --gradient-hope: linear-gradient(135deg, hsl(var(--primary) / 0.95) 0%, hsl(var(--chart-2) / 0.75) 55%, hsl(var(--primary) / 0.55) 100%);
+  --gradient-card: linear-gradient(135deg, hsl(var(--card) / 0.92) 0%, hsl(var(--background) / 0.92) 100%);
+  --gradient-gold: linear-gradient(135deg, hsl(var(--gold) / 0.7) 0%, hsl(38 85% 50% / 0.6) 100%);
+  --gradient-spiritual: linear-gradient(135deg, hsl(var(--primary) / 0.12) 0%, hsl(var(--gold) / 0.06) 50%, hsl(var(--primary) / 0.04) 100%);
 }
 
-/* Base layer */
+/* ====== BASE LAYER ====== */
 @layer base {
   * {
     @apply border-border;
   }
-  
+
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground font-sans antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  
+
   html {
     scroll-behavior: smooth;
     -webkit-tap-highlight-color: transparent;
   }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cinzel', serif;
+    @apply font-semibold tracking-tight;
+  }
 }
 
-/* Safe area utility classes - critical for mobile responsiveness */
+/* ====== COMPONENT LAYER ====== */
+@layer components {
+  .container-mobile {
+    @apply w-full max-w-lg mx-auto px-4;
+  }
+
+  .container-tablet {
+    @apply w-full max-w-2xl mx-auto px-4 sm:px-6;
+  }
+
+  .container-desktop {
+    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+}
+
+/* ====== UTILITY LAYER ====== */
 @layer utilities {
-  /* Top safe area (for notches, status bars) */
-  .pt-safe {
-    padding-top: max(1rem, env(safe-area-inset-top, 16px));
-  }
-  
-  .mt-safe {
-    margin-top: max(0.5rem, env(safe-area-inset-top, 8px));
-  }
-  
-  /* Bottom safe area (for home indicators, navigation bars) */
-  .pb-safe {
-    padding-bottom: max(1.5rem, calc(env(safe-area-inset-bottom, 24px) + 0.5rem));
-  }
-  
-  .mb-safe {
-    margin-bottom: max(1rem, env(safe-area-inset-bottom, 16px));
-  }
-  
-  /* Left safe area (for landscape notches) */
-  .pl-safe {
-    padding-left: max(0.75rem, env(safe-area-inset-left, 12px));
-  }
-  
-  /* Right safe area (for landscape notches) */
-  .pr-safe {
-    padding-right: max(0.75rem, env(safe-area-inset-right, 12px));
-  }
-  
-  /* Combined horizontal safe area */
+  /* Safe area utilities */
+  .pt-safe { padding-top: max(1rem, env(safe-area-inset-top, 16px)); }
+  .mt-safe { margin-top: max(0.5rem, env(safe-area-inset-top, 8px)); }
+  .pb-safe { padding-bottom: max(1.5rem, calc(env(safe-area-inset-bottom, 24px) + 0.5rem)); }
+  .mb-safe { margin-bottom: max(1rem, env(safe-area-inset-bottom, 16px)); }
+  .pl-safe { padding-left: max(0.75rem, env(safe-area-inset-left, 12px)); }
+  .pr-safe { padding-right: max(0.75rem, env(safe-area-inset-right, 12px)); }
   .px-safe {
     padding-left: max(0.75rem, env(safe-area-inset-left, 12px));
     padding-right: max(0.75rem, env(safe-area-inset-right, 12px));
   }
-  
-  /* Full safe area padding */
   .p-safe {
     padding-top: max(0.5rem, env(safe-area-inset-top, 8px));
     padding-bottom: max(1.5rem, calc(env(safe-area-inset-bottom, 24px) + 0.5rem));
     padding-left: max(0.75rem, env(safe-area-inset-left, 12px));
     padding-right: max(0.75rem, env(safe-area-inset-right, 12px));
   }
-  
-  /* Safe area inset as variable for custom use */
-  .safe-area-inset-top {
-    --safe-area-top: env(safe-area-inset-top, 0px);
-  }
-  
-  .safe-area-inset-bottom {
-    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
-  }
-  
-  .safe-area-inset-left {
-    --safe-area-left: env(safe-area-inset-left, 0px);
-  }
-  
-  .safe-area-inset-right {
-    --safe-area-right: env(safe-area-inset-right, 0px);
-  }
 
-  /* Fixed bottom with safe area - for fixed navigation */
   .fixed-bottom-safe {
     position: fixed;
     bottom: 0;
@@ -216,38 +228,86 @@
     right: 0;
     padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 12px));
   }
-  
-  /* Content padding to account for fixed navigation */
+
   .content-pb-nav {
     padding-bottom: calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)));
   }
-  
-  /* Minimum touch target size */
+
   .touch-target {
     min-height: 44px;
     min-width: 44px;
   }
+
+  /* Gradient utilities */
+  .gradient-hope { background: var(--gradient-hope); }
+  .gradient-card { background: var(--gradient-card); }
+  .gradient-gold { background: var(--gradient-gold); }
+  .gradient-spiritual { background: var(--gradient-spiritual); }
+
+  .text-gradient-hope {
+    background: var(--gradient-hope);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .text-gradient-gold {
+    background: var(--gradient-gold);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Glass effects */
+  .glass {
+    @apply bg-background/60 backdrop-blur-xl border border-border/50;
+  }
+
+  .glass-card {
+    @apply bg-card/80 backdrop-blur-lg border border-border/40;
+    box-shadow: var(--shadow-lg);
+  }
+
+  /* Glow effects */
+  .glow-green {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .glow-gold {
+    box-shadow: 0 0 30px -5px hsl(var(--gold) / 0.3);
+  }
+
+  /* Text gradient */
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent-foreground;
+  }
+
+  /* Responsive text */
+  .text-responsive-sm { @apply text-xs sm:text-sm; }
+  .text-responsive-base { @apply text-sm sm:text-base; }
+  .text-responsive-lg { @apply text-base sm:text-lg; }
+  .text-responsive-xl { @apply text-lg sm:text-xl; }
+  .text-responsive-2xl { @apply text-xl sm:text-2xl; }
+
+  /* Responsive spacing */
+  .p-responsive { @apply p-3 sm:p-4 md:p-6; }
+  .px-responsive { @apply px-3 sm:px-4 md:px-6; }
+  .py-responsive { @apply py-3 sm:py-4 md:py-6; }
+  .gap-responsive { @apply gap-2 sm:gap-3 md:gap-4; }
+
+  /* Helpers */
+  .text-balance { text-wrap: balance; }
+  .scroll-smooth { scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .no-select { -webkit-user-select: none; -moz-user-select: none; user-select: none; }
+  .touch-feedback { -webkit-tap-highlight-color: transparent; }
+  .touch-feedback:active { opacity: 0.7; }
+  .card-responsive { @apply rounded-xl sm:rounded-2xl p-3 sm:p-4; }
+  .mobile-full { @apply -mx-3 sm:mx-0 px-3 sm:px-0 sm:rounded-2xl; }
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  @apply bg-muted/30;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-muted-foreground/20 rounded-full;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground/30;
-}
-
-/* Animation classes */
+/* ====== ANIMATIONS ====== */
 @keyframes float {
   0%, 100% { transform: translateY(0) rotate(0deg); }
   50% { transform: translateY(-10px) rotate(2deg); }
@@ -263,64 +323,24 @@
   100% { transform: translateX(100%); }
 }
 
-.animate-float {
-  animation: float 6s ease-in-out infinite;
+@keyframes streak-pulse {
+  0%, 100% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.05); filter: brightness(1.15); }
 }
 
-.animate-pulse-glow {
-  animation: pulse-glow 3s ease-in-out infinite;
-}
+.animate-float { animation: float 6s ease-in-out infinite; }
+.animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+.animate-streak-pulse { animation: streak-pulse 2s ease-in-out infinite; }
 
-/* Glass effect */
-.glass {
-  @apply bg-background/60 backdrop-blur-xl border border-border/50;
-}
+/* ====== SCROLLBAR ====== */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { @apply bg-muted/30; }
+::-webkit-scrollbar-thumb { @apply bg-muted-foreground/20 rounded-full; }
+::-webkit-scrollbar-thumb:hover { @apply bg-muted-foreground/30; }
 
-.glass-card {
-  @apply bg-card/80 backdrop-blur-lg border border-border/40 shadow-lg;
-}
+/* ====== iOS FIXES ====== */
+.scroll-touch { -webkit-overflow-scrolling: touch; }
 
-/* Gradient utilities */
-.gradient-primary {
-  @apply bg-gradient-to-br from-primary/90 to-primary;
-}
-
-.gradient-card {
-  @apply bg-gradient-to-br from-card to-card/95;
-}
-
-/* Text gradient */
-.text-gradient {
-  @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent-foreground;
-}
-
-/* Mobile-first responsive containers */
-@layer components {
-  .container-mobile {
-    @apply w-full max-w-lg mx-auto px-4;
-  }
-  
-  .container-tablet {
-    @apply w-full max-w-2xl mx-auto px-4 sm:px-6;
-  }
-  
-  .container-desktop {
-    @apply w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
-  }
-}
-
-/* Fix for iOS momentum scrolling */
-.scroll-touch {
-  -webkit-overflow-scrolling: touch;
-}
-
-/* Prevent text selection on interactive elements */
-.no-select {
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-/* Fix for iOS input zoom */
 @media screen and (max-width: 768px) {
   input[type="text"],
   input[type="email"],
@@ -330,173 +350,5 @@
   textarea,
   select {
     font-size: 16px !important;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Inter', sans-serif;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Cinzel', serif;
-    @apply font-semibold tracking-tight;
-  }
-}
-
-@layer utilities {
-  .gradient-hope {
-    background: var(--gradient-hope);
-  }
-  
-  .gradient-card {
-    background: var(--gradient-card);
-  }
-  
-  .text-gradient-hope {
-    background: var(--gradient-hope);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .glass-card {
-    @apply backdrop-blur-xl bg-white/80 border border-white/20 shadow-lg;
-  }
-
-  .glow-green {
-    box-shadow: 0 0 40px -10px hsl(120 35% 35% / 0.3);
-  }
-
-  /* Safe area insets for all edges */
-  .safe-area-inset-top {
-    padding-top: env(safe-area-inset-top, 0px);
-  }
-
-  .safe-area-inset-bottom {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-
-  .safe-area-inset-left {
-    padding-left: env(safe-area-inset-left, 0px);
-  }
-
-  .safe-area-inset-right {
-    padding-right: env(safe-area-inset-right, 0px);
-  }
-
-  /* Combined safe area padding */
-  .safe-area-all {
-    padding-top: env(safe-area-inset-top, 0px);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    padding-left: env(safe-area-inset-left, 0px);
-    padding-right: env(safe-area-inset-right, 0px);
-  }
-
-  .pb-safe {
-    padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px));
-  }
-
-  .pt-safe {
-    padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
-  }
-
-  /* Margin utilities for safe areas */
-  .mb-safe {
-    margin-bottom: max(0px, env(safe-area-inset-bottom, 0px));
-  }
-
-  .mt-safe {
-    margin-top: max(0px, env(safe-area-inset-top, 0px));
-  }
-
-  /* Responsive text utilities */
-  .text-responsive-sm {
-    @apply text-xs sm:text-sm;
-  }
-
-  .text-responsive-base {
-    @apply text-sm sm:text-base;
-  }
-
-  .text-responsive-lg {
-    @apply text-base sm:text-lg;
-  }
-
-  .text-responsive-xl {
-    @apply text-lg sm:text-xl;
-  }
-
-  .text-responsive-2xl {
-    @apply text-xl sm:text-2xl;
-  }
-
-  /* Responsive spacing utilities */
-  .p-responsive {
-    @apply p-3 sm:p-4 md:p-6;
-  }
-
-  .px-responsive {
-    @apply px-3 sm:px-4 md:px-6;
-  }
-
-  .py-responsive {
-    @apply py-3 sm:py-4 md:py-6;
-  }
-
-  .gap-responsive {
-    @apply gap-2 sm:gap-3 md:gap-4;
-  }
-
-  /* No text overflow */
-  .text-balance {
-    text-wrap: balance;
-  }
-
-  /* Smooth scrolling */
-  .scroll-smooth {
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  /* Hide scrollbar but keep functionality */
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Prevent text selection on interactive elements */
-  .no-select {
-    -webkit-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-  }
-
-  /* Touch feedback for mobile */
-  .touch-feedback {
-    -webkit-tap-highlight-color: transparent;
-  }
-
-  .touch-feedback:active {
-    opacity: 0.7;
-  }
-
-  /* Responsive card sizing */
-  .card-responsive {
-    @apply rounded-xl sm:rounded-2xl p-3 sm:p-4;
-  }
-
-  /* Full-width on mobile, contained on larger screens */
-  .mobile-full {
-    @apply -mx-3 sm:mx-0 px-3 sm:px-0 sm:rounded-2xl;
   }
 }
