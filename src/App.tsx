@@ -39,6 +39,7 @@ import RotinaComDeus from "./pages/RotinaComDeus";
 import Onboarding from "./pages/Onboarding";
 import Provas from "./pages/Provas";
 import PerfilPublico from "./pages/PerfilPublico";
+import MomentoComDeus from "./pages/MomentoComDeus";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -92,6 +93,7 @@ function AnimatedRoutes() {
           <Route path="/mensagens" element={<Mensagens />} />
           <Route path="/rotina-com-deus" element={<RotinaComDeus />} />
           <Route path="/provas" element={<Provas />} />
+          <Route path="/momento-com-deus" element={<MomentoComDeus />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </motion.div>
