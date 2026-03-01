@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import {
   BookOpen, Calendar, Users, Music, Heart, Award,
   MessageSquare, Shield, ChevronRight, Trophy, Brain,
-  Target, MessageCircle, Sparkles, ClipboardCheck,
+  Target, MessageCircle, Sparkles, ClipboardCheck, Sun,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -89,6 +89,7 @@ const Dashboard = () => {
   // Features
   const baseFeatures = [
     { title: "Devocional Diário", description: "Comece o dia com Deus", icon: BookOpen, href: "/devocional", badge: "Novo" },
+    { title: "Momento com Deus", description: "Oração imersiva", icon: Sun, href: "/momento-com-deus", badge: "✨" },
     { title: "Mensagens", description: "Chat privado", icon: MessageCircle, href: "/mensagens" },
     { title: "Rotina com Deus", description: "Planos espirituais guiados", icon: Heart, href: "/rotina-com-deus" },
     { title: "Versículos por Humor", description: "Palavra para seu momento", icon: Heart, href: "/versiculos" },
