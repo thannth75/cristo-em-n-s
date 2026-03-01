@@ -1058,6 +1058,38 @@ export type Database = {
         }
         Relationships: []
       }
+      message_reactions: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string
+          reaction: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id: string
+          reaction?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string
+          reaction?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "private_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       milestones: {
         Row: {
           created_at: string
@@ -1524,8 +1556,11 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          deleted_at: string | null
+          edited_at: string | null
           id: string
           image_url: string | null
+          is_deleted: boolean | null
           is_read: boolean | null
           message_type: string
           receiver_id: string
@@ -1534,8 +1569,11 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
           id?: string
           image_url?: string | null
+          is_deleted?: boolean | null
           is_read?: boolean | null
           message_type?: string
           receiver_id: string
@@ -1544,8 +1582,11 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
           id?: string
           image_url?: string | null
+          is_deleted?: boolean | null
           is_read?: boolean | null
           message_type?: string
           receiver_id?: string
