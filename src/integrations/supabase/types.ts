@@ -947,31 +947,75 @@ export type Database = {
           },
         ]
       }
+      group_message_reactions: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string
+          reaction: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id: string
+          reaction?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string
+          reaction?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_message_reactions_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "group_messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_messages: {
         Row: {
           content: string
           created_at: string
+          deleted_at: string | null
+          edited_at: string | null
           group_id: string
           id: string
           image_url: string | null
+          is_deleted: boolean | null
+          message_type: string
           reply_to_id: string | null
           user_id: string
         }
         Insert: {
           content: string
           created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
           group_id: string
           id?: string
           image_url?: string | null
+          is_deleted?: boolean | null
+          message_type?: string
           reply_to_id?: string | null
           user_id: string
         }
         Update: {
           content?: string
           created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
           group_id?: string
           id?: string
           image_url?: string | null
+          is_deleted?: boolean | null
+          message_type?: string
           reply_to_id?: string | null
           user_id?: string
         }
