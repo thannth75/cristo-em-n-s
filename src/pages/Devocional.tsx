@@ -9,7 +9,11 @@ import {
   Sparkles,
   Clock,
   Calendar as CalendarIcon,
-  Hand
+  Hand,
+  Share2,
+  History,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -59,6 +63,9 @@ const Devocional = () => {
   const [selectedDevotional, setSelectedDevotional] = useState<Devotional | null>(null);
   const [personalReflection, setPersonalReflection] = useState("");
   const [isCompleting, setIsCompleting] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyPage, setHistoryPage] = useState(1);
+  const HISTORY_PER_PAGE = 10;
 
   useEffect(() => {
     if (!authLoading) {
@@ -163,6 +170,27 @@ const Devocional = () => {
       month: "long",
     });
   };
+
+  const handleShare = async (devotional: Devotional) => {
+    const text = `📖 ${devotional.title}\n\n"${devotional.bible_verse}"\n— ${devotional.bible_reference}\n\nVida em Cristo`;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: devotional.title, text });
+      } catch {}
+    } else {
+      await navigator.clipboard.writeText(text);
+      toast({ title: "Copiado! 📋", description: "Devocional copiado para a área de transferência." });
+    }
+  };
+
+  // Reflection history
+  const completedDevotionals = recentDevotionals
+    .filter(d => isDevotionalCompleted(d.id))
+    .map(d => ({
+      ...d,
+      reflection: userProgress.find(p => p.devotional_id === d.id)?.personal_reflection,
+      completedAt: userProgress.find(p => p.devotional_id === d.id)?.completed_at,
+    }));
 
   const userName = profile?.full_name?.split(" ")[0] || "Jovem";
   const completedCount = userProgress.length;
@@ -440,21 +468,92 @@ const Devocional = () => {
                   />
                 </div>
 
-                {/* Complete Button */}
-                <Button
-                  onClick={handleCompleteDevotional}
-                  disabled={isCompleting}
-                  className="w-full rounded-xl"
-                >
-                  {isDevotionalCompleted(selectedDevotional.id) 
-                    ? "Atualizar reflexão" 
-                    : "Marcar como lido"
-                  }
-                </Button>
+                {/* Action Buttons */}
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleCompleteDevotional}
+                    disabled={isCompleting}
+                    className="flex-1 rounded-xl"
+                  >
+                    {isDevotionalCompleted(selectedDevotional.id) 
+                      ? "Atualizar reflexão" 
+                      : "Marcar como lido"
+                    }
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => handleShare(selectedDevotional)}
+                    className="rounded-xl"
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Reflection History */}
+        {completedDevotionals.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="mt-6"
+          >
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className="w-full flex items-center justify-between mb-3"
+            >
+              <h2 className="font-serif text-lg font-semibold text-foreground flex items-center gap-2">
+                <History className="h-5 w-5 text-primary" />
+                Minhas Reflexões
+              </h2>
+              {showHistory ? (
+                <ChevronUp className="h-5 w-5 text-muted-foreground" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-muted-foreground" />
+              )}
+            </button>
+
+            {showHistory && (
+              <div className="space-y-3">
+                {completedDevotionals
+                  .slice(0, historyPage * HISTORY_PER_PAGE)
+                  .map((d) => (
+                    <div key={d.id} className="rounded-2xl bg-card p-4 shadow-sm border-l-4 border-primary/30">
+                      <div className="flex items-center justify-between mb-1">
+                        <h4 className="font-semibold text-foreground text-sm truncate flex-1">{d.title}</h4>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleShare(d)}
+                          className="shrink-0"
+                        >
+                          <Share2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-2">{formatDate(d.devotional_date)}</p>
+                      {d.reflection && (
+                        <p className="text-sm text-foreground/80 italic bg-muted/50 rounded-lg p-3">
+                          "{d.reflection}"
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                {completedDevotionals.length > historyPage * HISTORY_PER_PAGE && (
+                  <Button
+                    variant="outline"
+                    onClick={() => setHistoryPage(p => p + 1)}
+                    className="w-full rounded-xl"
+                  >
+                    Ver mais reflexões
+                  </Button>
+                )}
+              </div>
+            )}
+          </motion.div>
+        )}
       </main>
 
       <BottomNavigation />
