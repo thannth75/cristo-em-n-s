@@ -69,6 +69,8 @@ const DashboardLider = () => {
   const [members, setMembers] = useState<MemberProfile[]>([]);
   const [attendanceStats, setAttendanceStats] = useState<AttendanceData[]>([]);
   const [engagementStats, setEngagementStats] = useState<EngagementData[]>([]);
+  const [cellsList, setCellsList] = useState<any[]>([]);
+  const [cellMembersList, setCellMembersList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [stateFilter, setStateFilter] = useState<string>("all");
   const [cityFilter, setCityFilter] = useState<string>("all");
@@ -97,7 +99,7 @@ const DashboardLider = () => {
   const fetchAllData = async () => {
     setIsLoading(true);
     
-    const [membersRes, attendanceRes, eventsRes, postsRes, prayersRes, devotionalsRes, achievementsRes] = await Promise.all([
+    const [membersRes, attendanceRes, eventsRes, postsRes, prayersRes, devotionalsRes, achievementsRes, cellsRes, cellMembersRes, testimoniesRes] = await Promise.all([
       supabase.from("profiles").select("user_id, full_name, email, city, state, created_at, is_approved").eq("is_approved", true),
       supabase.from("attendance").select("user_id, checked_in_at, event_id"),
       supabase.from("events").select("id, title, event_date"),
@@ -105,9 +107,14 @@ const DashboardLider = () => {
       supabase.from("prayer_requests").select("user_id"),
       supabase.from("devotional_progress").select("user_id"),
       supabase.from("user_achievements").select("user_id"),
+      supabase.from("cells").select("id, name, is_active").eq("is_active", true),
+      supabase.from("cell_members").select("cell_id, user_id"),
+      supabase.from("testimonies" as any).select("user_id"),
     ]);
 
     setMembers(membersRes.data || []);
+    setCellsList(cellsRes.data || []);
+    setCellMembersList(cellMembersRes.data || []);
 
     // Process attendance data
     const attendanceMap = new Map<string, { count: number; lastDate: string | null; eventsSet: Set<string> }>();
@@ -149,6 +156,9 @@ const DashboardLider = () => {
     const achievementCounts = new Map<string, number>();
     (achievementsRes.data || []).forEach(a => achievementCounts.set(a.user_id, (achievementCounts.get(a.user_id) || 0) + 1));
 
+    const testimonyCounts = new Map<string, number>();
+    ((testimoniesRes.data as any[]) || []).forEach((t: any) => testimonyCounts.set(t.user_id, (testimonyCounts.get(t.user_id) || 0) + 1));
+
     const engStats: EngagementData[] = (membersRes.data || []).map(m => ({
       user_id: m.user_id,
       full_name: m.full_name,
@@ -156,13 +166,13 @@ const DashboardLider = () => {
       state: m.state,
       posts_count: postCounts.get(m.user_id) || 0,
       prayers_count: prayerCounts.get(m.user_id) || 0,
-      testimonies_count: 0,
+      testimonies_count: testimonyCounts.get(m.user_id) || 0,
       study_chapters_completed: 0,
       devotionals_completed: devotionalCounts.get(m.user_id) || 0,
       quizzes_completed: achievementCounts.get(m.user_id) || 0,
     })).sort((a, b) => 
-      (b.posts_count + b.prayers_count + b.devotionals_completed) - 
-      (a.posts_count + a.prayers_count + a.devotionals_completed)
+      (b.posts_count + b.prayers_count + b.devotionals_completed + b.testimonies_count) - 
+      (a.posts_count + a.prayers_count + a.devotionals_completed + a.testimonies_count)
     );
     setEngagementStats(engStats);
 
@@ -332,9 +342,10 @@ const DashboardLider = () => {
         </motion.div>
 
         <Tabs defaultValue="attendance" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 mb-4">
+          <TabsList className="grid w-full grid-cols-4 mb-4">
             <TabsTrigger value="attendance" className="text-xs sm:text-sm">Presença</TabsTrigger>
             <TabsTrigger value="engagement" className="text-xs sm:text-sm">Engajamento</TabsTrigger>
+            <TabsTrigger value="cells" className="text-xs sm:text-sm">Células</TabsTrigger>
             <TabsTrigger value="growth" className="text-xs sm:text-sm">Crescimento</TabsTrigger>
           </TabsList>
 
@@ -435,6 +446,42 @@ const DashboardLider = () => {
                   </div>
                 </motion.div>
               ))}
+            </div>
+          </TabsContent>
+
+          {/* Cells Tab */}
+          <TabsContent value="cells">
+            <div className="space-y-3">
+              <div className="rounded-2xl bg-primary/10 p-4 mb-4">
+                <h3 className="font-semibold text-foreground mb-2">Células Ativas</h3>
+                <p className="text-sm text-muted-foreground">
+                  Visão geral dos pequenos grupos e participação
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mb-4">
+                <div className="rounded-2xl bg-card p-4 shadow-md text-center">
+                  <p className="text-2xl font-bold text-primary">{cellsList.length}</p>
+                  <p className="text-xs text-muted-foreground">Células ativas</p>
+                </div>
+                <div className="rounded-2xl bg-card p-4 shadow-md text-center">
+                  <p className="text-2xl font-bold text-foreground">{cellMembersList.length}</p>
+                  <p className="text-xs text-muted-foreground">Membros em células</p>
+                </div>
+              </div>
+
+              {cellsList.map((cell: any) => {
+                const cellMemberCount = cellMembersList.filter((cm: any) => cm.cell_id === cell.id).length;
+                return (
+                  <div key={cell.id} className="rounded-2xl bg-card p-4 shadow-md">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-semibold text-foreground">{cell.name}</h4>
+                      <span className="text-sm font-bold text-primary">{cellMemberCount}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">{cellMemberCount} membros</p>
+                  </div>
+                );
+              })}
             </div>
           </TabsContent>
 
