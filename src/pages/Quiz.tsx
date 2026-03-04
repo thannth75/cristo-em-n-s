@@ -435,16 +435,27 @@ const Quiz = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="mb-6 rounded-2xl gradient-hope p-5 text-primary-foreground"
+          className="mb-6 grid grid-cols-3 gap-3"
         >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm opacity-80">Quizzes concluídos</p>
-              <p className="font-serif text-2xl font-bold">
-                {new Set(userAttempts.map(a => a.quiz_id)).size}
-              </p>
-            </div>
-            <Award className="h-10 w-10 opacity-80" />
+          <div className="rounded-2xl gradient-hope p-4 text-primary-foreground text-center">
+            <p className="text-2xl font-bold">
+              {new Set(userAttempts.map(a => a.quiz_id)).size}
+            </p>
+            <p className="text-xs opacity-80">Concluídos</p>
+          </div>
+          <div className="rounded-2xl bg-card p-4 text-center">
+            <p className="text-2xl font-bold text-foreground">
+              {userAttempts.length > 0 
+                ? Math.round(userAttempts.reduce((sum, a) => sum + (a.correct_answers / a.total_questions) * 100, 0) / userAttempts.length)
+                : 0}%
+            </p>
+            <p className="text-xs text-muted-foreground">Média</p>
+          </div>
+          <div className="rounded-2xl bg-card p-4 text-center">
+            <p className="text-2xl font-bold text-foreground">
+              {userAttempts.reduce((sum, a) => sum + a.score, 0)}
+            </p>
+            <p className="text-xs text-muted-foreground">Pontos Total</p>
           </div>
         </motion.div>
 
