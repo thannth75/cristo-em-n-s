@@ -8,17 +8,14 @@ import {
   MessageCircle, 
   Award, 
   Trophy, 
-  Star,
-  Users,
   BookOpen,
   Heart,
   Camera,
-  Check
+  Eye
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
@@ -43,8 +40,8 @@ interface UserStats {
   posts: number;
   achievements: number;
   attendance: number;
-  followers: number;
-  following: number;
+  devotionals: number;
+  profileViews: number;
 }
 
 interface Achievement {
@@ -70,11 +67,10 @@ const PerfilPublico = () => {
   const { user: currentUser, isApproved, isLoading: authLoading } = useAuth();
   
   const [profile, setProfile] = useState<PublicProfile | null>(null);
-  const [stats, setStats] = useState<UserStats>({ posts: 0, achievements: 0, attendance: 0, followers: 0, following: 0 });
+  const [stats, setStats] = useState<UserStats>({ posts: 0, achievements: 0, attendance: 0, devotionals: 0, profileViews: 0 });
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [posts, setPosts] = useState<Post[]>([]);
   const [levelInfo, setLevelInfo] = useState<{ title: string; icon: string; xpRequired: number; nextXp: number } | null>(null);
-  const [isFollowing, setIsFollowing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -97,7 +93,6 @@ const PerfilPublico = () => {
     setIsLoading(true);
 
     try {
-      // Fetch profile using secure public_profiles view (excludes email, phone, birth_date)
       const { data: profileData } = await supabase
         .from("public_profiles" as any)
         .select("user_id, full_name, avatar_url, cover_url, bio, city, state, current_level, total_xp, created_at")
@@ -108,24 +103,23 @@ const PerfilPublico = () => {
         setProfile(profileData as unknown as PublicProfile);
       }
 
-      // Fetch stats in parallel
-      const [postsRes, achievementsRes, attendanceRes, followersRes, followingRes] = await Promise.all([
+      // Fetch community-focused stats (no followers)
+      const [postsRes, achievementsRes, attendanceRes, devotionalsRes, viewsRes] = await Promise.all([
         supabase.from("community_posts").select("id", { count: "exact" }).eq("user_id", userId),
         supabase.from("user_achievements").select("*, achievements(*)").eq("user_id", userId),
         supabase.from("attendance").select("id", { count: "exact" }).eq("user_id", userId),
-        supabase.from("user_follows").select("id", { count: "exact" }).eq("following_id", userId),
-        supabase.from("user_follows").select("id", { count: "exact" }).eq("follower_id", userId),
+        supabase.from("devotional_progress").select("id", { count: "exact" }).eq("user_id", userId),
+        supabase.from("profile_views").select("id", { count: "exact" }).eq("profile_user_id", userId),
       ]);
 
       setStats({
         posts: postsRes.count || 0,
         achievements: achievementsRes.data?.length || 0,
         attendance: attendanceRes.count || 0,
-        followers: followersRes.count || 0,
-        following: followingRes.count || 0,
+        devotionals: devotionalsRes.count || 0,
+        profileViews: viewsRes.count || 0,
       });
 
-      // Set achievements
       if (achievementsRes.data) {
         setAchievements(achievementsRes.data.map((a: any) => ({
           id: a.id,
@@ -136,7 +130,6 @@ const PerfilPublico = () => {
         })));
       }
 
-      // Fetch recent posts
       const { data: postsData } = await supabase
         .from("community_posts")
         .select("id, content, image_url, likes_count, comments_count, created_at")
@@ -144,44 +137,22 @@ const PerfilPublico = () => {
         .order("created_at", { ascending: false })
         .limit(6);
 
-      if (postsData) {
-        setPosts(postsData);
-      }
+      if (postsData) setPosts(postsData);
 
       // Fetch level info
       const currentLevel = (profileData as any)?.current_level || 1;
-      const { data: levelData } = await supabase
-        .from("level_definitions")
-        .select("*")
-        .lte("level_number", currentLevel)
-        .order("level_number", { ascending: false })
-        .limit(1);
+      const [levelRes, nextLevelRes] = await Promise.all([
+        supabase.from("level_definitions").select("*").lte("level_number", currentLevel).order("level_number", { ascending: false }).limit(1),
+        supabase.from("level_definitions").select("xp_required").eq("level_number", currentLevel + 1).single(),
+      ]);
 
-      const { data: nextLevelData } = await supabase
-        .from("level_definitions")
-        .select("xp_required")
-        .eq("level_number", currentLevel + 1)
-        .single();
-
-      if (levelData?.[0]) {
+      if (levelRes.data?.[0]) {
         setLevelInfo({
-          title: levelData[0].title,
-          icon: levelData[0].icon,
-          xpRequired: levelData[0].xp_required,
-          nextXp: nextLevelData?.xp_required || levelData[0].xp_required + 100,
+          title: levelRes.data[0].title,
+          icon: levelRes.data[0].icon,
+          xpRequired: levelRes.data[0].xp_required,
+          nextXp: nextLevelRes.data?.xp_required || levelRes.data[0].xp_required + 100,
         });
-      }
-
-      // Check if following
-      if (currentUser?.id !== userId) {
-        const { data: followData } = await supabase
-          .from("user_follows")
-          .select("id")
-          .eq("follower_id", currentUser?.id)
-          .eq("following_id", userId)
-          .single();
-
-        setIsFollowing(!!followData);
       }
     } catch (error) {
       console.error("Error fetching profile:", error);
@@ -192,32 +163,10 @@ const PerfilPublico = () => {
 
   const recordProfileView = async () => {
     if (!userId || !currentUser || userId === currentUser.id) return;
-
     await supabase.from("profile_views").insert({
       profile_user_id: userId,
       viewer_id: currentUser.id,
     });
-  };
-
-  const handleFollow = async () => {
-    if (!userId || !currentUser) return;
-
-    if (isFollowing) {
-      await supabase
-        .from("user_follows")
-        .delete()
-        .eq("follower_id", currentUser.id)
-        .eq("following_id", userId);
-      setIsFollowing(false);
-      setStats(prev => ({ ...prev, followers: prev.followers - 1 }));
-    } else {
-      await supabase.from("user_follows").insert({
-        follower_id: currentUser.id,
-        following_id: userId,
-      });
-      setIsFollowing(true);
-      setStats(prev => ({ ...prev, followers: prev.followers + 1 }));
-    }
   };
 
   const formatDate = (dateStr: string) => {
@@ -261,15 +210,9 @@ const PerfilPublico = () => {
       {/* Cover Photo */}
       <div className="relative h-40 sm:h-56 bg-gradient-to-br from-primary/80 to-primary">
         {profile.cover_url && (
-          <img 
-            src={profile.cover_url} 
-            alt="Cover" 
-            className="absolute inset-0 w-full h-full object-cover"
-          />
+          <img src={profile.cover_url} alt="Cover" className="absolute inset-0 w-full h-full object-cover" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-        
-        {/* Back Button */}
         <Button
           variant="ghost"
           size="icon"
@@ -281,10 +224,8 @@ const PerfilPublico = () => {
         </Button>
       </div>
 
-      {/* Profile Info */}
       <ResponsiveContainer size="lg" className="-mt-16 relative z-10">
         <div className="flex flex-col items-center sm:flex-row sm:items-end sm:gap-6">
-          {/* Avatar */}
           <div className="relative">
             <Avatar className="h-28 w-28 sm:h-36 sm:w-36 border-4 border-background shadow-xl">
               <AvatarImage src={profile.avatar_url || ""} />
@@ -299,7 +240,6 @@ const PerfilPublico = () => {
             )}
           </div>
 
-          {/* Name and Actions */}
           <div className="flex-1 text-center sm:text-left mt-4 sm:mt-0 sm:mb-4">
             <h1 className="font-serif text-2xl sm:text-3xl font-bold text-foreground">
               {profile.full_name}
@@ -318,30 +258,17 @@ const PerfilPublico = () => {
             )}
           </div>
 
-          {/* Action Buttons */}
+          {/* Action Buttons - no follow, just message */}
           <div className="flex gap-2 mt-4 sm:mt-0 sm:mb-4">
             {!isOwnProfile ? (
-              <>
-                <Button 
-                  onClick={handleFollow}
-                  variant={isFollowing ? "outline" : "default"}
-                  className="rounded-xl"
-                >
-                  {isFollowing ? (
-                    <><Check className="h-4 w-4 mr-1" /> Seguindo</>
-                  ) : (
-                    <><Users className="h-4 w-4 mr-1" /> Seguir</>
-                  )}
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="rounded-xl"
-                  onClick={() => navigate(`/mensagens?user=${userId}`)}
-                >
-                  <MessageCircle className="h-4 w-4 mr-1" />
-                  Mensagem
-                </Button>
-              </>
+              <Button 
+                variant="outline" 
+                className="rounded-xl"
+                onClick={() => navigate(`/mensagens?user=${userId}`)}
+              >
+                <MessageCircle className="h-4 w-4 mr-1" />
+                Mensagem
+              </Button>
             ) : (
               <Button 
                 variant="outline" 
@@ -355,7 +282,6 @@ const PerfilPublico = () => {
           </div>
         </div>
 
-        {/* Bio */}
         {profile.bio && (
           <motion.p 
             initial={{ opacity: 0 }}
@@ -366,7 +292,7 @@ const PerfilPublico = () => {
           </motion.p>
         )}
 
-        {/* Stats */}
+        {/* Community Stats - no followers/following */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -376,8 +302,8 @@ const PerfilPublico = () => {
             { label: "Posts", value: stats.posts, icon: BookOpen },
             { label: "Conquistas", value: stats.achievements, icon: Award },
             { label: "Presenças", value: stats.attendance, icon: Calendar },
-            { label: "Seguidores", value: stats.followers, icon: Heart },
-            { label: "Seguindo", value: stats.following, icon: Users },
+            { label: "Devocionais", value: stats.devotionals, icon: Heart },
+            { label: "Visitas", value: stats.profileViews, icon: Eye },
           ].map((stat) => (
             <div key={stat.label} className="text-center p-2 rounded-xl bg-card">
               <stat.icon className="h-4 w-4 mx-auto text-primary mb-1" />
@@ -429,26 +355,16 @@ const PerfilPublico = () => {
                     onClick={() => navigate(`/comunidade`)}
                   >
                     {post.image_url ? (
-                      <img 
-                        src={post.image_url} 
-                        alt="Post" 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform"
-                      />
+                      <img src={post.image_url} alt="Post" className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center p-3 bg-primary/10">
-                        <p className="text-xs text-center text-foreground line-clamp-4">
-                          {post.content}
-                        </p>
+                        <p className="text-xs text-center text-foreground line-clamp-4">{post.content}</p>
                       </div>
                     )}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
                       <div className="flex gap-3 text-white text-sm">
-                        <span className="flex items-center gap-1">
-                          <Heart className="h-4 w-4" /> {post.likes_count}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MessageCircle className="h-4 w-4" /> {post.comments_count}
-                        </span>
+                        <span className="flex items-center gap-1"><Heart className="h-4 w-4" /> {post.likes_count}</span>
+                        <span className="flex items-center gap-1"><MessageCircle className="h-4 w-4" /> {post.comments_count}</span>
                       </div>
                     </div>
                   </motion.div>
@@ -474,9 +390,7 @@ const PerfilPublico = () => {
                   >
                     <span className="text-3xl">{achievement.icon}</span>
                     <h3 className="font-semibold mt-2 text-sm">{achievement.name}</h3>
-                    <p className="text-xs text-muted-foreground line-clamp-2">
-                      {achievement.description}
-                    </p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{achievement.description}</p>
                   </motion.div>
                 ))}
               </div>
@@ -484,7 +398,6 @@ const PerfilPublico = () => {
           </TabsContent>
         </Tabs>
 
-        {/* Joined date */}
         <p className="text-center text-xs text-muted-foreground mt-8 mb-4">
           Membro desde {formatDate(profile.created_at)}
         </p>

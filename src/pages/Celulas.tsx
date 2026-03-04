@@ -387,9 +387,10 @@ const Celulas = () => {
             </div>
 
             <Tabs defaultValue="members" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsList className="grid w-full grid-cols-3 mb-4">
                 <TabsTrigger value="members">Membros</TabsTrigger>
                 <TabsTrigger value="meetings">Encontros</TabsTrigger>
+                <TabsTrigger value="stats">Relatório</TabsTrigger>
               </TabsList>
 
               <TabsContent value="members" className="space-y-3">
@@ -447,11 +448,9 @@ const Celulas = () => {
                         <span className="text-sm font-medium text-primary">
                           {formatDate(meeting.meeting_date)}
                         </span>
-                        {meeting.attendance_count > 0 && (
-                          <span className="text-xs text-muted-foreground">
-                            {meeting.attendance_count} presentes
-                          </span>
-                        )}
+                        <span className="text-xs text-muted-foreground">
+                          {meeting.attendance_count || 0} presentes
+                        </span>
                       </div>
                       {meeting.topic && (
                         <p className="font-medium text-foreground">{meeting.topic}</p>
@@ -461,6 +460,41 @@ const Celulas = () => {
                       )}
                     </div>
                   ))
+                )}
+              </TabsContent>
+
+              <TabsContent value="stats" className="space-y-4">
+                <div className="rounded-2xl bg-card p-5">
+                  <h4 className="font-semibold text-foreground mb-4">📊 Resumo da Célula</h4>
+                  <div className="grid grid-cols-3 gap-3 text-center">
+                    <div className="rounded-xl bg-primary/10 p-3">
+                      <p className="text-2xl font-bold text-primary">{cellMembers.length}</p>
+                      <p className="text-xs text-muted-foreground">Membros</p>
+                    </div>
+                    <div className="rounded-xl bg-primary/10 p-3">
+                      <p className="text-2xl font-bold text-primary">{cellMeetings.length}</p>
+                      <p className="text-xs text-muted-foreground">Encontros</p>
+                    </div>
+                    <div className="rounded-xl bg-primary/10 p-3">
+                      <p className="text-2xl font-bold text-primary">
+                        {cellMeetings.length > 0 
+                          ? Math.round(cellMeetings.reduce((sum, m) => sum + (m.attendance_count || 0), 0) / cellMeetings.length)
+                          : 0}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Média/Encontro</p>
+                    </div>
+                  </div>
+                </div>
+                {cellMeetings.length > 0 && (
+                  <div className="rounded-2xl bg-card p-5">
+                    <h4 className="font-semibold text-foreground mb-3">Últimos Encontros</h4>
+                    {cellMeetings.slice(0, 5).map((m) => (
+                      <div key={m.id} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                        <span className="text-sm text-foreground">{formatDate(m.meeting_date)}</span>
+                        <span className="text-sm font-medium text-primary">{m.attendance_count || 0} 👥</span>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </TabsContent>
             </Tabs>
