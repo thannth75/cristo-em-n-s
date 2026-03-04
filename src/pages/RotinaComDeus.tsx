@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Heart, Play, Check, ChevronRight, Calendar, BookOpen, 
-  Target, Clock, Flame, Award 
+  Target, Clock, Flame, Award, RotateCcw 
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -441,14 +441,39 @@ const RotinaComDeus = () => {
               </div>
             </motion.div>
 
-            {/* Change Plan */}
-            <Button
-              variant="outline"
-              onClick={() => setIsPlanDialogOpen(true)}
-              className="w-full rounded-xl"
-            >
-              Trocar Plano
-            </Button>
+            {/* Actions */}
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  if (!userProgress) return;
+                  await supabase
+                    .from("user_routine_progress")
+                    .update({ is_active: false })
+                    .eq("id", userProgress.id);
+                  const { error } = await supabase.from("user_routine_progress").insert({
+                    user_id: user?.id,
+                    plan_id: userProgress.plan_id,
+                    current_day: 1,
+                  });
+                  if (!error) {
+                    toast({ title: "Plano recomeçado! 🔄" });
+                    fetchData();
+                  }
+                }}
+                className="flex-1 rounded-xl"
+              >
+                <RotateCcw className="mr-2 h-4 w-4" />
+                Recomeçar
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setIsPlanDialogOpen(true)}
+                className="flex-1 rounded-xl"
+              >
+                Trocar Plano
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="space-y-6">
