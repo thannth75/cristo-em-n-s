@@ -340,18 +340,18 @@ export const EnhancedStoryViewer = ({
         style={{ backgroundColor: story.background_color || '#1a472a' }}
       >
         {story.image_url ? (
-          <img
-            src={story.image_url}
-            alt=""
-            className="max-w-full max-h-full object-contain rounded-xl"
-          />
+          <img src={story.image_url} alt="" className="max-w-full max-h-full object-contain rounded-xl" />
         ) : (
-          <p
-            className="text-2xl font-serif text-center max-w-md"
-            style={{ color: story.text_color || '#ffffff' }}
-          >
+          <p className="text-2xl font-serif text-center max-w-md" style={{ color: story.text_color || '#ffffff' }}>
             {story.content}
           </p>
+        )}
+        {/* Music badge overlay */}
+        {story.audio_title && (
+          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2 animate-pulse">
+            <span className="text-lg">🎵</span>
+            <span className="text-white text-sm font-medium">{story.audio_title}</span>
+          </div>
         )}
       </div>
 
