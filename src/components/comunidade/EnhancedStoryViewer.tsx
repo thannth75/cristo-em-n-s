@@ -268,8 +268,7 @@ export const EnhancedStoryViewer = ({
       onTouchStart={handlePressStart}
       onTouchEnd={handlePressEnd}
     >
-      {/* Audio element */}
-      {story.audio_url && <audio ref={audioRef} loop />}
+      {/* Audio element removed - managed via useEffect */}
       
       {/* Progress bars */}
       <div className="absolute top-4 left-4 right-4 flex gap-1 z-20 safe-area-inset-top">
@@ -302,7 +301,7 @@ export const EnhancedStoryViewer = ({
               <Eye className="w-3 h-3" />
               {story.views_count} {(isOwnStory || story.user_id === userId) && '• Ver'}
               {story.audio_title && (
-                <span className="ml-2">🎵 {story.audio_title}</span>
+                <span className="ml-2 flex items-center gap-1">🎵 {story.audio_title}</span>
               )}
             </button>
           </div>
