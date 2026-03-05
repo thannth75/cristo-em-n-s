@@ -106,15 +106,21 @@ export const EnhancedStoryViewer = ({
 
   // Audio management
   useEffect(() => {
-    if (story?.audio_url && audioRef.current) {
+    if (story?.audio_url) {
+      if (!audioRef.current) {
+        audioRef.current = new Audio();
+      }
       audioRef.current.src = story.audio_url;
+      audioRef.current.loop = true;
       audioRef.current.muted = isMuted;
-      if (!isPaused) audioRef.current.play();
+      if (!isPaused) audioRef.current.play().catch(() => {});
+    } else {
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
     }
     return () => {
-      if (audioRef.current) audioRef.current.pause();
+      if (audioRef.current) { audioRef.current.pause(); }
     };
-  }, [story?.audio_url, isPaused, isMuted]);
+  }, [story?.audio_url, currentIndex]);
 
   const checkLikeStatus = async () => {
     const { data } = await supabase
