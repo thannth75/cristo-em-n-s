@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Send, Smile, Loader2, Globe, Lock, Camera } from 'lucide-react';
+import { ArrowLeft, Send, Smile, Loader2, Globe, Lock, Camera, Mic, Square, Paperclip } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
@@ -37,8 +37,13 @@ export const GroupChat = ({ group, onClose }: GroupChatProps) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     fetchMessages();
@@ -56,26 +61,18 @@ export const GroupChat = ({ group, onClose }: GroupChatProps) => {
 
   const fetchMessages = async () => {
     const { data: messagesData } = await supabase
-      .from('group_messages')
-      .select('*')
-      .eq('group_id', group.id)
-      .order('created_at', { ascending: true })
-      .limit(100);
+      .from('group_messages').select('*').eq('group_id', group.id)
+      .order('created_at', { ascending: true }).limit(100);
 
     if (messagesData) {
       const userIds = [...new Set(messagesData.map(m => m.user_id))];
       const msgIds = messagesData.map(m => m.id);
-      
       const [{ data: profiles }, { data: reactions }] = await Promise.all([
         supabase.from('profiles').select('user_id, full_name, avatar_url').in('user_id', userIds),
-        msgIds.length > 0 
-          ? supabase.from('group_message_reactions').select('message_id, reaction, user_id').in('message_id', msgIds)
-          : { data: [] as any[] },
+        msgIds.length > 0 ? supabase.from('group_message_reactions').select('message_id, reaction, user_id').in('message_id', msgIds) : { data: [] as any[] },
       ]);
-
       setMessages(messagesData.map(msg => ({
-        ...msg,
-        profile: profiles?.find(p => p.user_id === msg.user_id),
+        ...msg, profile: profiles?.find(p => p.user_id === msg.user_id),
         reactions: (reactions || []).filter(r => r.message_id === msg.id),
       })));
     }
@@ -85,9 +82,7 @@ export const GroupChat = ({ group, onClose }: GroupChatProps) => {
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
     setIsSending(true);
-    const { error } = await supabase.from('group_messages').insert({
-      group_id: group.id, user_id: user?.id, content: newMessage.trim(),
-    });
+    const { error } = await supabase.from('group_messages').insert({ group_id: group.id, user_id: user?.id, content: newMessage.trim() });
     if (error) toast({ title: 'Erro ao enviar', variant: 'destructive' });
     else setNewMessage('');
     setIsSending(false);
@@ -105,40 +100,88 @@ export const GroupChat = ({ group, onClose }: GroupChatProps) => {
     setIsSending(false);
   };
 
-  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user?.id) return;
     if (file.size > 10 * 1024 * 1024) { toast({ title: 'Arquivo muito grande (máx 10MB)', variant: 'destructive' }); return; }
     setIsSending(true);
     const ext = file.name.split('.').pop();
     const path = `groups/${group.id}/${user.id}-${Date.now()}.${ext}`;
-    const { error: uploadError } = await supabase.storage.from('chat-media').upload(path, file);
-    if (uploadError) { toast({ title: 'Erro ao enviar foto', variant: 'destructive' }); setIsSending(false); return; }
+    const { error: uploadError } = await supabase.storage.from('chat-media').upload(path, file, { contentType: file.type });
+    if (uploadError) { toast({ title: 'Erro ao enviar arquivo', variant: 'destructive' }); setIsSending(false); return; }
     const { data: urlData } = supabase.storage.from('chat-media').getPublicUrl(path);
-    await supabase.from('group_messages').insert({ group_id: group.id, user_id: user.id, content: '📷 Foto', image_url: urlData.publicUrl });
+    
+    const isAudio = file.type.startsWith('audio/');
+    const isImage = file.type.startsWith('image/');
+    const isVideo = file.type.startsWith('video/');
+    const content = isAudio ? '🎵 Áudio' : isImage ? '📷 Foto' : isVideo ? '🎬 Vídeo' : `📎 ${file.name}`;
+    
+    await supabase.from('group_messages').insert({ group_id: group.id, user_id: user.id, content, image_url: urlData.publicUrl });
+    setIsSending(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  // Audio recording
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      audioChunksRef.current = [];
+      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        await uploadAudio(audioBlob);
+      };
+      mediaRecorder.start();
+      mediaRecorderRef.current = mediaRecorder;
+      setIsRecording(true);
+      setRecordingTime(0);
+      recordingTimerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000);
+    } catch {
+      toast({ title: 'Não foi possível acessar o microfone', variant: 'destructive' });
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecording(false);
+    if (recordingTimerRef.current) { clearInterval(recordingTimerRef.current); recordingTimerRef.current = null; }
+  };
+
+  const uploadAudio = async (blob: Blob) => {
+    if (!user?.id) return;
+    setIsSending(true);
+    const path = `groups/${group.id}/${user.id}-audio-${Date.now()}.webm`;
+    const { error: uploadError } = await supabase.storage.from('chat-media').upload(path, blob, { contentType: 'audio/webm' });
+    if (uploadError) { toast({ title: 'Erro ao enviar áudio', variant: 'destructive' }); setIsSending(false); return; }
+    const { data: urlData } = supabase.storage.from('chat-media').getPublicUrl(path);
+    await supabase.from('group_messages').insert({ group_id: group.id, user_id: user.id, content: '🎵 Áudio', image_url: urlData.publicUrl });
     setIsSending(false);
   };
+
+  const formatRecordingTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
 
   const handleMessageEdited = (id: string, newContent: string) => {
     setMessages(prev => prev.map(m => m.id === id ? { ...m, content: newContent, edited_at: new Date().toISOString() } : m));
   };
-
   const handleMessageDeleted = (id: string) => {
     setMessages(prev => prev.map(m => m.id === id ? { ...m, is_deleted: true, content: 'Mensagem apagada' } : m));
   };
-
   const handleReactionToggled = (messageId: string, reaction: string, added: boolean) => {
     setMessages(prev => prev.map(m => {
       if (m.id !== messageId) return m;
-      const reactions = added
-        ? [...m.reactions, { reaction, user_id: user?.id || '' }]
-        : m.reactions.filter(r => !(r.reaction === reaction && r.user_id === user?.id));
+      const reactions = added ? [...m.reactions, { reaction, user_id: user?.id || '' }] : m.reactions.filter(r => !(r.reaction === reaction && r.user_id === user?.id));
       return { ...m, reactions };
     }));
   };
 
   const formatTime = (dateStr: string) => new Date(dateStr).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   const isEmojiOnly = (text: string) => /^[\p{Emoji}\s]+$/u.test(text) && text.trim().length <= 4;
+  const isAudioMessage = (msg: GroupMessage) => msg.content === '🎵 Áudio' && msg.image_url;
+  const isMediaMessage = (msg: GroupMessage) => msg.image_url && (msg.content === '📷 Foto' || msg.content === '🎬 Vídeo' || msg.content === '🎵 Áudio' || msg.content.startsWith('📎'));
 
   const groupMessagesByDate = (msgs: GroupMessage[]) => {
     const groups: { date: string; messages: GroupMessage[] }[] = [];
@@ -174,9 +217,7 @@ export const GroupChat = ({ group, onClose }: GroupChatProps) => {
         </Button>
         <Avatar className="h-10 w-10 ring-2 ring-primary-foreground/20">
           {group.image_url ? <AvatarImage src={group.image_url} /> : null}
-          <AvatarFallback className="bg-primary-foreground/20 text-primary-foreground font-bold text-sm">
-            {group.name.slice(0, 2).toUpperCase()}
-          </AvatarFallback>
+          <AvatarFallback className="bg-primary-foreground/20 text-primary-foreground font-bold text-sm">{group.name.slice(0, 2).toUpperCase()}</AvatarFallback>
         </Avatar>
         <div className="flex-1 min-w-0 text-left">
           <h2 className="font-semibold text-primary-foreground truncate text-base">{group.name}</h2>
@@ -201,62 +242,66 @@ export const GroupChat = ({ group, onClose }: GroupChatProps) => {
           messageGroups.map((grp, gi) => (
             <div key={gi}>
               <div className="flex justify-center my-3">
-                <span className="bg-muted/80 text-muted-foreground text-[10px] px-3 py-1 rounded-full font-medium">
-                  {formatDateLabel(grp.date)}
-                </span>
+                <span className="bg-muted/80 text-muted-foreground text-[10px] px-3 py-1 rounded-full font-medium">{formatDateLabel(grp.date)}</span>
               </div>
               {grp.messages.map((msg) => {
                 const isOwn = msg.user_id === user?.id;
                 const isEmoji = !msg.is_deleted && isEmojiOnly(msg.content);
                 const isDeleted = msg.is_deleted;
+                const isAudio = isAudioMessage(msg);
 
                 return (
                   <div key={msg.id} className={`flex gap-2 mb-2 ${isOwn ? 'flex-row-reverse' : ''}`}>
                     {!isOwn && (
                       <Avatar className="h-7 w-7 shrink-0 mt-1">
                         <AvatarImage src={msg.profile?.avatar_url || ""} />
-                        <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold">
-                          {msg.profile?.full_name?.charAt(0) || '?'}
-                        </AvatarFallback>
+                        <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-bold">{msg.profile?.full_name?.charAt(0) || '?'}</AvatarFallback>
                       </Avatar>
                     )}
                     <div className="max-w-[75%]">
-                      <div className={`${
-                        isEmoji ? '' : `rounded-2xl px-3 py-2 shadow-sm ${
-                          isDeleted ? 'bg-muted/50 border border-border rounded-lg' :
-                          isOwn ? 'bg-primary text-primary-foreground rounded-tr-md' : 'bg-card border border-border rounded-tl-md'
-                        }`
-                      }`}>
+                      <div className={`${isEmoji ? '' : `rounded-2xl px-3 py-2 shadow-sm ${
+                        isDeleted ? 'bg-muted/50 border border-border rounded-lg' :
+                        isOwn ? 'bg-primary text-primary-foreground rounded-tr-md' : 'bg-card border border-border rounded-tl-md'
+                      }`}`}>
                         {!isOwn && !isEmoji && !isDeleted && (
                           <p className="text-[10px] font-semibold text-primary mb-0.5">{msg.profile?.full_name?.split(' ')[0]}</p>
                         )}
                         {isDeleted ? (
                           <p className="text-xs text-muted-foreground italic">🚫 Mensagem apagada</p>
+                        ) : isAudio ? (
+                          <div className="flex items-center gap-2">
+                            <audio src={msg.image_url!} controls className="max-w-[200px] h-8" preload="metadata" />
+                          </div>
                         ) : msg.image_url ? (
-                          <img src={msg.image_url} alt="Foto" className="rounded-lg max-w-[220px] w-full object-cover cursor-pointer"
-                            onClick={() => window.open(msg.image_url!, "_blank")} loading="lazy" />
+                          msg.image_url.includes('.webm') || msg.image_url.includes('.mp3') || msg.image_url.includes('.ogg') ? (
+                            <audio src={msg.image_url} controls className="max-w-[200px] h-8" preload="metadata" />
+                          ) : msg.content === '🎬 Vídeo' ? (
+                            <video src={msg.image_url} controls className="rounded-lg max-w-[220px] w-full" preload="metadata" />
+                          ) : msg.content.startsWith('📎') ? (
+                            <a href={msg.image_url} target="_blank" rel="noopener noreferrer" className={`text-sm underline ${isOwn ? 'text-primary-foreground' : 'text-primary'}`}>
+                              {msg.content}
+                            </a>
+                          ) : (
+                            <img src={msg.image_url} alt="Foto" className="rounded-lg max-w-[220px] w-full object-cover cursor-pointer"
+                              onClick={() => window.open(msg.image_url!, "_blank")} loading="lazy" />
+                          )
                         ) : isEmoji ? (
                           <span className="text-4xl block text-center">{msg.content}</span>
                         ) : (
                           <p className="text-sm break-words whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                         )}
-                        <div className="flex items-center gap-1 mt-0.5">
-                          <p className={`text-[10px] text-right flex-1 ${isOwn ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>
-                            {formatTime(msg.created_at)}
-                          </p>
-                          {msg.edited_at && !isDeleted && (
-                            <span className={`text-[9px] ${isOwn ? 'text-primary-foreground/40' : 'text-muted-foreground/60'}`}>editada</span>
-                          )}
-                        </div>
+                        {!isEmoji && (
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <p className={`text-[10px] text-right flex-1 ${isOwn ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>{formatTime(msg.created_at)}</p>
+                            {msg.edited_at && !isDeleted && <span className={`text-[9px] ${isOwn ? 'text-primary-foreground/40' : 'text-muted-foreground/60'}`}>editada</span>}
+                          </div>
+                        )}
                       </div>
                       <GroupReactionsDisplay reactions={msg.reactions} isOwn={isOwn} />
                       {!isDeleted && (
-                        <GroupMessageActions
-                          messageId={msg.id} content={msg.content} isOwn={isOwn} isDeleted={isDeleted}
+                        <GroupMessageActions messageId={msg.id} content={msg.content} isOwn={isOwn} isDeleted={isDeleted}
                           reactions={msg.reactions} userId={user?.id || ""}
-                          onMessageEdited={handleMessageEdited} onMessageDeleted={handleMessageDeleted}
-                          onReactionToggled={handleReactionToggled}
-                        />
+                          onMessageEdited={handleMessageEdited} onMessageDeleted={handleMessageDeleted} onReactionToggled={handleReactionToggled} />
                       )}
                     </div>
                   </div>
@@ -268,25 +313,44 @@ export const GroupChat = ({ group, onClose }: GroupChatProps) => {
         <div ref={messagesEndRef} />
       </div>
 
-      <ChatMediaPicker userId={user?.id || ""} onSendSticker={(c) => handleSendSticker(c)} onSendImage={handleSendImage}
+      <ChatMediaPicker userId={user?.id || ""} onSendSticker={handleSendSticker} onSendImage={handleSendImage}
         isOpen={showMediaPicker} onClose={() => setShowMediaPicker(false)} />
-      <input ref={fileInputRef} type="file" accept="image/*,video/*" className="hidden" onChange={handlePhotoUpload} />
+      <input ref={fileInputRef} type="file" accept="image/*,video/*,audio/*,.pdf,.doc,.docx" className="hidden" onChange={handleFileUpload} />
 
       {/* Input */}
       <div className="p-2 border-t border-border bg-card flex items-center gap-1.5"
         style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 8px))' }}>
-        <button onClick={() => setShowMediaPicker(!showMediaPicker)} className="text-muted-foreground hover:text-primary transition-colors shrink-0 p-2">
-          <Smile className="h-5 w-5" />
-        </button>
-        <button onClick={() => fileInputRef.current?.click()} className="text-muted-foreground hover:text-primary transition-colors shrink-0 p-2">
-          <Camera className="h-5 w-5" />
-        </button>
-        <Input value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Mensagem..."
-          className="flex-1 rounded-full text-sm h-10" maxLength={500}
-          onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()} onFocus={() => setShowMediaPicker(false)} />
-        <Button onClick={handleSendMessage} disabled={!newMessage.trim() || isSending} size="icon" className="rounded-full shrink-0 h-10 w-10">
-          {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-        </Button>
+        {isRecording ? (
+          <div className="flex-1 flex items-center gap-2 px-3">
+            <div className="w-2 h-2 rounded-full bg-destructive animate-pulse" />
+            <span className="text-sm text-destructive font-medium">{formatRecordingTime(recordingTime)}</span>
+            <span className="text-xs text-muted-foreground flex-1">Gravando...</span>
+            <Button onClick={stopRecording} size="icon" variant="destructive" className="rounded-full h-10 w-10">
+              <Square className="w-4 h-4" />
+            </Button>
+          </div>
+        ) : (
+          <>
+            <button onClick={() => setShowMediaPicker(!showMediaPicker)} className="text-muted-foreground hover:text-primary transition-colors shrink-0 p-2">
+              <Smile className="h-5 w-5" />
+            </button>
+            <button onClick={() => fileInputRef.current?.click()} className="text-muted-foreground hover:text-primary transition-colors shrink-0 p-2">
+              <Paperclip className="h-5 w-5" />
+            </button>
+            <Input value={newMessage} onChange={(e) => setNewMessage(e.target.value)} placeholder="Mensagem..."
+              className="flex-1 rounded-full text-sm h-10" maxLength={500}
+              onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()} onFocus={() => setShowMediaPicker(false)} />
+            {newMessage.trim() ? (
+              <Button onClick={handleSendMessage} disabled={isSending} size="icon" className="rounded-full shrink-0 h-10 w-10">
+                {isSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              </Button>
+            ) : (
+              <Button onClick={startRecording} size="icon" variant="ghost" className="rounded-full shrink-0 h-10 w-10 text-primary">
+                <Mic className="w-5 h-5" />
+              </Button>
+            )}
+          </>
+        )}
       </div>
     </motion.div>
   );

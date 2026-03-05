@@ -106,15 +106,21 @@ export const EnhancedStoryViewer = ({
 
   // Audio management
   useEffect(() => {
-    if (story?.audio_url && audioRef.current) {
+    if (story?.audio_url) {
+      if (!audioRef.current) {
+        audioRef.current = new Audio();
+      }
       audioRef.current.src = story.audio_url;
+      audioRef.current.loop = true;
       audioRef.current.muted = isMuted;
-      if (!isPaused) audioRef.current.play();
+      if (!isPaused) audioRef.current.play().catch(() => {});
+    } else {
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
     }
     return () => {
-      if (audioRef.current) audioRef.current.pause();
+      if (audioRef.current) { audioRef.current.pause(); }
     };
-  }, [story?.audio_url, isPaused, isMuted]);
+  }, [story?.audio_url, currentIndex]);
 
   const checkLikeStatus = async () => {
     const { data } = await supabase
@@ -262,8 +268,7 @@ export const EnhancedStoryViewer = ({
       onTouchStart={handlePressStart}
       onTouchEnd={handlePressEnd}
     >
-      {/* Audio element */}
-      {story.audio_url && <audio ref={audioRef} loop />}
+      {/* Audio element removed - managed via useEffect */}
       
       {/* Progress bars */}
       <div className="absolute top-4 left-4 right-4 flex gap-1 z-20 safe-area-inset-top">
@@ -296,7 +301,7 @@ export const EnhancedStoryViewer = ({
               <Eye className="w-3 h-3" />
               {story.views_count} {(isOwnStory || story.user_id === userId) && '• Ver'}
               {story.audio_title && (
-                <span className="ml-2">🎵 {story.audio_title}</span>
+                <span className="ml-2 flex items-center gap-1">🎵 {story.audio_title}</span>
               )}
             </button>
           </div>
@@ -335,18 +340,18 @@ export const EnhancedStoryViewer = ({
         style={{ backgroundColor: story.background_color || '#1a472a' }}
       >
         {story.image_url ? (
-          <img
-            src={story.image_url}
-            alt=""
-            className="max-w-full max-h-full object-contain rounded-xl"
-          />
+          <img src={story.image_url} alt="" className="max-w-full max-h-full object-contain rounded-xl" />
         ) : (
-          <p
-            className="text-2xl font-serif text-center max-w-md"
-            style={{ color: story.text_color || '#ffffff' }}
-          >
+          <p className="text-2xl font-serif text-center max-w-md" style={{ color: story.text_color || '#ffffff' }}>
             {story.content}
           </p>
+        )}
+        {/* Music badge overlay */}
+        {story.audio_title && (
+          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2 animate-pulse">
+            <span className="text-lg">🎵</span>
+            <span className="text-white text-sm font-medium">{story.audio_title}</span>
+          </div>
         )}
       </div>
 

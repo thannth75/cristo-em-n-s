@@ -184,16 +184,35 @@ const PlanoLeitura = () => {
   };
 
   const handleStartPlan = async (plan: ReadingPlan) => {
+    // Deactivate all current progress
     await supabase
       .from("user_reading_progress")
       .update({ is_active: false })
-      .eq("user_id", user?.id);
+      .eq("user_id", user?.id)
+      .eq("is_active", true);
 
-    const { error } = await supabase.from("user_reading_progress").insert({
-      user_id: user?.id,
-      plan_id: plan.id,
-      current_day: 1,
-    });
+    // Check if there's already a row for this plan (unique constraint: user_id + plan_id)
+    const { data: existing } = await supabase
+      .from("user_reading_progress")
+      .select("id")
+      .eq("user_id", user?.id)
+      .eq("plan_id", plan.id)
+      .maybeSingle();
+
+    let error;
+    if (existing) {
+      // Reactivate existing row and reset to day 1
+      ({ error } = await supabase
+        .from("user_reading_progress")
+        .update({ is_active: true, current_day: 1, completed_at: null, started_at: new Date().toISOString() })
+        .eq("id", existing.id));
+    } else {
+      ({ error } = await supabase.from("user_reading_progress").insert({
+        user_id: user?.id,
+        plan_id: plan.id,
+        current_day: 1,
+      }));
+    }
 
     if (error) {
       toast({ title: "Erro", description: "Não foi possível iniciar o plano.", variant: "destructive" });
@@ -207,18 +226,11 @@ const PlanoLeitura = () => {
   const handleRestartPlan = async () => {
     if (!userProgress) return;
 
-    // Deactivate current progress
-    await supabase
+    // Reset current progress to day 1 (same row, avoids unique constraint)
+    const { error } = await supabase
       .from("user_reading_progress")
-      .update({ is_active: false })
+      .update({ current_day: 1, completed_at: null, started_at: new Date().toISOString() })
       .eq("id", userProgress.id);
-
-    // Start fresh with same plan
-    const { error } = await supabase.from("user_reading_progress").insert({
-      user_id: user?.id,
-      plan_id: userProgress.plan_id,
-      current_day: 1,
-    });
 
     if (error) {
       toast({ title: "Erro ao recomeçar", variant: "destructive" });
