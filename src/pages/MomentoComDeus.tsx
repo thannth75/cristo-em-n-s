@@ -92,6 +92,7 @@ const MomentoComDeus = () => {
   const [isMuted, setIsMuted] = useState(false);
   const [privateNote, setPrivateNote] = useState("");
   const [totalTimeSpent, setTotalTimeSpent] = useState(0);
+  const [selectedTheme, setSelectedTheme] = useState(PRAYER_THEMES[6]); // "Livre" by default
   const [verse] = useState(() => IMMERSIVE_VERSES[Math.floor(Math.random() * IMMERSIVE_VERSES.length)]);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
