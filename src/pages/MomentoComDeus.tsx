@@ -27,6 +27,42 @@ const AMBIENT_SOUNDS = [
   { id: "piano", label: "Piano", icon: Volume2 },
 ];
 
+const PRAYER_THEMES = [
+  { id: "gratidao", emoji: "🙏", label: "Gratidão", description: "Agradeça a Deus por tudo que Ele tem feito", suggestions: ["Agradeça por 3 bênçãos de hoje", "Louve a Deus por quem Ele é", "Agradeça por pessoas que ama"] },
+  { id: "intercessao", emoji: "🤝", label: "Intercessão", description: "Ore por outras pessoas e necessidades", suggestions: ["Ore por sua família", "Ore por amigos que precisam de Deus", "Ore por sua igreja e líderes"] },
+  { id: "confissao", emoji: "💧", label: "Confissão", description: "Confesse e peça perdão ao Senhor", suggestions: ["Peça perdão por pecados conhecidos", "Peça ao Espírito Santo que revele áreas", "Entregue suas fraquezas a Deus"] },
+  { id: "adoracao", emoji: "👑", label: "Adoração", description: "Adore a Deus por Sua grandeza", suggestions: ["Medite nos atributos de Deus", "Cante um louvor em seu coração", "Declare a soberania de Deus"] },
+  { id: "direcao", emoji: "🧭", label: "Direção", description: "Peça sabedoria e direção de Deus", suggestions: ["Peça sabedoria para decisões", "Entregue seus planos a Deus", "Peça que Deus abra portas"] },
+  { id: "cura", emoji: "💚", label: "Cura", description: "Ore por cura física, emocional e espiritual", suggestions: ["Ore por cura interior", "Entregue suas dores a Deus", "Ore por pessoas enfermas"] },
+  { id: "livre", emoji: "✨", label: "Livre", description: "Ore livremente como o Espírito guiar", suggestions: ["Fale com Deus como um amigo", "Ouça a voz de Deus em silêncio", "Deixe o Espírito Santo guiar"] },
+];
+
+// Play a gentle bell sound when timer completes
+const playCompletionSound = () => {
+  try {
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const playTone = (freq: number, startTime: number, duration: number) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, startTime);
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.3, startTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+    // Three gentle bell tones
+    playTone(523.25, audioCtx.currentTime, 1.5); // C5
+    playTone(659.25, audioCtx.currentTime + 0.5, 1.5); // E5
+    playTone(783.99, audioCtx.currentTime + 1.0, 2.0); // G5
+  } catch (e) {
+    console.log("Audio not available");
+  }
+};
+
 const IMMERSIVE_VERSES = [
   { verse: "Aquietai-vos e sabei que eu sou Deus.", reference: "Salmos 46:10" },
   { verse: "Vinde a mim, todos os que estais cansados e sobrecarregados, e eu vos aliviarei.", reference: "Mateus 11:28" },
@@ -56,6 +92,7 @@ const MomentoComDeus = () => {
   const [isMuted, setIsMuted] = useState(false);
   const [privateNote, setPrivateNote] = useState("");
   const [totalTimeSpent, setTotalTimeSpent] = useState(0);
+  const [selectedTheme, setSelectedTheme] = useState(PRAYER_THEMES[6]); // "Livre" by default
   const [verse] = useState(() => IMMERSIVE_VERSES[Math.floor(Math.random() * IMMERSIVE_VERSES.length)]);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -89,7 +126,8 @@ const MomentoComDeus = () => {
     if (phase === "prayer" && timeRemaining === 0 && !isRunning) {
       const elapsed = selectedTime;
       setTotalTimeSpent(elapsed);
-      setTimeout(() => setPhase("journal"), 1500);
+      playCompletionSound();
+      setTimeout(() => setPhase("journal"), 2000);
     }
   }, [timeRemaining, isRunning, phase, selectedTime]);
 
@@ -234,11 +272,44 @@ const MomentoComDeus = () => {
               </div>
             </motion.div>
 
-            {/* Start Button */}
+            {/* Prayer Theme Selection */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
+              className="mb-8 w-full max-w-sm"
+            >
+              <p className="text-sm font-medium text-muted-foreground text-center mb-3">
+                🙏 Tema de Oração
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {PRAYER_THEMES.map((theme) => (
+                  <button
+                    key={theme.id}
+                    onClick={() => setSelectedTheme(theme)}
+                    className={`rounded-xl px-3 py-2.5 text-left transition-all ${
+                      selectedTheme.id === theme.id
+                        ? "bg-primary text-primary-foreground shadow-md"
+                        : "bg-muted/60 text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    <span className="text-base mr-1">{theme.emoji}</span>
+                    <span className="text-xs font-medium">{theme.label}</span>
+                  </button>
+                ))}
+              </div>
+              {selectedTheme && (
+                <p className="text-xs text-muted-foreground text-center mt-2 italic">
+                  {selectedTheme.description}
+                </p>
+              )}
+            </motion.div>
+
+            {/* Start Button */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
             >
               <Button
                 onClick={startPrayer}
@@ -271,17 +342,42 @@ const MomentoComDeus = () => {
               className="absolute inset-0 m-auto h-72 w-72 rounded-full bg-primary/20 blur-3xl"
             />
 
-            {/* Verse */}
+            {/* Theme & Verse */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
-              className="relative mb-10 text-center max-w-xs"
+              className="relative mb-6 text-center max-w-xs"
             >
+              <p className="text-sm font-semibold text-primary mb-1">
+                {selectedTheme.emoji} {selectedTheme.label}
+              </p>
               <p className="font-serif text-lg italic text-foreground/80 leading-relaxed">
                 "{verse.verse}"
               </p>
               <p className="mt-2 text-xs text-primary/70">{verse.reference}</p>
+            </motion.div>
+
+            {/* Prayer Suggestions */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1 }}
+              className="relative mb-6 w-full max-w-xs"
+            >
+              <div className="space-y-1">
+                {selectedTheme.suggestions.map((s, i) => (
+                  <motion.p
+                    key={i}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 0.7, x: 0 }}
+                    transition={{ delay: 1.5 + i * 0.5 }}
+                    className="text-xs text-muted-foreground text-center"
+                  >
+                    • {s}
+                  </motion.p>
+                ))}
+              </div>
             </motion.div>
 
             {/* Timer Circle */}
