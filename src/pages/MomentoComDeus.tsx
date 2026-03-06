@@ -126,7 +126,8 @@ const MomentoComDeus = () => {
     if (phase === "prayer" && timeRemaining === 0 && !isRunning) {
       const elapsed = selectedTime;
       setTotalTimeSpent(elapsed);
-      setTimeout(() => setPhase("journal"), 1500);
+      playCompletionSound();
+      setTimeout(() => setPhase("journal"), 2000);
     }
   }, [timeRemaining, isRunning, phase, selectedTime]);
 
