@@ -27,6 +27,42 @@ const AMBIENT_SOUNDS = [
   { id: "piano", label: "Piano", icon: Volume2 },
 ];
 
+const PRAYER_THEMES = [
+  { id: "gratidao", emoji: "🙏", label: "Gratidão", description: "Agradeça a Deus por tudo que Ele tem feito", suggestions: ["Agradeça por 3 bênçãos de hoje", "Louve a Deus por quem Ele é", "Agradeça por pessoas que ama"] },
+  { id: "intercessao", emoji: "🤝", label: "Intercessão", description: "Ore por outras pessoas e necessidades", suggestions: ["Ore por sua família", "Ore por amigos que precisam de Deus", "Ore por sua igreja e líderes"] },
+  { id: "confissao", emoji: "💧", label: "Confissão", description: "Confesse e peça perdão ao Senhor", suggestions: ["Peça perdão por pecados conhecidos", "Peça ao Espírito Santo que revele áreas", "Entregue suas fraquezas a Deus"] },
+  { id: "adoracao", emoji: "👑", label: "Adoração", description: "Adore a Deus por Sua grandeza", suggestions: ["Medite nos atributos de Deus", "Cante um louvor em seu coração", "Declare a soberania de Deus"] },
+  { id: "direcao", emoji: "🧭", label: "Direção", description: "Peça sabedoria e direção de Deus", suggestions: ["Peça sabedoria para decisões", "Entregue seus planos a Deus", "Peça que Deus abra portas"] },
+  { id: "cura", emoji: "💚", label: "Cura", description: "Ore por cura física, emocional e espiritual", suggestions: ["Ore por cura interior", "Entregue suas dores a Deus", "Ore por pessoas enfermas"] },
+  { id: "livre", emoji: "✨", label: "Livre", description: "Ore livremente como o Espírito guiar", suggestions: ["Fale com Deus como um amigo", "Ouça a voz de Deus em silêncio", "Deixe o Espírito Santo guiar"] },
+];
+
+// Play a gentle bell sound when timer completes
+const playCompletionSound = () => {
+  try {
+    const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const playTone = (freq: number, startTime: number, duration: number) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, startTime);
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(0.3, startTime + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(startTime);
+      osc.stop(startTime + duration);
+    };
+    // Three gentle bell tones
+    playTone(523.25, audioCtx.currentTime, 1.5); // C5
+    playTone(659.25, audioCtx.currentTime + 0.5, 1.5); // E5
+    playTone(783.99, audioCtx.currentTime + 1.0, 2.0); // G5
+  } catch (e) {
+    console.log("Audio not available");
+  }
+};
+
 const IMMERSIVE_VERSES = [
   { verse: "Aquietai-vos e sabei que eu sou Deus.", reference: "Salmos 46:10" },
   { verse: "Vinde a mim, todos os que estais cansados e sobrecarregados, e eu vos aliviarei.", reference: "Mateus 11:28" },
