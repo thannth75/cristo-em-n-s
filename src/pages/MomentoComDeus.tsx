@@ -342,17 +342,42 @@ const MomentoComDeus = () => {
               className="absolute inset-0 m-auto h-72 w-72 rounded-full bg-primary/20 blur-3xl"
             />
 
-            {/* Verse */}
+            {/* Theme & Verse */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
-              className="relative mb-10 text-center max-w-xs"
+              className="relative mb-6 text-center max-w-xs"
             >
+              <p className="text-sm font-semibold text-primary mb-1">
+                {selectedTheme.emoji} {selectedTheme.label}
+              </p>
               <p className="font-serif text-lg italic text-foreground/80 leading-relaxed">
                 "{verse.verse}"
               </p>
               <p className="mt-2 text-xs text-primary/70">{verse.reference}</p>
+            </motion.div>
+
+            {/* Prayer Suggestions */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 1 }}
+              className="relative mb-6 w-full max-w-xs"
+            >
+              <div className="space-y-1">
+                {selectedTheme.suggestions.map((s, i) => (
+                  <motion.p
+                    key={i}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 0.7, x: 0 }}
+                    transition={{ delay: 1.5 + i * 0.5 }}
+                    className="text-xs text-muted-foreground text-center"
+                  >
+                    • {s}
+                  </motion.p>
+                ))}
+              </div>
             </motion.div>
 
             {/* Timer Circle */}
