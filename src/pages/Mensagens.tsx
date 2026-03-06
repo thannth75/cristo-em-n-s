@@ -383,7 +383,10 @@ const Mensagens = () => {
   }
 
   const selectedPartnerProfile = selectedConversation ? profiles[selectedConversation] || allProfiles.find(p => p.user_id === selectedConversation) : null;
-  const messageGroups = groupMessagesByDate(messages);
+  const filteredMessages = chatSearch
+    ? messages.filter(m => !m.is_deleted && m.content.toLowerCase().includes(chatSearch.toLowerCase()))
+    : messages;
+  const messageGroups = groupMessagesByDate(filteredMessages);
 
   return (
     <div className="min-h-screen bg-background">
