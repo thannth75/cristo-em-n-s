@@ -72,6 +72,8 @@ const Mensagens = () => {
   const [messageReactions, setMessageReactions] = useState<Record<string, ReactionData[]>>({});
   const [isTyping, setIsTyping] = useState(false);
   const [partnerTyping, setPartnerTyping] = useState(false);
+  const [chatSearch, setChatSearch] = useState("");
+  const [showChatSearch, setShowChatSearch] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
