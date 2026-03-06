@@ -113,14 +113,42 @@ export const EnhancedStoryViewer = ({
       audioRef.current.src = story.audio_url;
       audioRef.current.loop = true;
       audioRef.current.muted = isMuted;
-      if (!isPaused) audioRef.current.play().catch(() => {});
+      audioRef.current.volume = 0.7;
+      if (!isPaused) {
+        // Try unmuted first, fallback to muted
+        audioRef.current.play().catch(() => {
+          if (audioRef.current) {
+            audioRef.current.muted = true;
+            setIsMuted(true);
+            audioRef.current.play().catch(() => {});
+          }
+        });
+      }
     } else {
-      if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+      if (audioRef.current) { audioRef.current.pause(); audioRef.current.currentTime = 0; }
     }
     return () => {
       if (audioRef.current) { audioRef.current.pause(); }
     };
   }, [story?.audio_url, currentIndex]);
+
+  // Sync mute state
+  useEffect(() => {
+    if (audioRef.current) {
+      audioRef.current.muted = isMuted;
+      if (!isMuted && audioRef.current.paused && !isPaused) {
+        audioRef.current.play().catch(() => {});
+      }
+    }
+  }, [isMuted]);
+
+  // Pause/resume audio with story
+  useEffect(() => {
+    if (audioRef.current) {
+      if (isPaused) audioRef.current.pause();
+      else audioRef.current.play().catch(() => {});
+    }
+  }, [isPaused]);
 
   const checkLikeStatus = async () => {
     const { data } = await supabase
