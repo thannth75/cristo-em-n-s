@@ -272,11 +272,44 @@ const MomentoComDeus = () => {
               </div>
             </motion.div>
 
-            {/* Start Button */}
+            {/* Prayer Theme Selection */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
+              className="mb-8 w-full max-w-sm"
+            >
+              <p className="text-sm font-medium text-muted-foreground text-center mb-3">
+                🙏 Tema de Oração
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                {PRAYER_THEMES.map((theme) => (
+                  <button
+                    key={theme.id}
+                    onClick={() => setSelectedTheme(theme)}
+                    className={`rounded-xl px-3 py-2.5 text-left transition-all ${
+                      selectedTheme.id === theme.id
+                        ? "bg-primary text-primary-foreground shadow-md"
+                        : "bg-muted/60 text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    <span className="text-base mr-1">{theme.emoji}</span>
+                    <span className="text-xs font-medium">{theme.label}</span>
+                  </button>
+                ))}
+              </div>
+              {selectedTheme && (
+                <p className="text-xs text-muted-foreground text-center mt-2 italic">
+                  {selectedTheme.description}
+                </p>
+              )}
+            </motion.div>
+
+            {/* Start Button */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
             >
               <Button
                 onClick={startPrayer}
