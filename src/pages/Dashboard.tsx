@@ -102,7 +102,6 @@ const Dashboard = () => {
     { title: "Ranking", description: "Veja sua posição", icon: Trophy, href: "/ranking" },
     { title: "Comunidade", description: "Chat e posts", icon: MessageCircle, href: "/comunidade" },
     { title: "Pedidos de Oração", description: "Ore com os irmãos", icon: MessageSquare, href: "/oracoes" },
-    { title: "Discipulado", description: "Crescimento guiado", icon: Heart, href: "/discipulado" },
   ];
 
   const youthFeatures = [

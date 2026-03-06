@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, Send, ArrowLeft, Search, Check, CheckCheck, Plus, Smile, Paperclip, Loader2, Users } from "lucide-react";
+import { MessageCircle, Send, ArrowLeft, Search, Check, CheckCheck, Plus, Smile, Paperclip, Loader2, Users, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -72,6 +72,8 @@ const Mensagens = () => {
   const [messageReactions, setMessageReactions] = useState<Record<string, ReactionData[]>>({});
   const [isTyping, setIsTyping] = useState(false);
   const [partnerTyping, setPartnerTyping] = useState(false);
+  const [chatSearch, setChatSearch] = useState("");
+  const [showChatSearch, setShowChatSearch] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -381,7 +383,10 @@ const Mensagens = () => {
   }
 
   const selectedPartnerProfile = selectedConversation ? profiles[selectedConversation] || allProfiles.find(p => p.user_id === selectedConversation) : null;
-  const messageGroups = groupMessagesByDate(messages);
+  const filteredMessages = chatSearch
+    ? messages.filter(m => !m.is_deleted && m.content.toLowerCase().includes(chatSearch.toLowerCase()))
+    : messages;
+  const messageGroups = groupMessagesByDate(filteredMessages);
 
   return (
     <div className="min-h-screen bg-background">
@@ -391,28 +396,43 @@ const Mensagens = () => {
         ) : selectedConversation ? (
           <motion.div key="chat" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col h-screen">
             {/* Chat Header */}
-            <header className="sticky top-0 z-20 flex items-center gap-3 bg-primary px-2 py-2" style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top, 8px))' }}>
-              <Button variant="ghost" size="icon" onClick={() => { setSelectedConversation(null); setShowMediaPicker(false); }} className="shrink-0 text-primary-foreground hover:bg-primary-foreground/10">
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <button onClick={() => navigate(`/perfil/${selectedConversation}`)} className="flex items-center gap-3 flex-1 min-w-0">
-                <Avatar className="h-10 w-10 ring-2 ring-primary-foreground/20">
-                  <AvatarImage src={selectedPartnerProfile?.avatar_url || ""} />
-                  <AvatarFallback className="bg-primary-foreground/20 text-primary-foreground text-sm font-semibold">{getInitials(selectedPartnerProfile?.full_name || "?")}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0 text-left">
-                  <h2 className="font-semibold text-primary-foreground truncate text-base">{selectedPartnerProfile?.full_name || "Usuário"}</h2>
-                  <div className="text-primary-foreground/70 text-xs">
-                    {partnerTyping ? (
-                      <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-primary-foreground/90 font-medium">
-                        digitando...
-                      </motion.span>
-                    ) : (
-                      <OnlineStatusBadge lastSeen={selectedPartnerProfile?.last_seen || null} showText />
-                    )}
+            <header className="sticky top-0 z-20 bg-primary px-2 py-2" style={{ paddingTop: 'max(0.5rem, env(safe-area-inset-top, 8px))' }}>
+              <div className="flex items-center gap-3">
+                <Button variant="ghost" size="icon" onClick={() => { setSelectedConversation(null); setShowMediaPicker(false); setShowChatSearch(false); setChatSearch(""); }} className="shrink-0 text-primary-foreground hover:bg-primary-foreground/10">
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+                <button onClick={() => navigate(`/perfil/${selectedConversation}`)} className="flex items-center gap-3 flex-1 min-w-0">
+                  <Avatar className="h-10 w-10 ring-2 ring-primary-foreground/20">
+                    <AvatarImage src={selectedPartnerProfile?.avatar_url || ""} />
+                    <AvatarFallback className="bg-primary-foreground/20 text-primary-foreground text-sm font-semibold">{getInitials(selectedPartnerProfile?.full_name || "?")}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0 text-left">
+                    <h2 className="font-semibold text-primary-foreground truncate text-base">{selectedPartnerProfile?.full_name || "Usuário"}</h2>
+                    <div className="text-primary-foreground/70 text-xs">
+                      {partnerTyping ? (
+                        <motion.span initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-primary-foreground/90 font-medium">
+                          digitando...
+                        </motion.span>
+                      ) : (
+                        <OnlineStatusBadge lastSeen={selectedPartnerProfile?.last_seen || null} showText />
+                      )}
+                    </div>
                   </div>
-                </div>
-              </button>
+                </button>
+                <Button variant="ghost" size="icon" onClick={() => setShowChatSearch(!showChatSearch)} className="shrink-0 text-primary-foreground hover:bg-primary-foreground/10">
+                  <Search className="h-5 w-5" />
+                </Button>
+              </div>
+              {showChatSearch && (
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="mt-2 flex items-center gap-2">
+                  <Input value={chatSearch} onChange={(e) => setChatSearch(e.target.value)} placeholder="Buscar na conversa..." className="flex-1 rounded-full bg-background/90 border-0 text-sm h-9" autoFocus />
+                  {chatSearch && (
+                    <Button variant="ghost" size="icon" onClick={() => setChatSearch("")} className="text-primary-foreground h-8 w-8">
+                      <X className="h-4 w-4" />
+                    </Button>
+                  )}
+                </motion.div>
+              )}
             </header>
 
             {/* Chat Messages */}
