@@ -1314,6 +1314,7 @@ export type Database = {
           id: string
           is_read: boolean
           message: string
+          push_delivered: boolean | null
           title: string
           type: string
           user_id: string
@@ -1324,6 +1325,7 @@ export type Database = {
           id?: string
           is_read?: boolean
           message: string
+          push_delivered?: boolean | null
           title: string
           type?: string
           user_id: string
@@ -1334,6 +1336,7 @@ export type Database = {
           id?: string
           is_read?: boolean
           message?: string
+          push_delivered?: boolean | null
           title?: string
           type?: string
           user_id?: string
