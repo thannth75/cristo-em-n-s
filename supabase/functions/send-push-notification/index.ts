@@ -246,6 +246,7 @@ Deno.serve(async (req) => {
       message: requestPayload.body,
       type: requestPayload.type || "push",
       action_url: requestPayload.url || "/",
+      push_delivered: true, // Mark as delivered to prevent trigger from re-sending
     }));
 
     const { error: insertError, data } = await supabase
