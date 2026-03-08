@@ -328,12 +328,14 @@ const Dashboard = () => {
               <Flame className="h-12 w-12 text-primary" />
             </div>
             <p className="font-serif text-sm sm:text-base text-muted-foreground italic relative z-10">
-              {streaks.currentStreak >= 7 
-                ? `"🔥 ${streaks.currentStreak} dias consecutivos! Deus se alegra com sua fidelidade."`
-                : streaks.currentStreak >= 3
-                ? `"Você está construindo um hábito santo. ${streaks.currentStreak} dias seguidos!"`
-                : "\"Cada dia é uma nova oportunidade de servir a Deus e crescer em fé.\""
-              }
+            {(() => {
+              const best = Math.max(streaks.prayer, streaks.reading, streaks.devotional);
+              return best >= 7 
+                ? `"🔥 ${best} dias consecutivos! Deus se alegra com sua fidelidade."`
+                : best >= 3
+                ? `"Você está construindo um hábito santo. ${best} dias seguidos!"`
+                : "\"Cada dia é uma nova oportunidade de servir a Deus e crescer em fé.\"";
+            })()}
             </p>
             <p className="mt-2 text-xs sm:text-sm font-medium text-primary relative z-10">
               {weeklySummary.devotionalsCompleted > 0 
