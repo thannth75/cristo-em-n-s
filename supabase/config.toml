@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.push-relay]
 verify_jwt = false
+
+[functions.send-reading-reminder]
+verify_jwt = false
