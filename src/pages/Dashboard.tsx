@@ -190,6 +190,23 @@ const Dashboard = () => {
           animate={{ opacity: 1 }}
           className="space-y-4 sm:space-y-5"
         >
+          {/* Saudação Espiritual Dinâmica */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-accent/10 border border-primary/15 p-3.5 sm:p-4"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 shrink-0">
+                <Star className="h-5 w-5 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground">Mensagem do dia</p>
+                <p className="text-sm font-medium text-foreground">{spiritualMessage}</p>
+              </div>
+            </div>
+          </motion.div>
+
           {/* Versículo do Dia */}
           <VerseCard verse={todayVerse.verse} reference={todayVerse.reference} />
 
