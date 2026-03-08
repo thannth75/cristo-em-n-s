@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpen, Calendar, Users, Music, Heart, Award,
   MessageSquare, Shield, ChevronRight, Trophy, Brain,
   Target, MessageCircle, Sparkles, ClipboardCheck, Sun,
+  Flame, Star,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -38,6 +39,24 @@ const dailyVerses = [
   { verse: "Sede fortes e corajosos. Não temais, nem vos espanteis, pois o Senhor estará convosco.", reference: "Josué 1:9" },
 ];
 
+const spiritualGreetings = {
+  morning: [
+    "Que a graça de Deus guie seus passos hoje! ☀️",
+    "A misericórdia de Deus se renova a cada manhã! 🌅",
+    "Novo dia, nova chance de glorificar ao Senhor! ✨",
+  ],
+  afternoon: [
+    "Que Deus renove suas forças nesta tarde! 🕊️",
+    "Descanse na presença do Pai nesta tarde! ☁️",
+    "Continue firme, Deus está com você! 💪",
+  ],
+  evening: [
+    "Que a paz de Cristo encha seu coração esta noite! 🌙",
+    "Agradeça a Deus por mais um dia de graça! ⭐",
+    "Entregue suas preocupações a Deus e descanse em paz! 🙏",
+  ],
+};
+
 interface NextEvent {
   id: string;
   title: string;
@@ -62,6 +81,13 @@ const Dashboard = () => {
     const dayIndex = new Date().getDate() % dailyVerses.length;
     return dailyVerses[dayIndex];
   });
+
+  const spiritualMessage = useMemo(() => {
+    const hour = new Date().getHours();
+    const period = hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening";
+    const msgs = spiritualGreetings[period];
+    return msgs[new Date().getDate() % msgs.length];
+  }, []);
 
   useEffect(() => {
     if (!isLoading) {
