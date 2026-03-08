@@ -317,18 +317,29 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Motivação */}
+          {/* Motivação Dinâmica */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="rounded-2xl gradient-spiritual border border-primary/10 p-4 sm:p-5 text-center"
+            className="rounded-2xl gradient-spiritual border border-primary/10 p-4 sm:p-5 text-center overflow-hidden relative"
           >
-            <p className="font-serif text-sm sm:text-base text-muted-foreground italic">
-              "Cada dia é uma nova oportunidade de servir a Deus e crescer em fé."
+            <div className="absolute top-2 right-3 opacity-10">
+              <Flame className="h-12 w-12 text-primary" />
+            </div>
+            <p className="font-serif text-sm sm:text-base text-muted-foreground italic relative z-10">
+              {streaks.currentStreak >= 7 
+                ? `"🔥 ${streaks.currentStreak} dias consecutivos! Deus se alegra com sua fidelidade."`
+                : streaks.currentStreak >= 3
+                ? `"Você está construindo um hábito santo. ${streaks.currentStreak} dias seguidos!"`
+                : "\"Cada dia é uma nova oportunidade de servir a Deus e crescer em fé.\""
+              }
             </p>
-            <p className="mt-2 text-xs sm:text-sm font-medium text-primary">
-              Continue firme na caminhada! 🙏
+            <p className="mt-2 text-xs sm:text-sm font-medium text-primary relative z-10">
+              {weeklySummary.devotionalsCompleted > 0 
+                ? `${weeklySummary.devotionalsCompleted} devocionais esta semana — continue crescendo! 🌱`
+                : "Comece seu devocional de hoje e ganhe XP! 🙏"
+              }
             </p>
           </motion.div>
         </motion.div>
