@@ -1,3 +1,4 @@
+import React from "react";
 import { motion } from "framer-motion";
 import { TrendingUp, BookOpen, Heart, MessageCircle, Sparkles } from "lucide-react";
 import type { WeeklySummary } from "@/hooks/useWeeklySummary";
@@ -9,21 +10,24 @@ interface MetricProps {
   suffix?: string;
 }
 
-function Metric({ icon: Icon, label, value, suffix }: MetricProps) {
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 shrink-0">
-        <Icon className="h-3.5 w-3.5 text-primary" />
+const Metric = React.forwardRef<HTMLDivElement, MetricProps>(
+  ({ icon: Icon, label, value, suffix }, ref) => {
+    return (
+      <div ref={ref} className="flex items-center gap-2">
+        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 shrink-0">
+          <Icon className="h-3.5 w-3.5 text-primary" />
+        </div>
+        <div className="min-w-0">
+          <p className="text-xs text-muted-foreground truncate">{label}</p>
+          <p className="text-sm font-semibold text-foreground">
+            {value}{suffix}
+          </p>
+        </div>
       </div>
-      <div className="min-w-0">
-        <p className="text-xs text-muted-foreground truncate">{label}</p>
-        <p className="text-sm font-semibold text-foreground">
-          {value}{suffix}
-        </p>
-      </div>
-    </div>
-  );
-}
+    );
+  }
+);
+Metric.displayName = "Metric";
 
 export default function WeeklySummaryCard({ summary }: { summary: WeeklySummary }) {
   if (summary.isLoading) {

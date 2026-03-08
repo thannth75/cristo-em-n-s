@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   BookOpen, Calendar, Users, Music, Heart, Award,
   MessageSquare, Shield, ChevronRight, Trophy, Brain,
   Target, MessageCircle, Sparkles, ClipboardCheck, Sun,
+  Flame, Star,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -38,6 +39,24 @@ const dailyVerses = [
   { verse: "Sede fortes e corajosos. Não temais, nem vos espanteis, pois o Senhor estará convosco.", reference: "Josué 1:9" },
 ];
 
+const spiritualGreetings = {
+  morning: [
+    "Que a graça de Deus guie seus passos hoje! ☀️",
+    "A misericórdia de Deus se renova a cada manhã! 🌅",
+    "Novo dia, nova chance de glorificar ao Senhor! ✨",
+  ],
+  afternoon: [
+    "Que Deus renove suas forças nesta tarde! 🕊️",
+    "Descanse na presença do Pai nesta tarde! ☁️",
+    "Continue firme, Deus está com você! 💪",
+  ],
+  evening: [
+    "Que a paz de Cristo encha seu coração esta noite! 🌙",
+    "Agradeça a Deus por mais um dia de graça! ⭐",
+    "Entregue suas preocupações a Deus e descanse em paz! 🙏",
+  ],
+};
+
 interface NextEvent {
   id: string;
   title: string;
@@ -62,6 +81,13 @@ const Dashboard = () => {
     const dayIndex = new Date().getDate() % dailyVerses.length;
     return dailyVerses[dayIndex];
   });
+
+  const spiritualMessage = useMemo(() => {
+    const hour = new Date().getHours();
+    const period = hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening";
+    const msgs = spiritualGreetings[period];
+    return msgs[new Date().getDate() % msgs.length];
+  }, []);
 
   useEffect(() => {
     if (!isLoading) {
@@ -164,6 +190,23 @@ const Dashboard = () => {
           animate={{ opacity: 1 }}
           className="space-y-4 sm:space-y-5"
         >
+          {/* Saudação Espiritual Dinâmica */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="rounded-2xl bg-gradient-to-r from-primary/10 via-primary/5 to-accent/10 border border-primary/15 p-3.5 sm:p-4"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 shrink-0">
+                <Star className="h-5 w-5 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs text-muted-foreground">Mensagem do dia</p>
+                <p className="text-sm font-medium text-foreground">{spiritualMessage}</p>
+              </div>
+            </div>
+          </motion.div>
+
           {/* Versículo do Dia */}
           <VerseCard verse={todayVerse.verse} reference={todayVerse.reference} />
 
@@ -274,18 +317,31 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Motivação */}
+          {/* Motivação Dinâmica */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
-            className="rounded-2xl gradient-spiritual border border-primary/10 p-4 sm:p-5 text-center"
+            className="rounded-2xl gradient-spiritual border border-primary/10 p-4 sm:p-5 text-center overflow-hidden relative"
           >
-            <p className="font-serif text-sm sm:text-base text-muted-foreground italic">
-              "Cada dia é uma nova oportunidade de servir a Deus e crescer em fé."
+            <div className="absolute top-2 right-3 opacity-10">
+              <Flame className="h-12 w-12 text-primary" />
+            </div>
+            <p className="font-serif text-sm sm:text-base text-muted-foreground italic relative z-10">
+            {(() => {
+              const best = Math.max(streaks.prayer, streaks.reading, streaks.devotional);
+              return best >= 7 
+                ? `"🔥 ${best} dias consecutivos! Deus se alegra com sua fidelidade."`
+                : best >= 3
+                ? `"Você está construindo um hábito santo. ${best} dias seguidos!"`
+                : "\"Cada dia é uma nova oportunidade de servir a Deus e crescer em fé.\"";
+            })()}
             </p>
-            <p className="mt-2 text-xs sm:text-sm font-medium text-primary">
-              Continue firme na caminhada! 🙏
+            <p className="mt-2 text-xs sm:text-sm font-medium text-primary relative z-10">
+              {weeklySummary.devotionalsCompleted > 0 
+                ? `${weeklySummary.devotionalsCompleted} devocionais esta semana — continue crescendo! 🌱`
+                : "Comece seu devocional de hoje e ganhe XP! 🙏"
+              }
             </p>
           </motion.div>
         </motion.div>
