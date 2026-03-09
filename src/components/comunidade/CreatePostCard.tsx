@@ -1,4 +1,4 @@
-import { Image, Video, Smile, Calendar } from "lucide-react";
+import { Image, Video, Smile, BarChart3 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
