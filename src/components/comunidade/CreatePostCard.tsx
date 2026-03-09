@@ -1,4 +1,4 @@
-import { Image, Video, Smile, Calendar } from "lucide-react";
+import { Image, Video, Smile, BarChart3 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
@@ -52,10 +52,10 @@ export default function CreatePostCard({ userName, avatarUrl, onClick }: CreateP
           variant="ghost"
           size="sm"
           onClick={onClick}
-          className="flex-1 gap-2 text-muted-foreground hover:text-accent-foreground hover:bg-accent/50"
+          className="flex-1 gap-2 text-muted-foreground hover:text-primary hover:bg-primary/5"
         >
-          <Smile className="h-5 w-5 text-accent-foreground" />
-          <span className="hidden xs:inline text-sm">Sentimento</span>
+          <BarChart3 className="h-5 w-5 text-primary" />
+          <span className="hidden xs:inline text-sm">Enquete</span>
         </Button>
       </div>
     </div>
