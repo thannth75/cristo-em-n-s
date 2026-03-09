@@ -388,6 +388,8 @@ const Mensagens = () => {
     if (conv.lastMessageType === "image") return "📷 Foto";
     if (conv.lastMessageType === "sticker") return "😊 Figurinha";
     if (conv.lastMessageType === "gif") return "🎬 GIF";
+    if (conv.lastMessageType === "audio") return "🎤 Áudio";
+    if (conv.lastMessageType === "file") return "📎 Arquivo";
     return conv.lastMessage;
   };
 
