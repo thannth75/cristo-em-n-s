@@ -298,6 +298,32 @@ const Mensagens = () => {
     setIsSending(false);
   };
 
+  const handleSendAudio = async (audioUrl: string, duration: number) => {
+    if (!selectedConversation) return;
+    setIsSending(true);
+    const { data, error } = await supabase.functions.invoke("send-private-message", {
+      body: { receiver_id: selectedConversation, content: `🎤 Áudio (${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, "0")})`, message_type: "audio", image_url: audioUrl },
+    });
+    if (!error) {
+      const inserted = (data as any)?.message as Message | undefined;
+      if (inserted) { setMessages((prev) => [...prev, inserted]); fetchConversations(); }
+    }
+    setIsSending(false);
+  };
+
+  const handleSendFile = async (fileUrl: string, fileName: string, fileSize: number) => {
+    if (!selectedConversation) return;
+    setIsSending(true);
+    const { data, error } = await supabase.functions.invoke("send-private-message", {
+      body: { receiver_id: selectedConversation, content: `📎 ${fileName}`, message_type: "file", image_url: fileUrl },
+    });
+    if (!error) {
+      const inserted = (data as any)?.message as Message | undefined;
+      if (inserted) { setMessages((prev) => [...prev, inserted]); fetchConversations(); }
+    }
+    setIsSending(false);
+  };
+
   const handleMessageEdited = (id: string, newContent: string) => {
     setMessages((prev) => prev.map((m) => m.id === id ? { ...m, content: newContent, edited_at: new Date().toISOString() } : m));
   };
