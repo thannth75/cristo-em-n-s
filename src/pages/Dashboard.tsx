@@ -118,7 +118,7 @@ const Dashboard = () => {
     { title: "Devocional Diário", description: "Comece o dia com Deus", icon: BookOpen, href: "/devocional", badge: "Novo" },
     { title: "Momento com Deus", description: "Oração imersiva", icon: Sun, href: "/momento-com-deus", badge: "✨" },
     { title: "Mensagens", description: "Chat privado", icon: MessageCircle, href: "/mensagens" },
-    { title: "Discipulado", description: "Mentoria espiritual", icon: Heart, href: "/discipulado" },
+    { title: "Trilha de Fé", description: "Jornada de 7 dias", icon: Compass, href: "/trilha-fe", badge: "Novo" },
     { title: "Rotina com Deus", description: "Planos espirituais guiados", icon: Heart, href: "/rotina-com-deus" },
     { title: "Versículos por Humor", description: "Palavra para seu momento", icon: Heart, href: "/versiculos" },
     { title: "Testemunhos", description: "Histórias de fé", icon: Heart, href: "/testemunhos" },

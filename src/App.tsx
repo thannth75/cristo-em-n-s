@@ -109,7 +109,7 @@ function AnimatedRoutes() {
             <Route path="/provas" element={<Provas />} />
             <Route path="/momento-com-deus" element={<MomentoComDeus />} />
             <Route path="/radio" element={<Radio />} />
-            <Route path="/discipulado" element={<Discipulado />} />
+            <Route path="/trilha-fe" element={<TrilhaFe />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
