@@ -5,7 +5,7 @@ import {
   BookOpen, Calendar, Users, Music, Heart, Award,
   MessageSquare, Shield, ChevronRight, Trophy, Brain,
   Target, MessageCircle, Sparkles, ClipboardCheck, Sun,
-  Flame, Star, Radio, Globe, ExternalLink,
+  Flame, Star, Radio, Globe, ExternalLink, Compass,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
