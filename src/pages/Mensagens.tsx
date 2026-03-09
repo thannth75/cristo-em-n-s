@@ -548,6 +548,13 @@ const Mensagens = () => {
                                 >
                                   <Forward className="h-3.5 w-3.5" />
                                 </button>
+                                <button
+                                  onClick={() => { setReplyToMsg(msg); inputRef.current?.focus(); }}
+                                  className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
+                                  title="Responder"
+                                >
+                                  <Reply className="h-3.5 w-3.5" />
+                                </button>
                               </div>
                             )}
                           </div>
