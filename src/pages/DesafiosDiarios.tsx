@@ -101,13 +101,13 @@ export default function DesafiosDiarios() {
   const today = format(new Date(), "yyyy-MM-dd");
 
   useEffect(() => {
-    if (authState.user) {
+    if (user) {
       loadCompletedChallenges();
     }
-  }, [authState.user]);
+  }, [user]);
 
   const loadCompletedChallenges = async () => {
-    if (!authState.user) return;
+    if (!user) return;
     
     const { data } = await supabase
       .from("journal_entries")
