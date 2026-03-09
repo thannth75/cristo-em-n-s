@@ -122,6 +122,9 @@ const Auth = () => {
               src={logo}
               alt="Vida em Cristo"
               className="relative h-[280px] sm:h-[390px] w-auto drop-shadow-xl"
+              width={585}
+              height={390}
+              fetchPriority="high"
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             />
