@@ -29,7 +29,7 @@ function isValidUUID(str: string): boolean {
   return uuidRegex.test(str);
 }
 
-const VALID_MESSAGE_TYPES = ["text", "image", "sticker", "text_sticker", "gif"];
+const VALID_MESSAGE_TYPES = ["text", "image", "sticker", "text_sticker", "gif", "audio", "file"];
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
