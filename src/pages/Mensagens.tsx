@@ -399,6 +399,13 @@ const Mensagens = () => {
     }
 
     const msgType = msg.message_type || "text";
+    if (msgType === "audio" && msg.image_url) {
+      return <AudioMessagePlayer audioUrl={msg.image_url} isOwn={msg.sender_id === user?.id} />;
+    }
+    if (msgType === "file" && msg.image_url) {
+      const fileName = msg.content.replace("📎 ", "");
+      return <FileMessageBubble fileName={fileName} fileUrl={msg.image_url} isOwn={msg.sender_id === user?.id} />;
+    }
     if (msgType === "sticker") {
       if (msg.content.startsWith("http")) return <img src={msg.content} alt="Sticker" className="max-w-[120px] w-full object-contain" loading="lazy" />;
       return <span className="text-5xl block text-center py-1">{msg.content}</span>;
