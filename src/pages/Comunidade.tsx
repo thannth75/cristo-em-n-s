@@ -20,6 +20,7 @@ import { EnhancedCreatePostDialog } from "@/components/comunidade/EnhancedCreate
 import { PostLikersDialog } from "@/components/comunidade/PostLikersDialog";
 import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
 import { AdFeed, shouldShowAdAtIndex } from "@/components/ads/AdBanner";
+import VerseShareCard from "@/components/comunidade/VerseShareCard";
 import AIFloatingButton from "@/components/ai/AIFloatingButton";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
