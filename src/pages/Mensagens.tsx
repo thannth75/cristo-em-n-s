@@ -586,6 +586,27 @@ const Mensagens = () => {
 
             {/* Input */}
             <div className="sticky bottom-0 bg-background border-t border-border px-2 py-2" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 8px))' }}>
+              {/* Reply preview */}
+              {replyToMsg && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-2 mb-2 px-2 py-2 bg-primary/5 rounded-xl border-l-4 border-primary"
+                >
+                  <Reply className="h-4 w-4 text-primary shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-primary">
+                      {replyToMsg.sender_id === user?.id ? "Você" : (profiles[replyToMsg.sender_id]?.full_name || "Usuário")}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {replyToMsg.message_type === "image" ? "📷 Foto" : replyToMsg.message_type === "audio" ? "🎤 Áudio" : replyToMsg.message_type === "file" ? "📎 Arquivo" : replyToMsg.content}
+                    </p>
+                  </div>
+                  <button onClick={() => setReplyToMsg(null)} className="p-1 rounded-full hover:bg-muted shrink-0">
+                    <X className="h-3.5 w-3.5 text-muted-foreground" />
+                  </button>
+                </motion.div>
+              )}
               {/* Audio recorder takes over the input bar when active */}
               <div className="flex items-end gap-2">
                 <div className="flex-1 flex items-center gap-2 bg-card rounded-3xl px-3 py-2 shadow-sm border border-border">
