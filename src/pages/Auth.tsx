@@ -89,7 +89,7 @@ const Auth = () => {
   };
 
   return (
-    <div 
+    <main 
       className="relative min-h-screen bg-background overflow-hidden"
       style={{
         paddingTop: 'env(safe-area-inset-top, 0px)',
