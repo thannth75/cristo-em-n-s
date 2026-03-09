@@ -21,6 +21,8 @@ import { PostLikersDialog } from "@/components/comunidade/PostLikersDialog";
 import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
 import { AdFeed, shouldShowAdAtIndex } from "@/components/ads/AdBanner";
 import VerseShareCard from "@/components/comunidade/VerseShareCard";
+import CommunityStatsBar from "@/components/comunidade/CommunityStatsBar";
+import QuickDevotionalWidget from "@/components/comunidade/QuickDevotionalWidget";
 import AIFloatingButton from "@/components/ai/AIFloatingButton";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -228,6 +230,8 @@ const Comunidade = () => {
             onCreateStory={() => setCreateStoryOpen(true)} onViewStory={openStories} />
 
           <div className="space-y-3 sm:space-y-4 mt-4">
+            <CommunityStatsBar />
+            <QuickDevotionalWidget />
             <CreatePostCard userName={profile?.full_name} avatarUrl={profile?.avatar_url} onClick={() => setIsPostDialogOpen(true)} />
             <VerseShareCard onShareToPost={(text) => { setIsPostDialogOpen(true); }} />
 
