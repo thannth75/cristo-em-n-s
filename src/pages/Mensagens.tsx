@@ -15,6 +15,8 @@ import ChatMediaPicker from "@/components/chat/ChatMediaPicker";
 import { GroupList } from "@/components/comunidade/GroupList";
 import { GroupChat } from "@/components/comunidade/GroupChat";
 import { MessageActions, MessageReactionsDisplay } from "@/components/chat/MessageActions";
+import AudioRecorder, { AudioMessagePlayer } from "@/components/chat/AudioRecorder";
+import FileUploader, { FileMessageBubble } from "@/components/chat/FileUploader";
 
 interface Profile {
   user_id: string;
