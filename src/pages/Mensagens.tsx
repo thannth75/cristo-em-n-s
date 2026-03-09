@@ -77,6 +77,7 @@ const Mensagens = () => {
   const [partnerTyping, setPartnerTyping] = useState(false);
   const [chatSearch, setChatSearch] = useState("");
   const [showChatSearch, setShowChatSearch] = useState(false);
+  const [forwardMsg, setForwardMsg] = useState<Message | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
