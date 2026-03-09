@@ -74,39 +74,41 @@ function AnimatedRoutes() {
   return (
     <AnimatePresence mode="wait">
       <motion.div key={location.pathname} {...pageTransition} className="min-h-screen">
-        <Routes location={location}>
-          <Route path="/" element={<Index />} />
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/pending" element={<PendingApproval />} />
-          <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/estudos" element={<Estudos />} />
-          <Route path="/agenda" element={<Agenda />} />
-          <Route path="/musicos" element={<Musicos />} />
-          <Route path="/perfil" element={<Perfil />} />
-          <Route path="/perfil/:userId" element={<PerfilPublico />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/presenca" element={<Presenca />} />
-          <Route path="/diario" element={<Diario />} />
-          <Route path="/conquistas" element={<Conquistas />} />
-          <Route path="/oracoes" element={<Oracoes />} />
-          <Route path="/ranking" element={<Ranking />} />
-          <Route path="/comunidade" element={<Comunidade />} />
-          <Route path="/plano-leitura" element={<PlanoLeitura />} />
-          <Route path="/quiz" element={<Quiz />} />
-          <Route path="/install" element={<Install />} />
-          <Route path="/devocional" element={<Devocional />} />
-          <Route path="/testemunhos" element={<Testemunhos />} />
-          <Route path="/lembretes-oracao" element={<LembretesOracao />} />
-          <Route path="/versiculos" element={<Versiculos />} />
-          <Route path="/celulas" element={<Celulas />} />
-          <Route path="/dashboard-lider" element={<DashboardLider />} />
-          <Route path="/mensagens" element={<Mensagens />} />
-          <Route path="/rotina-com-deus" element={<RotinaComDeus />} />
-          <Route path="/provas" element={<Provas />} />
-          <Route path="/momento-com-deus" element={<MomentoComDeus />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <Suspense fallback={<PageLoader />}>
+          <Routes location={location}>
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/pending" element={<PendingApproval />} />
+            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/estudos" element={<Estudos />} />
+            <Route path="/agenda" element={<Agenda />} />
+            <Route path="/musicos" element={<Musicos />} />
+            <Route path="/perfil" element={<Perfil />} />
+            <Route path="/perfil/:userId" element={<PerfilPublico />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/presenca" element={<Presenca />} />
+            <Route path="/diario" element={<Diario />} />
+            <Route path="/conquistas" element={<Conquistas />} />
+            <Route path="/oracoes" element={<Oracoes />} />
+            <Route path="/ranking" element={<Ranking />} />
+            <Route path="/comunidade" element={<Comunidade />} />
+            <Route path="/plano-leitura" element={<PlanoLeitura />} />
+            <Route path="/quiz" element={<Quiz />} />
+            <Route path="/install" element={<Install />} />
+            <Route path="/devocional" element={<Devocional />} />
+            <Route path="/testemunhos" element={<Testemunhos />} />
+            <Route path="/lembretes-oracao" element={<LembretesOracao />} />
+            <Route path="/versiculos" element={<Versiculos />} />
+            <Route path="/celulas" element={<Celulas />} />
+            <Route path="/dashboard-lider" element={<DashboardLider />} />
+            <Route path="/mensagens" element={<Mensagens />} />
+            <Route path="/rotina-com-deus" element={<RotinaComDeus />} />
+            <Route path="/provas" element={<Provas />} />
+            <Route path="/momento-com-deus" element={<MomentoComDeus />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
       </motion.div>
     </AnimatePresence>
   );
