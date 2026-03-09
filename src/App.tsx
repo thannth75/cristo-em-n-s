@@ -47,6 +47,10 @@ const Provas = lazy(() => import("./pages/Provas"));
 const PerfilPublico = lazy(() => import("./pages/PerfilPublico"));
 const MomentoComDeus = lazy(() => import("./pages/MomentoComDeus"));
 const Radio = lazy(() => import("./pages/Radio"));
+const JogosEspirituais = lazy(() => import("./pages/JogosEspirituais"));
+const DesafiosDiarios = lazy(() => import("./pages/DesafiosDiarios"));
+const RoletaDesafios = lazy(() => import("./pages/RoletaDesafios"));
+const MemoriaBiblica = lazy(() => import("./pages/MemoriaBiblica"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const PageLoader = () => (
