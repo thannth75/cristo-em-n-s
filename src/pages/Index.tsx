@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import logo from "@/assets/logo-vida-em-cristo.png";
+import logo from "@/assets/logo-vida-em-cristo.webp";
 import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
