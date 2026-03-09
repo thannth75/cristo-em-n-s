@@ -256,9 +256,12 @@ const Mensagens = () => {
     if (!validation.success) { toast({ title: "Erro", description: validation.error, variant: "destructive" }); return; }
 
     setIsSending(true);
-    const messageContent = validation.data.content;
+    const messageContent = replyToMsg
+      ? `> ${replyToMsg.sender_id === user?.id ? "Você" : (profiles[replyToMsg.sender_id]?.full_name || "Usuário")}: ${replyToMsg.content.slice(0, 60)}\n\n${validation.data.content}`
+      : validation.data.content;
     setNewMessage("");
     setShowMediaPicker(false);
+    setReplyToMsg(null);
 
     const { data, error } = await supabase.functions.invoke("send-private-message", {
       body: { receiver_id: selectedConversation, content: messageContent },
