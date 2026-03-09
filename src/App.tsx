@@ -47,6 +47,10 @@ const Provas = lazy(() => import("./pages/Provas"));
 const PerfilPublico = lazy(() => import("./pages/PerfilPublico"));
 const MomentoComDeus = lazy(() => import("./pages/MomentoComDeus"));
 const Radio = lazy(() => import("./pages/Radio"));
+const JogosEspirituais = lazy(() => import("./pages/JogosEspirituais"));
+const DesafiosDiarios = lazy(() => import("./pages/DesafiosDiarios"));
+const RoletaDesafios = lazy(() => import("./pages/RoletaDesafios"));
+const MemoriaBiblica = lazy(() => import("./pages/MemoriaBiblica"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const PageLoader = () => (
@@ -110,6 +114,10 @@ function AnimatedRoutes() {
             <Route path="/momento-com-deus" element={<MomentoComDeus />} />
             <Route path="/radio" element={<Radio />} />
             <Route path="/trilha-fe" element={<TrilhaFe />} />
+            <Route path="/jogos" element={<JogosEspirituais />} />
+            <Route path="/desafios-diarios" element={<DesafiosDiarios />} />
+            <Route path="/roleta-desafios" element={<RoletaDesafios />} />
+            <Route path="/memoria-biblica" element={<MemoriaBiblica />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
