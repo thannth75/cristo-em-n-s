@@ -602,6 +602,17 @@ const Mensagens = () => {
                 )}
               </div>
             </div>
+
+            {/* Forward Dialog */}
+            <ForwardMessageDialog
+              isOpen={!!forwardMsg}
+              onClose={() => setForwardMsg(null)}
+              messageContent={forwardMsg?.content || ""}
+              messageType={forwardMsg?.message_type || "text"}
+              imageUrl={forwardMsg?.image_url}
+              contacts={allProfiles}
+              currentUserId={user?.id || ""}
+            />
           </motion.div>
         ) : (
           <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pb-24">
