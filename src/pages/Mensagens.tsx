@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, Send, ArrowLeft, Search, Check, CheckCheck, Plus, Smile, Paperclip, Loader2, Users, X, Forward } from "lucide-react";
+import { MessageCircle, Send, ArrowLeft, Search, Check, CheckCheck, Plus, Smile, Paperclip, Loader2, Users, X, Forward, Reply } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -78,6 +78,7 @@ const Mensagens = () => {
   const [chatSearch, setChatSearch] = useState("");
   const [showChatSearch, setShowChatSearch] = useState(false);
   const [forwardMsg, setForwardMsg] = useState<Message | null>(null);
+  const [replyToMsg, setReplyToMsg] = useState<Message | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -255,9 +256,12 @@ const Mensagens = () => {
     if (!validation.success) { toast({ title: "Erro", description: validation.error, variant: "destructive" }); return; }
 
     setIsSending(true);
-    const messageContent = validation.data.content;
+    const messageContent = replyToMsg
+      ? `> ${replyToMsg.sender_id === user?.id ? "Você" : (profiles[replyToMsg.sender_id]?.full_name || "Usuário")}: ${replyToMsg.content.slice(0, 60)}\n\n${validation.data.content}`
+      : validation.data.content;
     setNewMessage("");
     setShowMediaPicker(false);
+    setReplyToMsg(null);
 
     const { data, error } = await supabase.functions.invoke("send-private-message", {
       body: { receiver_id: selectedConversation, content: messageContent },
@@ -431,7 +435,9 @@ const Mensagens = () => {
     <div className="min-h-screen bg-background">
       <AnimatePresence mode="wait">
         {selectedGroup ? (
-          <GroupChat group={selectedGroup} onClose={() => setSelectedGroup(null)} />
+          <motion.div key="group-chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <GroupChat group={selectedGroup} onClose={() => setSelectedGroup(null)} />
+          </motion.div>
         ) : selectedConversation ? (
           <motion.div key="chat" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col h-screen">
             {/* Chat Header */}
@@ -545,6 +551,13 @@ const Mensagens = () => {
                                 >
                                   <Forward className="h-3.5 w-3.5" />
                                 </button>
+                                <button
+                                  onClick={() => { setReplyToMsg(msg); inputRef.current?.focus(); }}
+                                  className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
+                                  title="Responder"
+                                >
+                                  <Reply className="h-3.5 w-3.5" />
+                                </button>
                               </div>
                             )}
                           </div>
@@ -576,6 +589,27 @@ const Mensagens = () => {
 
             {/* Input */}
             <div className="sticky bottom-0 bg-background border-t border-border px-2 py-2" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 8px))' }}>
+              {/* Reply preview */}
+              {replyToMsg && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="flex items-center gap-2 mb-2 px-2 py-2 bg-primary/5 rounded-xl border-l-4 border-primary"
+                >
+                  <Reply className="h-4 w-4 text-primary shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-primary">
+                      {replyToMsg.sender_id === user?.id ? "Você" : (profiles[replyToMsg.sender_id]?.full_name || "Usuário")}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {replyToMsg.message_type === "image" ? "📷 Foto" : replyToMsg.message_type === "audio" ? "🎤 Áudio" : replyToMsg.message_type === "file" ? "📎 Arquivo" : replyToMsg.content}
+                    </p>
+                  </div>
+                  <button onClick={() => setReplyToMsg(null)} className="p-1 rounded-full hover:bg-muted shrink-0">
+                    <X className="h-3.5 w-3.5 text-muted-foreground" />
+                  </button>
+                </motion.div>
+              )}
               {/* Audio recorder takes over the input bar when active */}
               <div className="flex items-end gap-2">
                 <div className="flex-1 flex items-center gap-2 bg-card rounded-3xl px-3 py-2 shadow-sm border border-border">
