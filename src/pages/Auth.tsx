@@ -89,7 +89,7 @@ const Auth = () => {
   };
 
   return (
-    <div 
+    <main 
       className="relative min-h-screen bg-background overflow-hidden"
       style={{
         paddingTop: 'env(safe-area-inset-top, 0px)',
@@ -288,7 +288,7 @@ const Auth = () => {
         </p>
         <p className="mt-1 text-sm font-medium text-primary">— João 14:6</p>
       </motion.div>
-    </div>
+    </main>
   );
 };
 
