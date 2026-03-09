@@ -21,6 +21,7 @@ import GlowOrb from "@/components/GlowOrb";
 import ParallaxBackground from "@/components/ParallaxBackground";
 import BirthdaysCard from "@/components/comunidade/BirthdaysCard";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { AdFeed } from "@/components/ads/AdBanner";
 import AIFloatingButton from "@/components/ai/AIFloatingButton";
 import AmbientSound from "@/components/AmbientSound";
