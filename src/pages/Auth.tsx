@@ -121,7 +121,7 @@ const Auth = () => {
             <motion.img
               src={logo}
               alt="Vida em Cristo"
-              className="relative h-[280px] sm:h-[390px] w-auto drop-shadow-xl"
+              className="relative h-[253px] sm:h-[390px] w-auto drop-shadow-xl"
               width={585}
               height={390}
               fetchPriority="high"
