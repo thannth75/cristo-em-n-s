@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { motion } from "framer-motion";
 import { Flame, BookOpen, Heart, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -11,7 +12,7 @@ interface StreakItemProps {
   delay: number;
 }
 
-function StreakItem({ icon: Icon, label, count, color, delay }: StreakItemProps) {
+const StreakItem = forwardRef<HTMLDivElement, StreakItemProps>(function StreakItem({ icon: Icon, label, count, color, delay }, ref) {
   const isActive = count > 0;
 
   return (
@@ -50,7 +51,7 @@ function StreakItem({ icon: Icon, label, count, color, delay }: StreakItemProps)
       </div>
     </motion.div>
   );
-}
+});
 
 interface StreakCardProps {
   streaks: StreakData;

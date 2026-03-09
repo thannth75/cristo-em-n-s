@@ -17,6 +17,7 @@ import { GroupChat } from "@/components/comunidade/GroupChat";
 import { MessageActions, MessageReactionsDisplay } from "@/components/chat/MessageActions";
 import AudioRecorder, { AudioMessagePlayer } from "@/components/chat/AudioRecorder";
 import FileUploader, { FileMessageBubble } from "@/components/chat/FileUploader";
+import ForwardMessageDialog from "@/components/chat/ForwardMessageDialog";
 
 interface Profile {
   user_id: string;
@@ -76,6 +77,7 @@ const Mensagens = () => {
   const [partnerTyping, setPartnerTyping] = useState(false);
   const [chatSearch, setChatSearch] = useState("");
   const [showChatSearch, setShowChatSearch] = useState(false);
+  const [forwardMsg, setForwardMsg] = useState<Message | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -522,9 +524,9 @@ const Mensagens = () => {
                             {/* Reactions display */}
                             <MessageReactionsDisplay reactions={reactions} isOwn={isOwn} />
 
-                            {/* Actions (edit, delete, react) */}
+                            {/* Actions (edit, delete, react, forward) */}
                             {!msg.is_deleted && (
-                              <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                                 <MessageActions
                                   messageId={msg.id}
                                   content={msg.content}
@@ -536,6 +538,13 @@ const Mensagens = () => {
                                   onMessageDeleted={handleMessageDeleted}
                                   onReactionToggled={handleReactionToggled}
                                 />
+                                <button
+                                  onClick={() => setForwardMsg(msg)}
+                                  className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
+                                  title="Encaminhar"
+                                >
+                                  <Forward className="h-3.5 w-3.5" />
+                                </button>
                               </div>
                             )}
                           </div>
@@ -593,6 +602,17 @@ const Mensagens = () => {
                 )}
               </div>
             </div>
+
+            {/* Forward Dialog */}
+            <ForwardMessageDialog
+              isOpen={!!forwardMsg}
+              onClose={() => setForwardMsg(null)}
+              messageContent={forwardMsg?.content || ""}
+              messageType={forwardMsg?.message_type || "text"}
+              imageUrl={forwardMsg?.image_url}
+              contacts={allProfiles}
+              currentUserId={user?.id || ""}
+            />
           </motion.div>
         ) : (
           <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pb-24">
