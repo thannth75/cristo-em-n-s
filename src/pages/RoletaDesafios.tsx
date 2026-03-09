@@ -84,7 +84,7 @@ export default function RoletaDesafios() {
   };
 
   const completeChallenge = async () => {
-    if (!authState.user || !selectedChallenge || challengeCompleted) return;
+    if (!user || !selectedChallenge || challengeCompleted) return;
 
     try {
       const today = format(new Date(), "yyyy-MM-dd");
