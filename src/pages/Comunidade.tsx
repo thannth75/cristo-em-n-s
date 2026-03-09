@@ -20,6 +20,7 @@ import { EnhancedCreatePostDialog } from "@/components/comunidade/EnhancedCreate
 import { PostLikersDialog } from "@/components/comunidade/PostLikersDialog";
 import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
 import { AdFeed, shouldShowAdAtIndex } from "@/components/ads/AdBanner";
+import VerseShareCard from "@/components/comunidade/VerseShareCard";
 import AIFloatingButton from "@/components/ai/AIFloatingButton";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -228,6 +229,7 @@ const Comunidade = () => {
 
           <div className="space-y-3 sm:space-y-4 mt-4">
             <CreatePostCard userName={profile?.full_name} avatarUrl={profile?.avatar_url} onClick={() => setIsPostDialogOpen(true)} />
+            <VerseShareCard onShareToPost={(text) => { setIsPostDialogOpen(true); }} />
 
             {/* Feed Filters */}
             <div className="flex gap-2 px-1">

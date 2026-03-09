@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, Send, ArrowLeft, Search, Check, CheckCheck, Plus, Smile, Paperclip, Loader2, Users, X } from "lucide-react";
+import { MessageCircle, Send, ArrowLeft, Search, Check, CheckCheck, Plus, Smile, Paperclip, Loader2, Users, X, Forward } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -15,6 +15,8 @@ import ChatMediaPicker from "@/components/chat/ChatMediaPicker";
 import { GroupList } from "@/components/comunidade/GroupList";
 import { GroupChat } from "@/components/comunidade/GroupChat";
 import { MessageActions, MessageReactionsDisplay } from "@/components/chat/MessageActions";
+import AudioRecorder, { AudioMessagePlayer } from "@/components/chat/AudioRecorder";
+import FileUploader, { FileMessageBubble } from "@/components/chat/FileUploader";
 
 interface Profile {
   user_id: string;
@@ -296,6 +298,32 @@ const Mensagens = () => {
     setIsSending(false);
   };
 
+  const handleSendAudio = async (audioUrl: string, duration: number) => {
+    if (!selectedConversation) return;
+    setIsSending(true);
+    const { data, error } = await supabase.functions.invoke("send-private-message", {
+      body: { receiver_id: selectedConversation, content: `🎤 Áudio (${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, "0")})`, message_type: "audio", image_url: audioUrl },
+    });
+    if (!error) {
+      const inserted = (data as any)?.message as Message | undefined;
+      if (inserted) { setMessages((prev) => [...prev, inserted]); fetchConversations(); }
+    }
+    setIsSending(false);
+  };
+
+  const handleSendFile = async (fileUrl: string, fileName: string, fileSize: number) => {
+    if (!selectedConversation) return;
+    setIsSending(true);
+    const { data, error } = await supabase.functions.invoke("send-private-message", {
+      body: { receiver_id: selectedConversation, content: `📎 ${fileName}`, message_type: "file", image_url: fileUrl },
+    });
+    if (!error) {
+      const inserted = (data as any)?.message as Message | undefined;
+      if (inserted) { setMessages((prev) => [...prev, inserted]); fetchConversations(); }
+    }
+    setIsSending(false);
+  };
+
   const handleMessageEdited = (id: string, newContent: string) => {
     setMessages((prev) => prev.map((m) => m.id === id ? { ...m, content: newContent, edited_at: new Date().toISOString() } : m));
   };
@@ -360,6 +388,8 @@ const Mensagens = () => {
     if (conv.lastMessageType === "image") return "📷 Foto";
     if (conv.lastMessageType === "sticker") return "😊 Figurinha";
     if (conv.lastMessageType === "gif") return "🎬 GIF";
+    if (conv.lastMessageType === "audio") return "🎤 Áudio";
+    if (conv.lastMessageType === "file") return "📎 Arquivo";
     return conv.lastMessage;
   };
 
@@ -369,6 +399,13 @@ const Mensagens = () => {
     }
 
     const msgType = msg.message_type || "text";
+    if (msgType === "audio" && msg.image_url) {
+      return <AudioMessagePlayer audioUrl={msg.image_url} isOwn={msg.sender_id === user?.id} />;
+    }
+    if (msgType === "file" && msg.image_url) {
+      const fileName = msg.content.replace("📎 ", "");
+      return <FileMessageBubble fileName={fileName} fileUrl={msg.image_url} isOwn={msg.sender_id === user?.id} />;
+    }
     if (msgType === "sticker") {
       if (msg.content.startsWith("http")) return <img src={msg.content} alt="Sticker" className="max-w-[120px] w-full object-contain" loading="lazy" />;
       return <span className="text-5xl block text-center py-1">{msg.content}</span>;
@@ -530,6 +567,7 @@ const Mensagens = () => {
 
             {/* Input */}
             <div className="sticky bottom-0 bg-background border-t border-border px-2 py-2" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 8px))' }}>
+              {/* Audio recorder takes over the input bar when active */}
               <div className="flex items-end gap-2">
                 <div className="flex-1 flex items-center gap-2 bg-card rounded-3xl px-3 py-2 shadow-sm border border-border">
                   <button onClick={() => setShowMediaPicker(!showMediaPicker)} className="text-muted-foreground hover:text-primary transition-colors shrink-0">
@@ -544,13 +582,15 @@ const Mensagens = () => {
                     onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
                     onFocus={() => setShowMediaPicker(false)}
                   />
-                  <button onClick={() => setShowMediaPicker(!showMediaPicker)} className="text-muted-foreground hover:text-primary transition-colors shrink-0">
-                    <Paperclip className="h-5 w-5" />
-                  </button>
+                  <FileUploader userId={user?.id || ""} onSendFile={handleSendFile} />
                 </div>
-                <Button size="icon" onClick={handleSendMessage} disabled={!newMessage.trim() || isSending} className="h-11 w-11 rounded-full shrink-0 shadow-md">
-                  <Send className="h-5 w-5" />
-                </Button>
+                {newMessage.trim() ? (
+                  <Button size="icon" onClick={handleSendMessage} disabled={isSending} className="h-11 w-11 rounded-full shrink-0 shadow-md">
+                    <Send className="h-5 w-5" />
+                  </Button>
+                ) : (
+                  <AudioRecorder userId={user?.id || ""} onSendAudio={handleSendAudio} />
+                )}
               </div>
             </div>
           </motion.div>

@@ -29,7 +29,7 @@ function isValidUUID(str: string): boolean {
   return uuidRegex.test(str);
 }
 
-const VALID_MESSAGE_TYPES = ["text", "image", "sticker", "text_sticker", "gif"];
+const VALID_MESSAGE_TYPES = ["text", "image", "sticker", "text_sticker", "gif", "audio", "file"];
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -133,7 +133,11 @@ Deno.serve(async (req) => {
         ? `${senderName}: ${content}`
         : messageType === "gif"
           ? `${senderName}: 🎬 GIF`
-          : `${senderName}: ${clamp(content, 120)}`;
+          : messageType === "audio"
+            ? `${senderName}: 🎤 Áudio`
+            : messageType === "file"
+              ? `${senderName}: 📎 Arquivo`
+              : `${senderName}: ${clamp(content, 120)}`;
 
     const pushPayload = {
       user_id: receiverId,
