@@ -128,6 +128,7 @@ const Dashboard = () => {
     { title: "Ranking", description: "Veja sua posição", icon: Trophy, href: "/ranking" },
     { title: "Comunidade", description: "Chat e posts", icon: MessageCircle, href: "/comunidade" },
     { title: "Pedidos de Oração", description: "Ore com os irmãos", icon: MessageSquare, href: "/oracoes" },
+    { title: "Rádio de Louvores", description: "Ouça louvores 24h", icon: Radio, href: "/radio", badge: "🎵" },
   ];
 
   const youthFeatures = [
