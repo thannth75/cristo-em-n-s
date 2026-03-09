@@ -45,6 +45,7 @@ const Onboarding = lazy(() => import("./pages/Onboarding"));
 const Provas = lazy(() => import("./pages/Provas"));
 const PerfilPublico = lazy(() => import("./pages/PerfilPublico"));
 const MomentoComDeus = lazy(() => import("./pages/MomentoComDeus"));
+const Radio = lazy(() => import("./pages/Radio"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const PageLoader = () => (
@@ -106,6 +107,7 @@ function AnimatedRoutes() {
             <Route path="/rotina-com-deus" element={<RotinaComDeus />} />
             <Route path="/provas" element={<Provas />} />
             <Route path="/momento-com-deus" element={<MomentoComDeus />} />
+            <Route path="/radio" element={<Radio />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

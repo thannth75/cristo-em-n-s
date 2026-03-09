@@ -5,7 +5,7 @@ import {
   BookOpen, Calendar, Users, Music, Heart, Award,
   MessageSquare, Shield, ChevronRight, Trophy, Brain,
   Target, MessageCircle, Sparkles, ClipboardCheck, Sun,
-  Flame, Star,
+  Flame, Star, Radio, Globe, ExternalLink,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -21,6 +21,7 @@ import GlowOrb from "@/components/GlowOrb";
 import ParallaxBackground from "@/components/ParallaxBackground";
 import BirthdaysCard from "@/components/comunidade/BirthdaysCard";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { AdFeed } from "@/components/ads/AdBanner";
 import AIFloatingButton from "@/components/ai/AIFloatingButton";
 import AmbientSound from "@/components/AmbientSound";
@@ -128,6 +129,7 @@ const Dashboard = () => {
     { title: "Ranking", description: "Veja sua posição", icon: Trophy, href: "/ranking" },
     { title: "Comunidade", description: "Chat e posts", icon: MessageCircle, href: "/comunidade" },
     { title: "Pedidos de Oração", description: "Ore com os irmãos", icon: MessageSquare, href: "/oracoes" },
+    { title: "Rádio de Louvores", description: "Ouça louvores 24h", icon: Radio, href: "/radio", badge: "🎵" },
   ];
 
   const youthFeatures = [
@@ -299,6 +301,50 @@ const Dashboard = () => {
 
           {/* Aniversariantes */}
           <BirthdaysCard />
+
+          {/* Banner Obra em Restauração */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="rounded-2xl bg-gradient-to-r from-primary/15 via-accent/10 to-primary/10 border border-primary/20 p-4 sm:p-5 overflow-hidden relative"
+          >
+            <div className="absolute -top-4 -right-4 opacity-5">
+              <Globe className="h-24 w-24 text-primary" />
+            </div>
+            <div className="relative z-10 flex items-start gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 shrink-0">
+                <Globe className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-serif text-sm sm:text-base font-semibold text-foreground">
+                  Obra em Restauração
+                </h3>
+                <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5 mb-2.5">
+                  Acesse o site oficial do ministério, ouça a rádio e acompanhe as novidades.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    className="rounded-full gap-1.5 text-xs h-8"
+                    onClick={() => window.open("https://www.obraemrestauracao.org/", "_blank")}
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    Visitar Site
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="rounded-full gap-1.5 text-xs h-8"
+                    onClick={() => navigate("/radio")}
+                  >
+                    <Radio className="h-3 w-3" />
+                    Rádio de Louvores
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
 
           <AdFeed />
 
