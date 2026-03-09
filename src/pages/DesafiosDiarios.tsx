@@ -132,7 +132,7 @@ export default function DesafiosDiarios() {
 
     try {
       await supabase.from("journal_entries").insert({
-        user_id: user.id,
+        user_id: authState.user.id,
         title: `Desafio Diário: ${challenge.id}`,
         content: `✅ ${challenge.title}\n\n${challenge.description}`,
         mood: "motivated"

@@ -114,6 +114,10 @@ function AnimatedRoutes() {
             <Route path="/momento-com-deus" element={<MomentoComDeus />} />
             <Route path="/radio" element={<Radio />} />
             <Route path="/trilha-fe" element={<TrilhaFe />} />
+            <Route path="/jogos" element={<JogosEspirituais />} />
+            <Route path="/desafios-diarios" element={<DesafiosDiarios />} />
+            <Route path="/roleta-desafios" element={<RoletaDesafios />} />
+            <Route path="/memoria-biblica" element={<MemoriaBiblica />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

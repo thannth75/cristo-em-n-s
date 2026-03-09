@@ -165,7 +165,7 @@ export default function MemoriaBiblica() {
       origin: { y: 0.6 }
     });
 
-    if (user) {
+    if (authState.user) {
       const xpAmount = difficulty === "facil" ? 20 : difficulty === "medio" ? 35 : 50;
       await awardXp("quiz", `memoria-${Date.now()}`, `Memória Bíblica - ${difficulty}`);
       
