@@ -17,6 +17,7 @@ import { GroupChat } from "@/components/comunidade/GroupChat";
 import { MessageActions, MessageReactionsDisplay } from "@/components/chat/MessageActions";
 import AudioRecorder, { AudioMessagePlayer } from "@/components/chat/AudioRecorder";
 import FileUploader, { FileMessageBubble } from "@/components/chat/FileUploader";
+import ForwardMessageDialog from "@/components/chat/ForwardMessageDialog";
 
 interface Profile {
   user_id: string;
