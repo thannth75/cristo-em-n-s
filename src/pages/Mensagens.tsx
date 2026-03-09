@@ -524,9 +524,9 @@ const Mensagens = () => {
                             {/* Reactions display */}
                             <MessageReactionsDisplay reactions={reactions} isOwn={isOwn} />
 
-                            {/* Actions (edit, delete, react) */}
+                            {/* Actions (edit, delete, react, forward) */}
                             {!msg.is_deleted && (
-                              <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                                 <MessageActions
                                   messageId={msg.id}
                                   content={msg.content}
@@ -538,6 +538,13 @@ const Mensagens = () => {
                                   onMessageDeleted={handleMessageDeleted}
                                   onReactionToggled={handleReactionToggled}
                                 />
+                                <button
+                                  onClick={() => setForwardMsg(msg)}
+                                  className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-primary transition-colors"
+                                  title="Encaminhar"
+                                >
+                                  <Forward className="h-3.5 w-3.5" />
+                                </button>
                               </div>
                             )}
                           </div>
