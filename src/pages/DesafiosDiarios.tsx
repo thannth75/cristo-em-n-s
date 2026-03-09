@@ -93,7 +93,7 @@ const dailyChallenges: Challenge[] = [
 ];
 
 export default function DesafiosDiarios() {
-  const { user } = useAuth();
+  const authState = useAuth();
   const { awardXp } = useXpAward();
   const [completedChallenges, setCompletedChallenges] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
