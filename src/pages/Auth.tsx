@@ -288,7 +288,7 @@ const Auth = () => {
         </p>
         <p className="mt-1 text-sm font-medium text-primary">— João 14:6</p>
       </motion.div>
-    </div>
+    </main>
   );
 };
 
