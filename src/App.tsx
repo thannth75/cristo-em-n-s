@@ -42,7 +42,7 @@ const DashboardLider = lazy(() => import("./pages/DashboardLider"));
 const Mensagens = lazy(() => import("./pages/Mensagens"));
 const RotinaComDeus = lazy(() => import("./pages/RotinaComDeus"));
 const Onboarding = lazy(() => import("./pages/Onboarding"));
-const Discipulado = lazy(() => import("./pages/Discipulado"));
+const TrilhaFe = lazy(() => import("./pages/TrilhaFe"));
 const Provas = lazy(() => import("./pages/Provas"));
 const PerfilPublico = lazy(() => import("./pages/PerfilPublico"));
 const MomentoComDeus = lazy(() => import("./pages/MomentoComDeus"));
