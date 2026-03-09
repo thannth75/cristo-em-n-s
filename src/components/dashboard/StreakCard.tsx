@@ -51,7 +51,7 @@ const StreakItem = forwardRef<HTMLDivElement, StreakItemProps>(function StreakIt
       </div>
     </motion.div>
   );
-}
+});
 
 interface StreakCardProps {
   streaks: StreakData;
