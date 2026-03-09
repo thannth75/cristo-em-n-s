@@ -133,7 +133,11 @@ Deno.serve(async (req) => {
         ? `${senderName}: ${content}`
         : messageType === "gif"
           ? `${senderName}: 🎬 GIF`
-          : `${senderName}: ${clamp(content, 120)}`;
+          : messageType === "audio"
+            ? `${senderName}: 🎤 Áudio`
+            : messageType === "file"
+              ? `${senderName}: 📎 Arquivo`
+              : `${senderName}: ${clamp(content, 120)}`;
 
     const pushPayload = {
       user_id: receiverId,
