@@ -107,6 +107,7 @@ function AnimatedRoutes() {
             <Route path="/rotina-com-deus" element={<RotinaComDeus />} />
             <Route path="/provas" element={<Provas />} />
             <Route path="/momento-com-deus" element={<MomentoComDeus />} />
+            <Route path="/radio" element={<Radio />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
