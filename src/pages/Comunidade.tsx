@@ -229,6 +229,7 @@ const Comunidade = () => {
 
           <div className="space-y-3 sm:space-y-4 mt-4">
             <CreatePostCard userName={profile?.full_name} avatarUrl={profile?.avatar_url} onClick={() => setIsPostDialogOpen(true)} />
+            <VerseShareCard onShareToPost={(text) => { setIsPostDialogOpen(true); }} />
 
             {/* Feed Filters */}
             <div className="flex gap-2 px-1">
