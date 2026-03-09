@@ -432,7 +432,9 @@ const Mensagens = () => {
     <div className="min-h-screen bg-background">
       <AnimatePresence mode="wait">
         {selectedGroup ? (
-          <GroupChat group={selectedGroup} onClose={() => setSelectedGroup(null)} />
+          <motion.div key="group-chat" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <GroupChat group={selectedGroup} onClose={() => setSelectedGroup(null)} />
+          </motion.div>
         ) : selectedConversation ? (
           <motion.div key="chat" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="flex flex-col h-screen">
             {/* Chat Header */}
