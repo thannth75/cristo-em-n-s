@@ -48,8 +48,8 @@ const challenges: Challenge[] = [
 ];
 
 export default function RoletaDesafios() {
-  const authState = useAuth();
-  const { awardXp } = useXpAward();
+  const { user } = useAuth();
+  const { awardXp } = useXpAward(user?.id);
   const [isSpinning, setIsSpinning] = useState(false);
   const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
   const [hasSpunToday, setHasSpunToday] = useState(false);
