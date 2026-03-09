@@ -90,7 +90,7 @@ export default function RoletaDesafios() {
       const today = format(new Date(), "yyyy-MM-dd");
       
       await supabase.from("journal_entries").insert({
-        user_id: authState.user.id,
+        user_id: user.id,
         title: `🎯 Roleta: ${selectedChallenge.title}`,
         content: `✅ Desafio da Roleta completado!\n\n${selectedChallenge.description}`,
         mood: "grateful"
