@@ -128,7 +128,7 @@ export default function DesafiosDiarios() {
   };
 
   const completeChallenge = async (challenge: Challenge) => {
-    if (!authState.user || completedChallenges.includes(challenge.id)) return;
+    if (!user || completedChallenges.includes(challenge.id)) return;
 
     try {
       await supabase.from("journal_entries").insert({
