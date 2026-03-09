@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import logoVidaEmCristo from "@/assets/logo-vida-em-cristo.webp";
+import logoVidaEmCristo from "@/assets/logo-vida-em-cristo.png";
 
 const brazilianStates = [
   { value: "AC", label: "Acre" },

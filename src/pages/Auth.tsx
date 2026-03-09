@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import logo from "@/assets/logo-vida-em-cristo.webp";
+import logo from "@/assets/logo-vida-em-cristo.png";
 import ParallaxBackground from "@/components/ParallaxBackground";
 
 const Auth = () => {
@@ -89,7 +89,7 @@ const Auth = () => {
   };
 
   return (
-    <main 
+    <div 
       className="relative min-h-screen bg-background overflow-hidden"
       style={{
         paddingTop: 'env(safe-area-inset-top, 0px)',
@@ -121,10 +121,7 @@ const Auth = () => {
             <motion.img
               src={logo}
               alt="Vida em Cristo"
-              className="relative h-[253px] sm:h-[390px] w-auto drop-shadow-xl"
-              width={585}
-              height={390}
-              fetchPriority="high"
+              className="relative h-[280px] sm:h-[390px] w-auto drop-shadow-xl"
               animate={{ y: [0, -8, 0] }}
               transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
             />
@@ -244,8 +241,7 @@ const Auth = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground min-w-[24px] min-h-[24px] flex items-center justify-center"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
@@ -288,7 +284,7 @@ const Auth = () => {
         </p>
         <p className="mt-1 text-sm font-medium text-primary">— João 14:6</p>
       </motion.div>
-    </main>
+    </div>
   );
 };
 

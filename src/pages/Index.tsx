@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import logo from "@/assets/logo-vida-em-cristo.webp";
+import logo from "@/assets/logo-vida-em-cristo.png";
 import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
@@ -37,9 +37,6 @@ const Index = () => {
           src={logo}
           alt="Vida em Cristo"
           className="mb-6 h-40 w-auto"
-          width={240}
-          height={160}
-          fetchPriority="high"
           animate={{ scale: [1, 1.02, 1] }}
           transition={{ duration: 2, repeat: Infinity }}
         />
