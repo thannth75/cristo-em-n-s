@@ -567,6 +567,7 @@ const Mensagens = () => {
 
             {/* Input */}
             <div className="sticky bottom-0 bg-background border-t border-border px-2 py-2" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom, 8px))' }}>
+              {/* Audio recorder takes over the input bar when active */}
               <div className="flex items-end gap-2">
                 <div className="flex-1 flex items-center gap-2 bg-card rounded-3xl px-3 py-2 shadow-sm border border-border">
                   <button onClick={() => setShowMediaPicker(!showMediaPicker)} className="text-muted-foreground hover:text-primary transition-colors shrink-0">
@@ -581,13 +582,15 @@ const Mensagens = () => {
                     onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
                     onFocus={() => setShowMediaPicker(false)}
                   />
-                  <button onClick={() => setShowMediaPicker(!showMediaPicker)} className="text-muted-foreground hover:text-primary transition-colors shrink-0">
-                    <Paperclip className="h-5 w-5" />
-                  </button>
+                  <FileUploader userId={user?.id || ""} onSendFile={handleSendFile} />
                 </div>
-                <Button size="icon" onClick={handleSendMessage} disabled={!newMessage.trim() || isSending} className="h-11 w-11 rounded-full shrink-0 shadow-md">
-                  <Send className="h-5 w-5" />
-                </Button>
+                {newMessage.trim() ? (
+                  <Button size="icon" onClick={handleSendMessage} disabled={isSending} className="h-11 w-11 rounded-full shrink-0 shadow-md">
+                    <Send className="h-5 w-5" />
+                  </Button>
+                ) : (
+                  <AudioRecorder userId={user?.id || ""} onSendAudio={handleSendAudio} />
+                )}
               </div>
             </div>
           </motion.div>
