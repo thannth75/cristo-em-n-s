@@ -15,6 +15,7 @@ import { VideoPost } from "./VideoPost";
 import PostComments from "./PostComments";
 import { RepostButton } from "./RepostButton";
 import { renderMentions } from "./MentionInput";
+import PollWidget from "./PollWidget";
 import { cn } from "@/lib/utils";
 
 interface Post {
