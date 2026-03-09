@@ -39,7 +39,7 @@ const versePairs = [
 ];
 
 export default function MemoriaBiblica() {
-  const { user } = useAuth();
+  const authState = useAuth();
   const { awardXp } = useXpAward();
   const [cards, setCards] = useState<VerseCard[]>([]);
   const [flippedCards, setFlippedCards] = useState<number[]>([]);
