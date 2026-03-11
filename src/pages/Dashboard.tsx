@@ -132,6 +132,7 @@ const Dashboard = () => {
     { title: "Comunidade", description: "Chat e posts", icon: MessageCircle, href: "/comunidade" },
     { title: "Pedidos de Oração", description: "Ore com os irmãos", icon: MessageSquare, href: "/oracoes" },
     { title: "Rádio de Louvores", description: "Ouça louvores 24h", icon: Radio, href: "/radio", badge: "🎵" },
+    { title: "Plano de Leitura", description: "Leia a Bíblia em 1 ano", icon: Target, href: "/plano-leitura" },
   ];
 
   const youthFeatures = [
