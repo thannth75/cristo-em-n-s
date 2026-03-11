@@ -83,6 +83,8 @@ export function useAuth() {
         const isYouth = userRoles.some((r) => r.role === "jovem");
         const isMember = userRoles.some((r) => r.role === "membro");
         const isMusician = userRoles.some((r) => r.role === "musico");
+        const isKidsLeader = userRoles.some((r) => r.role === "kids_leader");
+        const isKids = userRoles.some((r) => r.role === "kids");
 
         setState({
           user,
@@ -95,6 +97,8 @@ export function useAuth() {
           isYouth,
           isMember,
           isMusician,
+          isKidsLeader,
+          isKids,
           isProfileComplete: profile?.is_profile_complete ?? false,
           userCity: profile?.city ?? null,
         });
