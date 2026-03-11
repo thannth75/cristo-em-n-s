@@ -135,6 +135,8 @@ export function useAuth() {
           isYouth: false,
           isMember: false,
           isMusician: false,
+          isKidsLeader: false,
+          isKids: false,
           isProfileComplete: false,
           userCity: null,
         });

@@ -133,6 +133,7 @@ const Dashboard = () => {
     { title: "Pedidos de Oração", description: "Ore com os irmãos", icon: MessageSquare, href: "/oracoes" },
     { title: "Rádio de Louvores", description: "Ouça louvores 24h", icon: Radio, href: "/radio", badge: "🎵" },
     { title: "Plano de Leitura", description: "Leia a Bíblia em 1 ano", icon: Target, href: "/plano-leitura" },
+    { title: "Espaço Kids/Teen", description: "Área infantil cristã", icon: Sparkles, href: "/espaco-kids", badge: "🌈" },
   ];
 
   const youthFeatures = [
