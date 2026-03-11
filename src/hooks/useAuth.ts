@@ -18,7 +18,7 @@ interface Profile {
   is_profile_complete: boolean | null;
 }
 
-type AppRole = "jovem" | "lider" | "admin" | "membro" | "musico";
+type AppRole = "jovem" | "lider" | "admin" | "membro" | "musico" | "kids_leader" | "kids";
 
 interface UserRole {
   role: AppRole;
@@ -35,6 +35,8 @@ export interface AuthState {
   isYouth: boolean;
   isMember: boolean;
   isMusician: boolean;
+  isKidsLeader: boolean;
+  isKids: boolean;
   isProfileComplete: boolean;
   userCity: string | null;
 }
@@ -51,6 +53,8 @@ export function useAuth() {
     isYouth: false,
     isMember: false,
     isMusician: false,
+    isKidsLeader: false,
+    isKids: false,
     isProfileComplete: false,
     userCity: null,
   });
@@ -79,6 +83,8 @@ export function useAuth() {
         const isYouth = userRoles.some((r) => r.role === "jovem");
         const isMember = userRoles.some((r) => r.role === "membro");
         const isMusician = userRoles.some((r) => r.role === "musico");
+        const isKidsLeader = userRoles.some((r) => r.role === "kids_leader");
+        const isKids = userRoles.some((r) => r.role === "kids");
 
         setState({
           user,
@@ -91,6 +97,8 @@ export function useAuth() {
           isYouth,
           isMember,
           isMusician,
+          isKidsLeader,
+          isKids,
           isProfileComplete: profile?.is_profile_complete ?? false,
           userCity: profile?.city ?? null,
         });
@@ -127,6 +135,8 @@ export function useAuth() {
           isYouth: false,
           isMember: false,
           isMusician: false,
+          isKidsLeader: false,
+          isKids: false,
           isProfileComplete: false,
           userCity: null,
         });
@@ -146,10 +156,14 @@ export function useAuth() {
   // Helper para verificar se pode acessar área de músicos
   const canAccessMusicianContent = state.isMusician || state.isLeader || state.isAdmin;
 
+  // Helper para verificar se pode acessar/gerenciar Espaço Kids
+  const canAccessKidsContent = state.isKidsLeader || state.isLeader || state.isAdmin;
+
   return { 
     ...state, 
     signOut,
     canAccessYouthContent,
     canAccessMusicianContent,
+    canAccessKidsContent,
   };
 }
