@@ -35,6 +35,8 @@ export interface AuthState {
   isYouth: boolean;
   isMember: boolean;
   isMusician: boolean;
+  isKidsLeader: boolean;
+  isKids: boolean;
   isProfileComplete: boolean;
   userCity: string | null;
 }
