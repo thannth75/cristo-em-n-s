@@ -137,7 +137,6 @@ const Dashboard = () => {
   const youthFeatures = [
     { title: "Provas e Notas", description: "Avaliações e frequência", icon: ClipboardCheck, href: "/provas" },
     { title: "Células", description: "Pequenos grupos", icon: Users, href: "/celulas" },
-    { title: "Plano de Leitura", description: "Leia a Bíblia em 1 ano", icon: Target, href: "/plano-leitura" },
     { title: "Presença", description: "Registro de participação", icon: Users, href: "/presenca" },
   ];
 
