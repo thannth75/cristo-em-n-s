@@ -18,7 +18,7 @@ interface Profile {
   is_profile_complete: boolean | null;
 }
 
-type AppRole = "jovem" | "lider" | "admin" | "membro" | "musico";
+type AppRole = "jovem" | "lider" | "admin" | "membro" | "musico" | "kids_leader" | "kids";
 
 interface UserRole {
   role: AppRole;
