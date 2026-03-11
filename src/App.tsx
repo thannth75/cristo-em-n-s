@@ -51,6 +51,7 @@ const JogosEspirituais = lazy(() => import("./pages/JogosEspirituais"));
 const DesafiosDiarios = lazy(() => import("./pages/DesafiosDiarios"));
 const RoletaDesafios = lazy(() => import("./pages/RoletaDesafios"));
 const MemoriaBiblica = lazy(() => import("./pages/MemoriaBiblica"));
+const EspacoKids = lazy(() => import("./pages/EspacoKids"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const PageLoader = () => (
