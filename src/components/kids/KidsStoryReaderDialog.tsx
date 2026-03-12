@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { BookOpen, CheckCircle2, ChevronLeft, ChevronRight } from "lucide-react";
 import {
