@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageCircle, Send, Loader2, Heart, MoreVertical, Trash2 } from "lucide-react";
+import { MessageCircle, Send, Loader2, MoreVertical, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Sheet,
   SheetContent,
@@ -26,7 +28,8 @@ interface Comment {
   created_at: string;
   likes_count: number;
   profile?: { full_name: string; avatar_url: string | null };
-  user_liked?: boolean;
+  user_reaction?: string | null;
+  reaction_counts?: Record<string, number>;
 }
 
 interface PostCommentsProps {
@@ -35,10 +38,28 @@ interface PostCommentsProps {
   onCommentsChange: (count: number) => void;
 }
 
+const REACTIONS = [
+  { type: "like", emoji: "❤️", label: "Curtir" },
+  { type: "pray", emoji: "🙏", label: "Orar" },
+  { type: "fire", emoji: "🔥", label: "Forte" },
+  { type: "clap", emoji: "👏", label: "Amém" },
+  { type: "joy", emoji: "😊", label: "Alegria" },
+] as const;
+
+const adjustCount = (counts: Record<string, number>, type: string, delta: number) => {
+  const current = counts[type] || 0;
+  const next = Math.max(0, current + delta);
+  if (next === 0) {
+    const { [type]: _removed, ...rest } = counts;
+    return rest;
+  }
+  return { ...counts, [type]: next };
+};
+
 const PostComments = ({ postId, commentsCount, onCommentsChange }: PostCommentsProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
-  
+
   const [isOpen, setIsOpen] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
@@ -53,38 +74,60 @@ const PostComments = ({ postId, commentsCount, onCommentsChange }: PostCommentsP
 
   const fetchComments = async () => {
     setIsLoading(true);
-    
-    const { data: commentsData } = await supabase
+
+    const { data: commentsData, error } = await supabase
       .from("post_comments")
       .select("*")
       .eq("post_id", postId)
       .order("created_at", { ascending: true });
 
-    if (commentsData) {
-      const userIds = [...new Set(commentsData.map(c => c.user_id))];
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("user_id, full_name, avatar_url")
-        .in("user_id", userIds);
-
-      // Check which comments user has liked
-      const { data: userLikes } = await supabase
-        .from("comment_reactions")
-        .select("comment_id")
-        .eq("user_id", user?.id)
-        .in("comment_id", commentsData.map(c => c.id));
-
-      const likedCommentIds = new Set(userLikes?.map(l => l.comment_id) || []);
-
-      const commentsWithProfiles = commentsData.map(comment => ({
-        ...comment,
-        profile: profiles?.find(p => p.user_id === comment.user_id),
-        user_liked: likedCommentIds.has(comment.id),
-      }));
-
-      setComments(commentsWithProfiles);
+    if (error || !commentsData || commentsData.length === 0) {
+      setComments([]);
+      setIsLoading(false);
+      return;
     }
-    
+
+    const userIds = [...new Set(commentsData.map((comment) => comment.user_id))];
+    const commentIds = commentsData.map((comment) => comment.id);
+
+    const [{ data: profiles }, { data: reactions }] = await Promise.all([
+      supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", userIds),
+      supabase
+        .from("comment_reactions")
+        .select("comment_id, user_id, reaction_type")
+        .in("comment_id", commentIds),
+    ]);
+
+    const reactionsByComment = new Map<
+      string,
+      { counts: Record<string, number>; userReaction: string | null }
+    >();
+
+    commentIds.forEach((id) => {
+      reactionsByComment.set(id, { counts: {}, userReaction: null });
+    });
+
+    (reactions || []).forEach((reaction) => {
+      const bucket = reactionsByComment.get(reaction.comment_id);
+      if (!bucket) return;
+
+      bucket.counts[reaction.reaction_type] = (bucket.counts[reaction.reaction_type] || 0) + 1;
+      if (reaction.user_id === user?.id) {
+        bucket.userReaction = reaction.reaction_type;
+      }
+    });
+
+    const merged = commentsData.map((comment) => {
+      const reactionData = reactionsByComment.get(comment.id);
+      return {
+        ...comment,
+        profile: profiles?.find((profile) => profile.user_id === comment.user_id),
+        user_reaction: reactionData?.userReaction ?? null,
+        reaction_counts: reactionData?.counts ?? {},
+      };
+    });
+
+    setComments(merged);
     setIsLoading(false);
   };
 
@@ -92,7 +135,11 @@ const PostComments = ({ postId, commentsCount, onCommentsChange }: PostCommentsP
     if (!newComment.trim() || !user) return;
 
     if (newComment.length > 500) {
-      toast({ title: "Comentário muito longo", description: "Máximo 500 caracteres", variant: "destructive" });
+      toast({
+        title: "Comentário muito longo",
+        description: "Máximo 500 caracteres",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -106,51 +153,74 @@ const PostComments = ({ postId, commentsCount, onCommentsChange }: PostCommentsP
 
     if (error) {
       toast({ title: "Erro ao comentar", variant: "destructive" });
-    } else {
-      setNewComment("");
-      fetchComments();
-      
-      // Update comments count on post
-      const newCount = commentsCount + 1;
-      await supabase
-        .from("community_posts")
-        .update({ comments_count: newCount })
-        .eq("id", postId);
-      
-      onCommentsChange(newCount);
+      setIsSending(false);
+      return;
     }
+
+    setNewComment("");
+    await fetchComments();
+
+    const newCount = commentsCount + 1;
+    await supabase.from("community_posts").update({ comments_count: newCount }).eq("id", postId);
+    onCommentsChange(newCount);
 
     setIsSending(false);
   };
 
-  const handleLikeComment = async (commentId: string, isLiked: boolean) => {
+  const handleReactComment = async (comment: Comment, reactionType: string) => {
     if (!user) return;
 
-    if (isLiked) {
-      await supabase
-        .from("comment_reactions")
-        .delete()
-        .eq("comment_id", commentId)
-        .eq("user_id", user.id);
-    } else {
-      await supabase.from("comment_reactions").insert({
-        comment_id: commentId,
-        user_id: user.id,
-        reaction_type: "like",
-      });
+    const nextReaction = comment.user_reaction === reactionType ? null : reactionType;
+
+    const { error: clearError } = await supabase
+      .from("comment_reactions")
+      .delete()
+      .eq("comment_id", comment.id)
+      .eq("user_id", user.id);
+
+    if (clearError) {
+      toast({ title: "Erro ao reagir", variant: "destructive" });
+      return;
     }
 
-    // Update local state
-    setComments(prev => prev.map(c => {
-      if (c.id === commentId) {
-        return {
-          ...c,
-          user_liked: !isLiked,
-          likes_count: isLiked ? Math.max(0, c.likes_count - 1) : c.likes_count + 1,
-        };
+    if (nextReaction) {
+      const { error: insertError } = await supabase.from("comment_reactions").insert({
+        comment_id: comment.id,
+        user_id: user.id,
+        reaction_type: nextReaction,
+      });
+
+      if (insertError) {
+        toast({ title: "Erro ao reagir", variant: "destructive" });
+        return;
       }
-      return c;
-    }));
+    }
+
+    setComments((prev) =>
+      prev.map((item) => {
+        if (item.id !== comment.id) return item;
+
+        let counts = { ...(item.reaction_counts || {}) };
+        let likes = item.likes_count;
+
+        if (item.user_reaction) {
+          counts = adjustCount(counts, item.user_reaction, -1);
+          likes = Math.max(0, likes - 1);
+        }
+
+        if (nextReaction) {
+          counts = adjustCount(counts, nextReaction, 1);
+          likes += 1;
+        }
+
+        return {
+          ...item,
+          user_reaction: nextReaction,
+          reaction_counts: counts,
+          likes_count: likes,
+        };
+      })
+    );
   };
 
   const handleDeleteComment = async (commentId: string) => {
@@ -160,18 +230,16 @@ const PostComments = ({ postId, commentsCount, onCommentsChange }: PostCommentsP
       .eq("id", commentId)
       .eq("user_id", user?.id);
 
-    if (!error) {
-      setComments(prev => prev.filter(c => c.id !== commentId));
-      
-      // Update comments count
-      const newCount = Math.max(0, commentsCount - 1);
-      await supabase
-        .from("community_posts")
-        .update({ comments_count: newCount })
-        .eq("id", postId);
-      
-      onCommentsChange(newCount);
+    if (error) {
+      toast({ title: "Erro ao excluir comentário", variant: "destructive" });
+      return;
     }
+
+    setComments((prev) => prev.filter((comment) => comment.id !== commentId));
+
+    const newCount = Math.max(0, commentsCount - 1);
+    await supabase.from("community_posts").update({ comments_count: newCount }).eq("id", postId);
+    onCommentsChange(newCount);
   };
 
   const formatTime = (dateStr: string) => {
@@ -193,29 +261,26 @@ const PostComments = ({ postId, commentsCount, onCommentsChange }: PostCommentsP
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors"
+        className="flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-primary"
       >
         <MessageCircle className="h-4 w-4" />
         {commentsCount}
       </button>
 
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent side="bottom" className="h-[70vh] rounded-t-2xl px-4">
+        <SheetContent side="bottom" className="h-[72vh] rounded-t-2xl px-4">
           <SheetHeader className="pb-4">
-            <SheetTitle className="font-serif">
-              Comentários ({commentsCount})
-            </SheetTitle>
+            <SheetTitle className="font-serif">Comentários ({commentsCount})</SheetTitle>
           </SheetHeader>
 
-          <div className="flex flex-col h-full">
-            {/* Comments List */}
-            <div className="flex-1 overflow-y-auto space-y-3 pb-4">
+          <div className="flex h-full flex-col">
+            <div className="flex-1 space-y-3 overflow-y-auto pb-4">
               {isLoading ? (
                 <div className="flex justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 </div>
               ) : comments.length === 0 ? (
-                <div className="text-center py-8">
+                <div className="py-8 text-center">
                   <MessageCircle className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
                   <p className="text-muted-foreground">Seja o primeiro a comentar!</p>
                 </div>
@@ -227,26 +292,31 @@ const PostComments = ({ postId, commentsCount, onCommentsChange }: PostCommentsP
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, x: -100 }}
-                      className="flex gap-3 group"
+                      className="group flex gap-3"
                     >
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-semibold">
-                        {comment.profile?.full_name?.charAt(0) || "?"}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="bg-muted rounded-xl px-3 py-2">
+                      <Avatar className="h-8 w-8 shrink-0">
+                        <AvatarImage src={comment.profile?.avatar_url || undefined} alt={comment.profile?.full_name || "Avatar"} />
+                        <AvatarFallback className="text-xs font-semibold">
+                          {comment.profile?.full_name?.charAt(0)?.toUpperCase() || "?"}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="rounded-xl bg-muted px-3 py-2">
                           <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <span className="font-semibold text-sm text-foreground truncate">
+                            <div className="flex min-w-0 items-center gap-2">
+                              <span className="truncate text-sm font-semibold text-foreground">
                                 {comment.profile?.full_name || "Anônimo"}
                               </span>
-                              <span className="text-xs text-muted-foreground shrink-0">
+                              <span className="shrink-0 text-xs text-muted-foreground">
                                 {formatTime(comment.created_at)}
                               </span>
                             </div>
+
                             {comment.user_id === user?.id && (
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <button className="p-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <button className="p-1 opacity-0 transition-opacity group-hover:opacity-100">
                                     <MoreVertical className="h-4 w-4 text-muted-foreground" />
                                   </button>
                                 </DropdownMenuTrigger>
@@ -255,27 +325,40 @@ const PostComments = ({ postId, commentsCount, onCommentsChange }: PostCommentsP
                                     onClick={() => handleDeleteComment(comment.id)}
                                     className="text-destructive focus:text-destructive"
                                   >
-                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    <Trash2 className="mr-2 h-4 w-4" />
                                     Excluir
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
                             )}
                           </div>
-                          <p className="text-sm text-foreground mt-1 break-words">
-                            {comment.content}
-                          </p>
+
+                          <p className="mt-1 break-words text-sm text-foreground">{comment.content}</p>
                         </div>
-                        {/* Like button for comment */}
-                        <button
-                          onClick={() => handleLikeComment(comment.id, comment.user_liked || false)}
-                          className={`flex items-center gap-1 text-xs mt-1 ml-3 transition-colors ${
-                            comment.user_liked ? "text-destructive" : "text-muted-foreground hover:text-destructive"
-                          }`}
-                        >
-                          <Heart className={`h-3 w-3 ${comment.user_liked ? "fill-current" : ""}`} />
-                          {comment.likes_count > 0 && <span>{comment.likes_count}</span>}
-                        </button>
+
+                        <div className="ml-3 mt-1 flex flex-wrap items-center gap-1.5">
+                          {REACTIONS.map((reaction) => {
+                            const count = comment.reaction_counts?.[reaction.type] || 0;
+                            const active = comment.user_reaction === reaction.type;
+
+                            return (
+                              <button
+                                key={reaction.type}
+                                onClick={() => handleReactComment(comment, reaction.type)}
+                                className={cn(
+                                  "inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs transition-colors",
+                                  active
+                                    ? "border-primary/40 bg-primary/10 text-foreground"
+                                    : "border-border bg-card text-muted-foreground hover:text-foreground"
+                                )}
+                                aria-label={reaction.label}
+                              >
+                                <span>{reaction.emoji}</span>
+                                {count > 0 && <span>{count}</span>}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     </motion.div>
                   ))}
@@ -283,28 +366,30 @@ const PostComments = ({ postId, commentsCount, onCommentsChange }: PostCommentsP
               )}
             </div>
 
-            {/* Input Area */}
-            <div className="flex gap-2 pt-4 border-t border-border pb-safe">
-              <Input
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                placeholder="Escreva um comentário..."
-                className="flex-1 rounded-xl"
-                maxLength={500}
-                onKeyPress={(e) => e.key === "Enter" && handleSendComment()}
-              />
-              <Button
-                onClick={handleSendComment}
-                size="icon"
-                className="rounded-xl shrink-0"
-                disabled={!newComment.trim() || isSending}
-              >
-                {isSending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-              </Button>
+            <div className="border-t border-border pt-4 pb-safe">
+              <div className="flex gap-2">
+                <Input
+                  value={newComment}
+                  onChange={(event) => setNewComment(event.target.value)}
+                  placeholder="Escreva um comentário..."
+                  className="flex-1 rounded-xl"
+                  maxLength={500}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      void handleSendComment();
+                    }
+                  }}
+                />
+                <Button
+                  onClick={handleSendComment}
+                  size="icon"
+                  className="shrink-0 rounded-xl"
+                  disabled={!newComment.trim() || isSending}
+                >
+                  {isSending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                </Button>
+              </div>
             </div>
           </div>
         </SheetContent>

@@ -101,7 +101,7 @@ export function FeedPost({
           className="relative shrink-0"
         >
           <Avatar className="h-11 w-11 ring-2 ring-primary/10">
-            <AvatarImage src={post.profiles?.avatar_url || ""} />
+            <AvatarImage src={post.profiles?.avatar_url || ""} className="object-cover" />
             <AvatarFallback className="bg-primary/10 text-primary font-semibold">
               {getInitials(post.profiles?.full_name || "?")}
             </AvatarFallback>
