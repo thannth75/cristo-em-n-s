@@ -1,154 +1,15 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Volume2, VolumeX } from "lucide-react";
+import { ExternalLink, Radio, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-// Orchestral worship pad - majestic, peaceful, glorious
+const RADIO_WIDGET_URL =
+  "https://public-player-widget.webradiosite.com/?source=widget_embeded&locale=pt-br&info=https%3A%2F%2Fpublic-player-widget.webradiosite.com%2Fapp%2Fplayer%2Finfo%2F3001%3Fhash%3D40baa3aa9377e413d27100e209d7c2d24ba5afd1&theme=light&color=3&cover=0&current_track=1&schedules=1&link=1&link_to=https%3A%2F%2Fwww.obraemrestauracao.org&share=1&popup=1&embed=1&auto_play=0";
+
 const AmbientSound = () => {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [showTooltip, setShowTooltip] = useState(false);
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const isPlayingRef = useRef(false);
-  const nodesRef = useRef<OscillatorNode[]>([]);
-
-  const startSound = useCallback(() => {
-    const ctx = new AudioContext();
-    audioContextRef.current = ctx;
-    isPlayingRef.current = true;
-
-    const masterGain = ctx.createGain();
-    masterGain.gain.setValueAtTime(0, ctx.currentTime);
-    masterGain.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 4);
-    masterGain.connect(ctx.destination);
-
-    // Reverb simulation
-    const convolver = ctx.createConvolver();
-    const reverbLength = ctx.sampleRate * 3;
-    const impulse = ctx.createBuffer(2, reverbLength, ctx.sampleRate);
-    for (let ch = 0; ch < 2; ch++) {
-      const data = impulse.getChannelData(ch);
-      for (let i = 0; i < reverbLength; i++) {
-        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / reverbLength, 2.5);
-      }
-    }
-    convolver.buffer = impulse;
-    const reverbGain = ctx.createGain();
-    reverbGain.gain.value = 0.3;
-    convolver.connect(reverbGain);
-    reverbGain.connect(masterGain);
-
-    // Majestic orchestral pad - C major with extensions
-    // Root C2, E2, G2, C3, E3, G3, B3 (Cmaj7 spread voicing)
-    const padFreqs = [65.41, 82.41, 98.0, 130.81, 164.81, 196.0, 246.94];
-    const padGains = [0.25, 0.2, 0.2, 0.3, 0.15, 0.15, 0.1];
-
-    padFreqs.forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(freq, ctx.currentTime);
-      // Gentle vibrato for warmth
-      const lfo = ctx.createOscillator();
-      const lfoGain = ctx.createGain();
-      lfo.type = "sine";
-      lfo.frequency.value = 0.15 + Math.random() * 0.1;
-      lfoGain.gain.value = freq * 0.003;
-      lfo.connect(lfoGain);
-      lfoGain.connect(osc.frequency);
-      lfo.start();
-
-      const gain = ctx.createGain();
-      gain.gain.value = padGains[i];
-
-      osc.connect(gain);
-      gain.connect(masterGain);
-      gain.connect(convolver);
-      osc.start();
-      nodesRef.current.push(osc, lfo);
-    });
-
-    // Ethereal high strings - slow evolving shimmer
-    const shimmerFreqs = [523.25, 659.25, 783.99]; // C5, E5, G5
-    shimmerFreqs.forEach((freq) => {
-      const osc = ctx.createOscillator();
-      osc.type = "triangle";
-      osc.frequency.value = freq;
-      
-      const gain = ctx.createGain();
-      // Slow breathing amplitude
-      const ampLfo = ctx.createOscillator();
-      const ampLfoGain = ctx.createGain();
-      ampLfo.type = "sine";
-      ampLfo.frequency.value = 0.05 + Math.random() * 0.03;
-      ampLfoGain.gain.value = 0.015;
-      ampLfo.connect(ampLfoGain);
-      ampLfoGain.connect(gain.gain);
-      gain.gain.value = 0.02;
-
-      osc.connect(gain);
-      gain.connect(masterGain);
-      gain.connect(convolver);
-      osc.start();
-      ampLfo.start();
-      nodesRef.current.push(osc, ampLfo);
-    });
-
-    // Subtle sub-bass for depth and majesty
-    const sub = ctx.createOscillator();
-    sub.type = "sine";
-    sub.frequency.value = 32.7; // C1
-    const subGain = ctx.createGain();
-    subGain.gain.value = 0.08;
-    sub.connect(subGain);
-    subGain.connect(masterGain);
-    sub.start();
-    nodesRef.current.push(sub);
-
-    setIsPlaying(true);
-  }, []);
-
-  const stopSound = useCallback(() => {
-    isPlayingRef.current = false;
-    
-    if (audioContextRef.current && audioContextRef.current.state !== "closed") {
-      // Fade out gracefully
-      const ctx = audioContextRef.current;
-      const now = ctx.currentTime;
-      
-      // Stop all nodes after fade
-      nodesRef.current.forEach(node => {
-        try { node.stop(now + 2); } catch { /* ignore */ }
-      });
-      nodesRef.current = [];
-      
-      setTimeout(() => {
-        if (audioContextRef.current && audioContextRef.current.state !== "closed") {
-          audioContextRef.current.close();
-          audioContextRef.current = null;
-        }
-      }, 2500);
-    }
-    setIsPlaying(false);
-  }, []);
-
-  const toggleSound = () => {
-    if (isPlaying) {
-      stopSound();
-    } else {
-      startSound();
-    }
-  };
-
-  useEffect(() => {
-    return () => {
-      isPlayingRef.current = false;
-      nodesRef.current.forEach(node => {
-        try { node.stop(); } catch { /* ignore */ }
-      });
-      nodesRef.current = [];
-      if (audioContextRef.current && audioContextRef.current.state !== "closed") {
-        audioContextRef.current.close();
-      }
-    };
-  }, []);
+  const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div
@@ -157,35 +18,63 @@ const AmbientSound = () => {
         bottom: "calc(10rem + max(0.5rem, env(safe-area-inset-bottom, 8px)))",
       }}
     >
-      <motion.button
-        onClick={toggleSound}
-        onHoverStart={() => setShowTooltip(true)}
-        onHoverEnd={() => setShowTooltip(false)}
-        whileTap={{ scale: 0.9 }}
-        className={`flex h-10 w-10 items-center justify-center rounded-full shadow-lg transition-colors ${
-          isPlaying
-            ? "bg-primary text-primary-foreground"
-            : "bg-card/90 backdrop-blur-sm text-muted-foreground border border-border"
-        }`}
-        aria-label={isPlaying ? "Desativar som ambiente" : "Ativar som ambiente"}
-      >
-        {isPlaying ? (
-          <Volume2 className="h-4 w-4" />
-        ) : (
-          <VolumeX className="h-4 w-4" />
-        )}
-      </motion.button>
-
-      <AnimatePresence>
-        {showTooltip && (
+      <AnimatePresence mode="wait">
+        {isOpen ? (
           <motion.div
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 10 }}
-            className="absolute right-12 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-lg bg-card px-3 py-1.5 text-xs text-foreground shadow-md border border-border"
+            key="radio-widget"
+            initial={{ opacity: 0, y: 8, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.98 }}
+            className="w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xl"
           >
-            {isPlaying ? "Adoração ambiente 🎶" : "Som de adoração"}
+            <div className="flex items-center justify-between border-b border-border/60 bg-muted/30 px-3 py-2">
+              <p className="text-sm font-semibold text-foreground">Rádio de Louvores</p>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setIsOpen(false)}
+                aria-label="Fechar rádio"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="px-2 py-2">
+              <iframe
+                src={RADIO_WIDGET_URL}
+                title="Rádio Obra em Restauração"
+                scrolling="no"
+                frameBorder="0"
+                allow="autoplay; clipboard-write"
+                className="w-full rounded-xl"
+                height={165}
+              />
+            </div>
+
+            <div className="flex items-center justify-between gap-2 border-t border-border/60 px-3 py-2">
+              <span className="text-xs text-muted-foreground">Música cristã 24h</span>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-full gap-1.5"
+                onClick={() => navigate("/radio")}
+              >
+                Abrir página
+                <ExternalLink className="h-3.5 w-3.5" />
+              </Button>
+            </div>
           </motion.div>
+        ) : (
+          <motion.button
+            key="radio-button"
+            onClick={() => setIsOpen(true)}
+            whileTap={{ scale: 0.94 }}
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-card/95 text-primary shadow-lg backdrop-blur"
+            aria-label="Abrir rádio de louvores"
+          >
+            <Radio className="h-5 w-5" />
+          </motion.button>
         )}
       </AnimatePresence>
     </div>

@@ -89,7 +89,7 @@ export default function ModernFeedPost({
           className="relative shrink-0"
         >
           <Avatar className="h-10 w-10 sm:h-11 sm:w-11 ring-2 ring-primary/20 ring-offset-2 ring-offset-card">
-            <AvatarImage src={post.profiles?.avatar_url || undefined} />
+            <AvatarImage src={post.profiles?.avatar_url || undefined} className="object-cover" />
             <AvatarFallback className="bg-gradient-to-br from-primary to-primary/70 text-primary-foreground font-semibold">
               {userInitial}
             </AvatarFallback>
