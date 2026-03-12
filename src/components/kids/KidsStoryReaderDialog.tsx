@@ -44,7 +44,7 @@ export function KidsStoryReaderDialog({
   const totalChapters = story.chapters.length;
   const chapter = story.chapters[chapterIndex];
   const progressPercent = ((chapterIndex + 1) / totalChapters) * 100;
-  const hasVisitedAll = useMemo(() => visited.size === totalChapters, [visited.size, totalChapters]);
+  const hasVisitedAll = visited.size === totalChapters;
 
   const goToChapter = (nextIndex: number) => {
     if (nextIndex < 0 || nextIndex >= totalChapters) return;
