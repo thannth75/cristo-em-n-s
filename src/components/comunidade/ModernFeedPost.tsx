@@ -17,6 +17,7 @@ import { RepostButton } from "./RepostButton";
 import { renderMentions } from "./MentionInput";
 import PollWidget from "./PollWidget";
 import { cn } from "@/lib/utils";
+import PostReactions from "./PostReactions";
 
 interface Post {
   id: string;
