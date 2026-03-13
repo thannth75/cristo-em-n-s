@@ -116,11 +116,14 @@ const Dashboard = () => {
   // Features
   const baseFeatures = [
     { title: "Devocional Diário", description: "Comece o dia com Deus", icon: BookOpen, href: "/devocional", badge: "Novo" },
+    { title: "Modo Devocional", description: "Silêncio espiritual", icon: Sun, href: "/modo-devocional", badge: "🕊️" },
+    { title: "Bíblia Sagrada", description: "JFA Fiel Corrigida", icon: BookOpen, href: "/biblia", badge: "📖" },
     { title: "Momento com Deus", description: "Oração imersiva", icon: Sun, href: "/momento-com-deus", badge: "✨" },
     { title: "Mensagens", description: "Chat privado", icon: MessageCircle, href: "/mensagens" },
     { title: "Trilha de Fé", description: "Jornada de 7 dias", icon: Compass, href: "/trilha-fe" },
     { title: "Jogos Espirituais", description: "Desafios interativos", icon: Gamepad2, href: "/jogos", badge: "🎮" },
     { title: "Rotina com Deus", description: "Planos espirituais guiados", icon: Heart, href: "/rotina-com-deus" },
+    { title: "Cursos Cristãos", description: "Capacitação ministerial", icon: Award, href: "/cursos", badge: "🎓" },
     { title: "Versículos por Humor", description: "Palavra para seu momento", icon: Heart, href: "/versiculos" },
     { title: "Testemunhos", description: "Histórias de fé", icon: Heart, href: "/testemunhos" },
     { title: "Lembretes de Oração", description: "Momentos com Deus", icon: MessageSquare, href: "/lembretes-oracao" },
