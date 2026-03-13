@@ -52,6 +52,9 @@ const DesafiosDiarios = lazy(() => import("./pages/DesafiosDiarios"));
 const RoletaDesafios = lazy(() => import("./pages/RoletaDesafios"));
 const MemoriaBiblica = lazy(() => import("./pages/MemoriaBiblica"));
 const EspacoKids = lazy(() => import("./pages/EspacoKids"));
+const Biblia = lazy(() => import("./pages/Biblia"));
+const ModoDevocional = lazy(() => import("./pages/ModoDevocional"));
+const Cursos = lazy(() => import("./pages/Cursos"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const PageLoader = () => (
