@@ -159,6 +159,11 @@ export default function ModernFeedPost({
         <PollWidget postId={post.id} userId={currentUserId} />
       </div>
 
+      {/* Reactions */}
+      <div className="px-3 sm:px-4 py-2">
+        <PostReactions postId={post.id} userId={currentUserId} />
+      </div>
+
       {/* Stats bar */}
       <div className="flex items-center justify-between px-3 sm:px-4 py-2 text-xs sm:text-sm text-muted-foreground border-b border-border/50">
         <button
