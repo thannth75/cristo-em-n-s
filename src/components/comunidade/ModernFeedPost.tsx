@@ -17,6 +17,7 @@ import { RepostButton } from "./RepostButton";
 import { renderMentions } from "./MentionInput";
 import PollWidget from "./PollWidget";
 import { cn } from "@/lib/utils";
+import PostReactions from "./PostReactions";
 
 interface Post {
   id: string;
@@ -156,6 +157,11 @@ export default function ModernFeedPost({
       {/* Poll */}
       <div className="px-3 sm:px-4">
         <PollWidget postId={post.id} userId={currentUserId} />
+      </div>
+
+      {/* Reactions */}
+      <div className="px-3 sm:px-4 py-2">
+        <PostReactions postId={post.id} userId={currentUserId} />
       </div>
 
       {/* Stats bar */}
