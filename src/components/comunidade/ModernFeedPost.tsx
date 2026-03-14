@@ -59,8 +59,45 @@ export default function ModernFeedPost({
   onRepostSuccess,
 }: ModernFeedPostProps) {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [showComments, setShowComments] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [savingPost, setSavingPost] = useState(false);
   const isOwn = post.user_id === currentUserId;
+
+  // Check if post is saved
+  useEffect(() => {
+    const checkSaved = async () => {
+      const { data } = await supabase
+        .from("saved_posts")
+        .select("id")
+        .eq("user_id", currentUserId)
+        .eq("post_id", post.id)
+        .maybeSingle();
+      setIsSaved(!!data);
+    };
+    checkSaved();
+  }, [post.id, currentUserId]);
+
+  const handleToggleSave = async () => {
+    if (savingPost) return;
+    setSavingPost(true);
+    try {
+      if (isSaved) {
+        await supabase.from("saved_posts").delete().eq("user_id", currentUserId).eq("post_id", post.id);
+        setIsSaved(false);
+        toast({ title: "Removido dos salvos" });
+      } else {
+        await supabase.from("saved_posts").insert({ user_id: currentUserId, post_id: post.id });
+        setIsSaved(true);
+        toast({ title: "Post salvo! 🔖" });
+      }
+    } catch {
+      toast({ title: "Erro ao salvar", variant: "destructive" });
+    } finally {
+      setSavingPost(false);
+    }
+  };
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
