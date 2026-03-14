@@ -13,6 +13,7 @@ const AmbientSound = forwardRef<HTMLDivElement>(function AmbientSound(_, ref) {
 
   return (
     <div
+      ref={ref}
       className="fixed right-4 z-40"
       style={{
         bottom: "calc(10rem + max(0.5rem, env(safe-area-inset-bottom, 8px)))",
