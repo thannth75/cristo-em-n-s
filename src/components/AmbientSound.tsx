@@ -80,6 +80,6 @@ const AmbientSound = forwardRef<HTMLDivElement>(function AmbientSound(_, ref) {
       </AnimatePresence>
     </div>
   );
-};
+});
 
 export default AmbientSound;
