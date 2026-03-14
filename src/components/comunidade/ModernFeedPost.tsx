@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Heart, MessageCircle, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, MoreHorizontal, Pencil, Trash2, Bookmark, BookmarkCheck, Share2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UserLevelBadge } from "@/components/gamification/UserLevelBadge";
@@ -18,6 +19,8 @@ import { renderMentions } from "./MentionInput";
 import PollWidget from "./PollWidget";
 import { cn } from "@/lib/utils";
 import PostReactions from "./PostReactions";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Post {
   id: string;
