@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Heart, MessageCircle, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, MoreHorizontal, Pencil, Trash2, Bookmark, BookmarkCheck, Share2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { UserLevelBadge } from "@/components/gamification/UserLevelBadge";
@@ -18,6 +19,8 @@ import { renderMentions } from "./MentionInput";
 import PollWidget from "./PollWidget";
 import { cn } from "@/lib/utils";
 import PostReactions from "./PostReactions";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Post {
   id: string;
@@ -56,8 +59,45 @@ export default function ModernFeedPost({
   onRepostSuccess,
 }: ModernFeedPostProps) {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [showComments, setShowComments] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [savingPost, setSavingPost] = useState(false);
   const isOwn = post.user_id === currentUserId;
+
+  // Check if post is saved
+  useEffect(() => {
+    const checkSaved = async () => {
+      const { data } = await supabase
+        .from("saved_posts")
+        .select("id")
+        .eq("user_id", currentUserId)
+        .eq("post_id", post.id)
+        .maybeSingle();
+      setIsSaved(!!data);
+    };
+    checkSaved();
+  }, [post.id, currentUserId]);
+
+  const handleToggleSave = async () => {
+    if (savingPost) return;
+    setSavingPost(true);
+    try {
+      if (isSaved) {
+        await supabase.from("saved_posts").delete().eq("user_id", currentUserId).eq("post_id", post.id);
+        setIsSaved(false);
+        toast({ title: "Removido dos salvos" });
+      } else {
+        await supabase.from("saved_posts").insert({ user_id: currentUserId, post_id: post.id });
+        setIsSaved(true);
+        toast({ title: "Post salvo! 🔖" });
+      }
+    } catch {
+      toast({ title: "Erro ao salvar", variant: "destructive" });
+    } finally {
+      setSavingPost(false);
+    }
+  };
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -112,23 +152,33 @@ export default function ModernFeedPost({
           </p>
         </div>
 
-        {isOwn && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-muted-foreground">
-                <MoreHorizontal className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem onClick={() => onEdit(post)}>
-                <Pencil className="h-4 w-4 mr-2" /> Editar
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onDelete(post)} className="text-destructive focus:text-destructive">
-                <Trash2 className="h-4 w-4 mr-2" /> Excluir
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-muted-foreground">
+              <MoreHorizontal className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuItem onClick={handleToggleSave}>
+              {isSaved ? (
+                <><BookmarkCheck className="h-4 w-4 mr-2 text-primary" /> Salvo</>
+              ) : (
+                <><Bookmark className="h-4 w-4 mr-2" /> Salvar post</>
+              )}
+            </DropdownMenuItem>
+            {isOwn && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onEdit(post)}>
+                  <Pencil className="h-4 w-4 mr-2" /> Editar
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onDelete(post)} className="text-destructive focus:text-destructive">
+                  <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </header>
 
       {/* Content */}

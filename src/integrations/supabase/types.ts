@@ -2013,6 +2013,35 @@ export type Database = {
           },
         ]
       }
+      saved_posts: {
+        Row: {
+          id: string
+          post_id: string
+          saved_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          post_id: string
+          saved_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          post_id?: string
+          saved_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_posts_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       saved_stories: {
         Row: {
           id: string

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, forwardRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ExternalLink, Radio, X } from "lucide-react";
@@ -7,12 +7,13 @@ import { Button } from "@/components/ui/button";
 const RADIO_WIDGET_URL =
   "https://public-player-widget.webradiosite.com/?source=widget_embeded&locale=pt-br&info=https%3A%2F%2Fpublic-player-widget.webradiosite.com%2Fapp%2Fplayer%2Finfo%2F3001%3Fhash%3D40baa3aa9377e413d27100e209d7c2d24ba5afd1&theme=light&color=3&cover=0&current_track=1&schedules=1&link=1&link_to=https%3A%2F%2Fwww.obraemrestauracao.org&share=1&popup=1&embed=1&auto_play=0";
 
-const AmbientSound = () => {
+const AmbientSound = forwardRef<HTMLDivElement>(function AmbientSound(_, ref) {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div
+      ref={ref}
       className="fixed right-4 z-40"
       style={{
         bottom: "calc(10rem + max(0.5rem, env(safe-area-inset-bottom, 8px)))",
@@ -79,6 +80,6 @@ const AmbientSound = () => {
       </AnimatePresence>
     </div>
   );
-};
+});
 
 export default AmbientSound;
