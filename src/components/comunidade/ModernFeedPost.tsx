@@ -152,23 +152,33 @@ export default function ModernFeedPost({
           </p>
         </div>
 
-        {isOwn && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-muted-foreground">
-                <MoreHorizontal className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem onClick={() => onEdit(post)}>
-                <Pencil className="h-4 w-4 mr-2" /> Editar
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onDelete(post)} className="text-destructive focus:text-destructive">
-                <Trash2 className="h-4 w-4 mr-2" /> Excluir
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-muted-foreground">
+              <MoreHorizontal className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuItem onClick={handleToggleSave}>
+              {isSaved ? (
+                <><BookmarkCheck className="h-4 w-4 mr-2 text-primary" /> Salvo</>
+              ) : (
+                <><Bookmark className="h-4 w-4 mr-2" /> Salvar post</>
+              )}
+            </DropdownMenuItem>
+            {isOwn && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => onEdit(post)}>
+                  <Pencil className="h-4 w-4 mr-2" /> Editar
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => onDelete(post)} className="text-destructive focus:text-destructive">
+                  <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                </DropdownMenuItem>
+              </>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
       </header>
 
       {/* Content */}
