@@ -7,10 +7,15 @@ import {
   Brain,
   Gamepad2,
   GraduationCap,
+  Heart,
+  Music2,
   Sparkles,
   Star,
   Target,
   Trophy,
+  MessageCircle,
+  Palette,
+  Lightbulb,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useXpAward } from "@/hooks/useXpAward";
@@ -18,6 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import BottomNavigation from "@/components/BottomNavigation";
 import { KidsStoryReaderDialog } from "@/components/kids/KidsStoryReaderDialog";
 import {
   KIDS_MEMORY_VERSES,
@@ -26,9 +32,10 @@ import {
   KIDS_TRACKS,
   KIDS_WEEKLY_MISSIONS,
   type KidsStory,
+  type KidsAgeGroup,
 } from "@/data/kidsTeenContent";
 
-type KidsTab = "stories" | "quiz" | "missions" | "memory" | "tracks";
+type KidsTab = "home" | "stories" | "quiz" | "missions" | "memory" | "devocional" | "tracks";
 
 const getCurrentWeekKey = () => {
   const now = new Date();
@@ -47,16 +54,70 @@ interface MemoryCard {
   matched: boolean;
 }
 
+// Devocionais kids
+const KIDS_DEVOTIONALS = [
+  {
+    id: "dev1",
+    title: "Deus cuida de mim",
+    verse: "Salmos 23:1",
+    verseText: "O Senhor é o meu pastor; nada me faltará.",
+    message: "Assim como um pastor cuida das suas ovelhas, Deus cuida de você todos os dias. Ele te protege, alimenta e guia no caminho certo.",
+    prayer: "Senhor, obrigado por cuidar de mim. Me ajude a confiar em Ti todos os dias. Amém.",
+    emoji: "🐑",
+    ageGroup: "5-8" as KidsAgeGroup,
+  },
+  {
+    id: "dev2",
+    title: "Coragem para enfrentar",
+    verse: "Josué 1:9",
+    verseText: "Sê forte e corajoso; não temas, nem te espantes, porque o Senhor teu Deus é contigo.",
+    message: "Quando você sentir medo — na escola, em uma prova, ou diante de algo novo — lembre-se: Deus está com você. A coragem não é a ausência de medo, mas a certeza de que Deus está do seu lado.",
+    prayer: "Deus, me dê coragem para enfrentar o dia de hoje. Sei que o Senhor está comigo. Amém.",
+    emoji: "💪",
+    ageGroup: "9-12" as KidsAgeGroup,
+  },
+  {
+    id: "dev3",
+    title: "Identidade em Cristo",
+    verse: "2 Coríntios 5:17",
+    verseText: "Se alguém está em Cristo, nova criatura é: as coisas velhas já passaram; eis que tudo se fez novo.",
+    message: "O mundo vai tentar definir quem você é — pelas redes sociais, pela aparência, pelas notas. Mas sua verdadeira identidade está em Cristo. Você é filho(a) de Deus, amado(a) e com propósito.",
+    prayer: "Senhor, me ajude a encontrar minha identidade em Ti e não no que o mundo diz. Amém.",
+    emoji: "🦋",
+    ageGroup: "13-17" as KidsAgeGroup,
+  },
+  {
+    id: "dev4",
+    title: "Amizades que edificam",
+    verse: "Provérbios 27:17",
+    verseText: "Assim como o ferro afia o ferro, o homem afia o seu companheiro.",
+    message: "Escolha amigos que te levem para perto de Deus, não para longe. Boas amizades ajudam você a crescer na fé e a se tornar uma pessoa melhor.",
+    prayer: "Deus, me ajude a ser um bom amigo e a escolher amizades que me aproximem de Ti. Amém.",
+    emoji: "🤝",
+    ageGroup: "13-17" as KidsAgeGroup,
+  },
+];
+
+// Atividades criativas
+const CREATIVE_ACTIVITIES = [
+  { id: "draw-verse", title: "Desenhe o versículo do dia", emoji: "🎨", description: "Use cores e criatividade para ilustrar o que o versículo significa para você.", xp: 30 },
+  { id: "write-prayer", title: "Escreva uma oração", emoji: "✍️", description: "Escreva com suas palavras uma oração ao Senhor.", xp: 25 },
+  { id: "teach-friend", title: "Ensine a um amigo", emoji: "💬", description: "Conte a história bíblica que você leu para alguém.", xp: 40 },
+  { id: "gratitude", title: "Liste 3 gratidões", emoji: "🙏", description: "Escreva 3 coisas pelas quais você é grato(a) a Deus hoje.", xp: 20 },
+];
+
 const EspacoKids = () => {
   const navigate = useNavigate();
   const { user, isApproved, isLoading: authLoading } = useAuth();
   const { awardXp } = useXpAward(user?.id);
   const { toast } = useToast();
 
-  const [activeTab, setActiveTab] = useState<KidsTab>("stories");
+  const [activeTab, setActiveTab] = useState<KidsTab>("home");
+  const [selectedAgeGroup, setSelectedAgeGroup] = useState<KidsAgeGroup | "all">("all");
   const [completedStories, setCompletedStories] = useState<string[]>([]);
   const [completedMissions, setCompletedMissions] = useState<string[]>([]);
   const [memorizedVerses, setMemorizedVerses] = useState<string[]>([]);
+  const [completedActivities, setCompletedActivities] = useState<string[]>([]);
 
   const [selectedStory, setSelectedStory] = useState<KidsStory | null>(null);
   const [isStoryReaderOpen, setIsStoryReaderOpen] = useState(false);
@@ -82,53 +143,44 @@ const EspacoKids = () => {
 
   useEffect(() => {
     if (!user) return;
-
     const loadProgress = async () => {
       const { data, error } = await supabase
         .from("journal_entries")
         .select("title")
         .eq("user_id", user.id)
         .like("title", "KidsV2:%");
-
       if (error || !data) return;
 
-      const stories = data
-        .filter((entry) => entry.title?.startsWith("KidsV2:StoryComplete:"))
-        .map((entry) => entry.title!.replace("KidsV2:StoryComplete:", ""));
-
-      const missions = data
-        .filter((entry) => entry.title?.startsWith(`KidsV2:Mission:${CURRENT_WEEK}:`))
-        .map((entry) => entry.title!.replace(`KidsV2:Mission:${CURRENT_WEEK}:`, ""));
-
-      const verses = data
-        .filter((entry) => entry.title?.startsWith("KidsV2:Verse:"))
-        .map((entry) => entry.title!.replace("KidsV2:Verse:", ""));
-
-      setCompletedStories(stories);
-      setCompletedMissions(missions);
-      setMemorizedVerses(verses);
+      setCompletedStories(data.filter(e => e.title?.startsWith("KidsV2:StoryComplete:")).map(e => e.title!.replace("KidsV2:StoryComplete:", "")));
+      setCompletedMissions(data.filter(e => e.title?.startsWith(`KidsV2:Mission:${CURRENT_WEEK}:`)).map(e => e.title!.replace(`KidsV2:Mission:${CURRENT_WEEK}:`, "")));
+      setMemorizedVerses(data.filter(e => e.title?.startsWith("KidsV2:Verse:")).map(e => e.title!.replace("KidsV2:Verse:", "")));
+      setCompletedActivities(data.filter(e => e.title?.startsWith(`KidsV2:Activity:${CURRENT_WEEK}:`)).map(e => e.title!.replace(`KidsV2:Activity:${CURRENT_WEEK}:`, "")));
     };
-
     loadProgress();
   }, [user]);
 
-  const tabs = [
-    { id: "stories" as KidsTab, label: "Histórias", emoji: "📖" },
-    { id: "quiz" as KidsTab, label: "Quiz", emoji: "🧠" },
-    { id: "missions" as KidsTab, label: "Missões", emoji: "🌟" },
-    { id: "memory" as KidsTab, label: "Memória", emoji: "🎮" },
-    { id: "tracks" as KidsTab, label: "Trilhas", emoji: "🎯" },
-  ];
+  const filteredStories = useMemo(() =>
+    selectedAgeGroup === "all" ? KIDS_STORIES : KIDS_STORIES.filter(s => s.ageGroup === selectedAgeGroup),
+    [selectedAgeGroup]
+  );
 
-  const totalProgress = completedStories.length + completedMissions.length + memorizedVerses.length;
-  const maxProgress = KIDS_STORIES.length + KIDS_WEEKLY_MISSIONS.length + KIDS_MEMORY_VERSES.length;
+  const filteredDevotionals = useMemo(() =>
+    selectedAgeGroup === "all" ? KIDS_DEVOTIONALS : KIDS_DEVOTIONALS.filter(d => d.ageGroup === selectedAgeGroup),
+    [selectedAgeGroup]
+  );
 
+  const totalProgress = completedStories.length + completedMissions.length + memorizedVerses.length + completedActivities.length;
+  const maxProgress = KIDS_STORIES.length + KIDS_WEEKLY_MISSIONS.length + KIDS_MEMORY_VERSES.length + CREATIVE_ACTIVITIES.length;
+
+  const completedStoriesSet = useMemo(() => new Set(completedStories), [completedStories]);
+  const completedMissionsSet = useMemo(() => new Set(completedMissions), [completedMissions]);
+  const memorizedVersesSet = useMemo(() => new Set(memorizedVerses), [memorizedVerses]);
+  const completedActivitiesSet = useMemo(() => new Set(completedActivities), [completedActivities]);
+
+  // ─── Handlers ───
   const initMemoryGame = () => {
     const symbols = ["✝️", "📖", "🙏", "⭐", "❤️", "🕊️", "🌈", "🔥"];
-    const deck = [...symbols, ...symbols]
-      .sort(() => Math.random() - 0.5)
-      .map((symbol, index) => ({ id: index, symbol, flipped: false, matched: false }));
-
+    const deck = [...symbols, ...symbols].sort(() => Math.random() - 0.5).map((symbol, index) => ({ id: index, symbol, flipped: false, matched: false }));
     setMemoryCards(deck);
     setFlippedCards([]);
     setMemoryMoves(0);
@@ -138,45 +190,33 @@ const EspacoKids = () => {
 
   const handleMemoryClick = (cardId: number) => {
     if (memoryChecking || flippedCards.length === 2) return;
-
-    const selectedCard = memoryCards[cardId];
-    if (!selectedCard || selectedCard.flipped || selectedCard.matched) return;
-
-    const updatedCards = [...memoryCards];
-    updatedCards[cardId].flipped = true;
-    setMemoryCards(updatedCards);
-
+    const card = memoryCards[cardId];
+    if (!card || card.flipped || card.matched) return;
+    const updated = [...memoryCards];
+    updated[cardId].flipped = true;
+    setMemoryCards(updated);
     const newFlipped = [...flippedCards, cardId];
     setFlippedCards(newFlipped);
-
     if (newFlipped.length === 2) {
-      setMemoryMoves((prev) => prev + 1);
+      setMemoryMoves(prev => prev + 1);
       setMemoryChecking(true);
-
-      const [firstId, secondId] = newFlipped;
-      const first = updatedCards[firstId];
-      const second = updatedCards[secondId];
-
-      if (first.symbol === second.symbol) {
-        updatedCards[firstId].matched = true;
-        updatedCards[secondId].matched = true;
-        setMemoryCards([...updatedCards]);
+      const [a, b] = newFlipped;
+      if (updated[a].symbol === updated[b].symbol) {
+        updated[a].matched = true;
+        updated[b].matched = true;
+        setMemoryCards([...updated]);
         setFlippedCards([]);
         setMemoryChecking(false);
-
-        if (updatedCards.every((card) => card.matched)) {
+        if (updated.every(c => c.matched)) {
           setMemoryCompleted(true);
           void awardXp("rotina", `kids-memory-${CURRENT_WEEK}`, "Jogo da Memória Kids");
-          toast({
-            title: "Parabéns! 🎉",
-            description: "Você concluiu o jogo da memória e ganhou XP.",
-          });
+          toast({ title: "Parabéns! 🎉", description: "Jogo concluído! XP ganho." });
         }
       } else {
         window.setTimeout(() => {
-          updatedCards[firstId].flipped = false;
-          updatedCards[secondId].flipped = false;
-          setMemoryCards([...updatedCards]);
+          updated[a].flipped = false;
+          updated[b].flipped = false;
+          setMemoryCards([...updated]);
           setFlippedCards([]);
           setMemoryChecking(false);
         }, 750);
@@ -184,216 +224,246 @@ const EspacoKids = () => {
     }
   };
 
-  const openStoryReader = (story: KidsStory) => {
-    setSelectedStory(story);
-    setIsStoryReaderOpen(true);
-  };
+  const openStoryReader = (story: KidsStory) => { setSelectedStory(story); setIsStoryReaderOpen(true); };
 
   const handleCompleteStory = async (storyId: string) => {
     if (!user || completedStories.includes(storyId)) return;
-
-    const { error } = await supabase.from("journal_entries").insert({
-      user_id: user.id,
-      title: `KidsV2:StoryComplete:${storyId}`,
-      content: `História concluída no leitor Kids: ${storyId}`,
-      mood: "blessed",
-    });
-
-    if (error) {
-      toast({ title: "Erro ao salvar leitura", variant: "destructive" });
-      return;
-    }
-
-    setCompletedStories((prev) => [...prev, storyId]);
-    await awardXp("rotina", `kids-story-${storyId}`, "Leitura completa no Espaço Kids/Teen");
-    toast({ title: "História concluída! 📖", description: "Leitura registrada com sucesso." });
+    const { error } = await supabase.from("journal_entries").insert({ user_id: user.id, title: `KidsV2:StoryComplete:${storyId}`, content: `História concluída: ${storyId}`, mood: "blessed" });
+    if (error) { toast({ title: "Erro ao salvar", variant: "destructive" }); return; }
+    setCompletedStories(prev => [...prev, storyId]);
+    await awardXp("rotina", `kids-story-${storyId}`, "Leitura Kids/Teen");
+    toast({ title: "História concluída! 📖" });
   };
 
   const handleCompleteMission = async (missionId: string) => {
     if (!user || completedMissions.includes(missionId)) return;
-
-    const { error } = await supabase.from("journal_entries").insert({
-      user_id: user.id,
-      title: `KidsV2:Mission:${CURRENT_WEEK}:${missionId}`,
-      content: `Missão semanal concluída: ${missionId}`,
-      mood: "motivated",
-    });
-
-    if (error) {
-      toast({ title: "Erro ao salvar missão", variant: "destructive" });
-      return;
-    }
-
-    setCompletedMissions((prev) => [...prev, missionId]);
+    const { error } = await supabase.from("journal_entries").insert({ user_id: user.id, title: `KidsV2:Mission:${CURRENT_WEEK}:${missionId}`, content: `Missão: ${missionId}`, mood: "motivated" });
+    if (error) { toast({ title: "Erro ao salvar", variant: "destructive" }); return; }
+    setCompletedMissions(prev => [...prev, missionId]);
     await awardXp("rotina", `kids-mission-${CURRENT_WEEK}-${missionId}`, "Missão semanal Kids");
-    toast({ title: "Missão concluída! 🌟", description: "Você ganhou XP da semana." });
+    toast({ title: "Missão concluída! 🌟" });
   };
 
   const handleMemorizeVerse = async (verseId: string) => {
     if (!user || memorizedVerses.includes(verseId)) return;
-
-    const { error } = await supabase.from("journal_entries").insert({
-      user_id: user.id,
-      title: `KidsV2:Verse:${verseId}`,
-      content: `Versículo memorizado: ${verseId}`,
-      mood: "grateful",
-    });
-
-    if (error) {
-      toast({ title: "Erro ao salvar versículo", variant: "destructive" });
-      return;
-    }
-
-    setMemorizedVerses((prev) => [...prev, verseId]);
+    const { error } = await supabase.from("journal_entries").insert({ user_id: user.id, title: `KidsV2:Verse:${verseId}`, content: `Versículo memorizado: ${verseId}`, mood: "grateful" });
+    if (error) { toast({ title: "Erro ao salvar", variant: "destructive" }); return; }
+    setMemorizedVerses(prev => [...prev, verseId]);
     await awardXp("rotina", `kids-verse-${verseId}`, "Versículo memorizado");
-    toast({ title: "Versículo memorizado! ✨", description: "Continue firme na Palavra." });
+    toast({ title: "Versículo memorizado! ✨" });
   };
 
-  const startQuiz = () => {
-    setQuizStarted(true);
-    setCurrentQuestion(0);
-    setQuizScore(0);
-    setQuizFinished(false);
-    setSelectedAnswer(null);
+  const handleCompleteActivity = async (activityId: string) => {
+    if (!user || completedActivities.includes(activityId)) return;
+    const { error } = await supabase.from("journal_entries").insert({ user_id: user.id, title: `KidsV2:Activity:${CURRENT_WEEK}:${activityId}`, content: `Atividade criativa: ${activityId}`, mood: "creative" });
+    if (error) { toast({ title: "Erro ao salvar", variant: "destructive" }); return; }
+    setCompletedActivities(prev => [...prev, activityId]);
+    const activity = CREATIVE_ACTIVITIES.find(a => a.id === activityId);
+    await awardXp("rotina", `kids-activity-${CURRENT_WEEK}-${activityId}`, "Atividade criativa Kids");
+    toast({ title: "Atividade concluída! 🎨", description: `+${activity?.xp || 0} XP` });
   };
+
+  const startQuiz = () => { setQuizStarted(true); setCurrentQuestion(0); setQuizScore(0); setQuizFinished(false); setSelectedAnswer(null); };
 
   const handleQuizAnswer = (index: number) => {
     if (selectedAnswer !== null) return;
-
     setSelectedAnswer(index);
     const isCorrect = index === KIDS_QUIZ_QUESTIONS[currentQuestion].correct;
     const updatedScore = quizScore + (isCorrect ? 1 : 0);
-
-    if (isCorrect) setQuizScore((prev) => prev + 1);
-
+    if (isCorrect) setQuizScore(prev => prev + 1);
     window.setTimeout(async () => {
       setSelectedAnswer(null);
-
-      if (currentQuestion < KIDS_QUIZ_QUESTIONS.length - 1) {
-        setCurrentQuestion((prev) => prev + 1);
-        return;
-      }
-
+      if (currentQuestion < KIDS_QUIZ_QUESTIONS.length - 1) { setCurrentQuestion(prev => prev + 1); return; }
       setQuizFinished(true);
-      if (user) {
-        await awardXp(
-          "quiz",
-          `kids-quiz-${CURRENT_WEEK}-${Date.now()}`,
-          `Quiz Kids finalizado (${updatedScore}/${KIDS_QUIZ_QUESTIONS.length})`
-        );
-      }
+      if (user) await awardXp("quiz", `kids-quiz-${CURRENT_WEEK}-${Date.now()}`, `Quiz Kids (${updatedScore}/${KIDS_QUIZ_QUESTIONS.length})`);
     }, 800);
   };
 
-  const completedStoriesSet = useMemo(() => new Set(completedStories), [completedStories]);
-  const completedMissionsSet = useMemo(() => new Set(completedMissions), [completedMissions]);
-  const memorizedVersesSet = useMemo(() => new Set(memorizedVerses), [memorizedVerses]);
+  if (authLoading) {
+    return <div className="flex min-h-screen items-center justify-center bg-background">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+    </div>;
+  }
+
+  const tabs = [
+    { id: "home" as KidsTab, label: "Início", emoji: "🏠" },
+    { id: "stories" as KidsTab, label: "Histórias", emoji: "📖" },
+    { id: "devocional" as KidsTab, label: "Devocional", emoji: "💡" },
+    { id: "quiz" as KidsTab, label: "Quiz", emoji: "🧠" },
+    { id: "missions" as KidsTab, label: "Missões", emoji: "🌟" },
+    { id: "memory" as KidsTab, label: "Jogos", emoji: "🎮" },
+    { id: "tracks" as KidsTab, label: "Trilhas", emoji: "🎯" },
+  ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <div
-        className="sticky top-0 z-40 border-b border-border/60 bg-card/95 backdrop-blur px-4 py-3"
-        style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top, 12px))" }}
-      >
+    <div className="min-h-screen bg-background" style={{ paddingBottom: "calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))" }}>
+      {/* Header */}
+      <div className="sticky top-0 z-40 border-b border-border/60 bg-card/95 backdrop-blur px-4 py-3"
+        style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top, 12px))" }}>
         <div className="mx-auto flex max-w-3xl items-center gap-3">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate("/dashboard")}
-            className="h-9 w-9 rounded-full"
-          >
+          <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")} className="h-9 w-9 rounded-full">
             <ArrowLeft className="h-5 w-5" />
           </Button>
-
           <div className="min-w-0 flex-1">
             <h1 className="flex items-center gap-2 text-base font-bold text-foreground sm:text-lg">
               <Sparkles className="h-4 w-4 text-primary" />
-              Espaço Kids / Teen
+              Espaço Kids & Teen
             </h1>
-            <p className="text-xs text-muted-foreground">Aprender a Bíblia com alegria e propósito</p>
+            <p className="text-xs text-muted-foreground">Crescendo na fé com alegria! 🌟</p>
           </div>
-
           <div className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-            {totalProgress}/{maxProgress}
+            ⭐ {totalProgress}/{maxProgress}
           </div>
         </div>
       </div>
 
-      <main className="mx-auto max-w-3xl px-4 py-4 pb-10">
-        <section className="mb-4 rounded-2xl border border-border/70 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/5 p-4">
-          <div className="mb-2 flex items-center gap-2">
+      <main className="mx-auto max-w-3xl px-4 py-4 space-y-4">
+        {/* Age filter */}
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          {[
+            { id: "all" as const, label: "Todos", emoji: "👦👧" },
+            { id: "5-8" as KidsAgeGroup, label: "5-8 anos", emoji: "🧒" },
+            { id: "9-12" as KidsAgeGroup, label: "9-12 anos", emoji: "🧑" },
+            { id: "13-17" as KidsAgeGroup, label: "13-17 anos", emoji: "🧑‍🎓" },
+          ].map(ag => (
+            <button key={ag.id} onClick={() => setSelectedAgeGroup(ag.id)}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors shrink-0 ${
+                selectedAgeGroup === ag.id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground"
+              }`}>
+              <span>{ag.emoji}</span> {ag.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Progress */}
+        <section className="rounded-2xl border border-border/70 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/5 p-4">
+          <div className="flex items-center gap-2 mb-2">
             <Trophy className="h-4 w-4 text-primary" />
-            <h2 className="text-sm font-semibold text-foreground">Progresso espiritual da semana</h2>
+            <h2 className="text-sm font-semibold text-foreground">Progresso Espiritual</h2>
           </div>
           <Progress value={(totalProgress / maxProgress) * 100} className="h-2.5" />
-          <p className="mt-2 text-xs text-muted-foreground">
-            Leituras completas, missões e memorização agora só contam após conclusão real.
-          </p>
+          <div className="mt-2 flex flex-wrap gap-3 text-[10px] text-muted-foreground">
+            <span>📖 {completedStories.length} histórias</span>
+            <span>🌟 {completedMissions.length} missões</span>
+            <span>💭 {memorizedVerses.length} versículos</span>
+            <span>🎨 {completedActivities.length} atividades</span>
+          </div>
         </section>
 
-        <section className="mb-4 rounded-2xl border border-border/70 bg-card p-2">
-          <div className="grid grid-cols-5 gap-1.5">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => {
-                  setActiveTab(tab.id);
-                  if (tab.id === "memory" && memoryCards.length === 0) initMemoryGame();
-                }}
-                className={`rounded-xl px-1 py-2 text-center text-[11px] font-medium transition-colors sm:text-xs ${
-                  activeTab === tab.id
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
-                }`}
-              >
-                <span className="mb-0.5 block text-base" aria-hidden>
-                  {tab.emoji}
-                </span>
+        {/* Tabs */}
+        <section className="rounded-2xl border border-border/70 bg-card p-1.5">
+          <div className="flex gap-1 overflow-x-auto scrollbar-hide">
+            {tabs.map(tab => (
+              <button key={tab.id}
+                onClick={() => { setActiveTab(tab.id); if (tab.id === "memory" && memoryCards.length === 0) initMemoryGame(); }}
+                className={`rounded-lg px-2.5 py-2 text-center text-[10px] font-medium transition-colors whitespace-nowrap sm:text-xs shrink-0 ${
+                  activeTab === tab.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted/70"
+                }`}>
+                <span className="block text-sm mb-0.5">{tab.emoji}</span>
                 {tab.label}
               </button>
             ))}
           </div>
         </section>
 
+        {/* ═══ HOME ═══ */}
+        {activeTab === "home" && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+            {/* Welcome banner */}
+            <div className="rounded-2xl bg-gradient-to-br from-yellow-400/20 via-primary/10 to-pink-400/20 border border-primary/15 p-5 text-center">
+              <p className="text-4xl mb-2">🌈</p>
+              <h2 className="font-serif text-lg font-bold text-foreground">Bem-vindo ao Espaço Kids & Teen!</h2>
+              <p className="text-sm text-muted-foreground mt-1">Um lugar especial para aprender sobre Deus.</p>
+            </div>
+
+            {/* Quick actions grid */}
+            <div className="grid grid-cols-2 gap-2.5">
+              {[
+                { tab: "stories" as KidsTab, icon: BookOpen, label: "Histórias Bíblicas", color: "bg-blue-500/10 text-blue-600", count: `${filteredStories.length} disponíveis` },
+                { tab: "devocional" as KidsTab, icon: Lightbulb, label: "Devocional do Dia", color: "bg-amber-500/10 text-amber-600", count: `${filteredDevotionals.length} lições` },
+                { tab: "quiz" as KidsTab, icon: Brain, label: "Quiz Bíblico", color: "bg-purple-500/10 text-purple-600", count: `${KIDS_QUIZ_QUESTIONS.length} perguntas` },
+                { tab: "missions" as KidsTab, icon: Target, label: "Missões da Semana", color: "bg-green-500/10 text-green-600", count: `${completedMissions.length}/${KIDS_WEEKLY_MISSIONS.length}` },
+                { tab: "memory" as KidsTab, icon: Gamepad2, label: "Jogos Bíblicos", color: "bg-pink-500/10 text-pink-600", count: "Memória & mais" },
+                { tab: "tracks" as KidsTab, icon: GraduationCap, label: "Trilhas de Fé", color: "bg-teal-500/10 text-teal-600", count: "3 trilhas" },
+              ].map(item => (
+                <motion.button key={item.tab}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => { setActiveTab(item.tab); if (item.tab === "memory" && memoryCards.length === 0) initMemoryGame(); }}
+                  className="flex flex-col items-center gap-2 rounded-2xl border border-border/70 bg-card p-4 hover:bg-accent/50 transition-colors">
+                  <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${item.color}`}>
+                    <item.icon className="h-5 w-5" />
+                  </div>
+                  <p className="font-medium text-sm text-foreground text-center">{item.label}</p>
+                  <p className="text-[10px] text-muted-foreground">{item.count}</p>
+                </motion.button>
+              ))}
+            </div>
+
+            {/* Today's devotional preview */}
+            {filteredDevotionals.length > 0 && (
+              <div className="rounded-2xl border border-amber-500/20 bg-amber-50/5 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-2xl">{filteredDevotionals[0].emoji}</span>
+                  <div>
+                    <h3 className="font-semibold text-sm text-foreground">{filteredDevotionals[0].title}</h3>
+                    <p className="text-xs text-primary">{filteredDevotionals[0].verse}</p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground italic">"{filteredDevotionals[0].verseText}"</p>
+                <Button size="sm" className="rounded-full mt-3" onClick={() => setActiveTab("devocional")}>
+                  Ler devocional completo
+                </Button>
+              </div>
+            )}
+
+            {/* Creative activities */}
+            <div>
+              <h3 className="flex items-center gap-2 text-base font-bold text-foreground mb-3">
+                <Palette className="h-4 w-4 text-primary" /> Atividades Criativas
+              </h3>
+              <div className="grid grid-cols-2 gap-2">
+                {CREATIVE_ACTIVITIES.map(activity => {
+                  const isDone = completedActivitiesSet.has(activity.id);
+                  return (
+                    <div key={activity.id} className="rounded-xl border border-border/70 bg-card p-3">
+                      <span className="text-2xl">{activity.emoji}</span>
+                      <p className={`font-medium text-xs mt-1 ${isDone ? "text-muted-foreground line-through" : "text-foreground"}`}>{activity.title}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">{activity.description}</p>
+                      <Button size="sm" variant={isDone ? "outline" : "default"} className="w-full rounded-full mt-2 text-xs h-7"
+                        onClick={() => handleCompleteActivity(activity.id)} disabled={isDone}>
+                        {isDone ? "✅" : `+${activity.xp} XP`}
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ═══ STORIES ═══ */}
         {activeTab === "stories" && (
           <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
             <h3 className="flex items-center gap-2 text-lg font-bold text-foreground">
-              <BookOpen className="h-5 w-5 text-primary" /> Histórias Bíblicas com leitura guiada
+              <BookOpen className="h-5 w-5 text-primary" /> Histórias Bíblicas
             </h3>
-            <p className="text-sm text-muted-foreground">
-              Abra a história, avance os capítulos e conclua no final para marcar como lida.
-            </p>
-
+            <p className="text-sm text-muted-foreground">Abra, leia todos os capítulos e conclua para ganhar XP.</p>
             <div className="grid gap-3 sm:grid-cols-2">
-              {KIDS_STORIES.map((story) => {
+              {filteredStories.map(story => {
                 const isCompleted = completedStoriesSet.has(story.id);
                 return (
-                  <div
-                    key={story.id}
-                    className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm"
-                  >
-                    <div className="mb-2 flex items-start justify-between gap-3">
+                  <div key={story.id} className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm">
+                    <div className="flex items-start justify-between gap-3 mb-2">
                       <div>
-                        <p className="text-2xl" aria-hidden>
-                          {story.coverEmoji}
-                        </p>
+                        <p className="text-2xl">{story.coverEmoji}</p>
                         <h4 className="mt-1 font-semibold text-foreground">{story.title}</h4>
                         <p className="text-xs text-muted-foreground">{story.reference}</p>
                       </div>
-                      <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-secondary-foreground">
-                        {story.ageGroup} anos
-                      </span>
+                      <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-secondary-foreground">{story.ageGroup} anos</span>
                     </div>
-
                     <p className="mb-3 text-sm text-muted-foreground">{story.summary}</p>
-
-                    <Button
-                      type="button"
-                      className="w-full rounded-full"
-                      variant={isCompleted ? "outline" : "default"}
-                      onClick={() => openStoryReader(story)}
-                    >
-                      {isCompleted ? "✅ Revisar história" : "Abrir história"}
+                    <Button className="w-full rounded-full" variant={isCompleted ? "outline" : "default"} onClick={() => openStoryReader(story)}>
+                      {isCompleted ? "✅ Revisar" : "Abrir história"}
                     </Button>
                   </div>
                 );
@@ -402,6 +472,41 @@ const EspacoKids = () => {
           </motion.section>
         )}
 
+        {/* ═══ DEVOCIONAL ═══ */}
+        {activeTab === "devocional" && (
+          <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+            <h3 className="flex items-center gap-2 text-lg font-bold text-foreground">
+              <Lightbulb className="h-5 w-5 text-primary" /> Devocional Kids & Teen
+            </h3>
+            <p className="text-sm text-muted-foreground">Lições especiais para cada faixa etária.</p>
+
+            {filteredDevotionals.map(dev => (
+              <div key={dev.id} className="rounded-2xl border border-border/70 bg-card p-5 space-y-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">{dev.emoji}</span>
+                  <div>
+                    <h4 className="font-bold text-foreground">{dev.title}</h4>
+                    <p className="text-xs text-primary font-medium">{dev.verse}</p>
+                    <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">{dev.ageGroup} anos</span>
+                  </div>
+                </div>
+
+                <div className="rounded-xl bg-primary/5 border border-primary/15 p-3">
+                  <p className="text-sm text-foreground italic">"{dev.verseText}"</p>
+                </div>
+
+                <p className="text-sm text-muted-foreground leading-relaxed">{dev.message}</p>
+
+                <div className="rounded-xl bg-accent/30 p-3">
+                  <p className="text-xs font-semibold text-foreground mb-1">🙏 Oração:</p>
+                  <p className="text-sm text-muted-foreground italic">{dev.prayer}</p>
+                </div>
+              </div>
+            ))}
+          </motion.section>
+        )}
+
+        {/* ═══ QUIZ ═══ */}
         {activeTab === "quiz" && (
           <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
             {!quizStarted ? (
@@ -410,60 +515,36 @@ const EspacoKids = () => {
                   <Brain className="h-6 w-6 text-primary" />
                 </div>
                 <h3 className="text-lg font-bold text-foreground">Quiz Bíblico Kids</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Responda perguntas sobre as histórias estudadas.
-                </p>
-                <Button className="mt-5 rounded-full px-8" onClick={startQuiz}>
-                  Começar quiz
-                </Button>
+                <p className="mt-1 text-sm text-muted-foreground">Responda perguntas sobre as histórias estudadas.</p>
+                <Button className="mt-5 rounded-full px-8" onClick={startQuiz}>Começar quiz</Button>
               </div>
             ) : quizFinished ? (
               <div className="rounded-2xl border border-border/70 bg-card p-6 text-center">
-                <p className="mb-2 text-4xl" aria-hidden>
-                  {quizScore >= 5 ? "🏆" : quizScore >= 3 ? "⭐" : "💪"}
-                </p>
+                <p className="mb-2 text-4xl">{quizScore >= 5 ? "🏆" : quizScore >= 3 ? "⭐" : "💪"}</p>
                 <h3 className="text-lg font-bold text-foreground">Quiz finalizado!</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Você acertou {quizScore} de {KIDS_QUIZ_QUESTIONS.length} perguntas.
-                </p>
-                <Button className="mt-5 rounded-full" onClick={startQuiz}>
-                  Jogar novamente
-                </Button>
+                <p className="mt-1 text-sm text-muted-foreground">Você acertou {quizScore} de {KIDS_QUIZ_QUESTIONS.length}.</p>
+                <Button className="mt-5 rounded-full" onClick={startQuiz}>Jogar novamente</Button>
               </div>
             ) : (
               <div className="rounded-2xl border border-border/70 bg-card p-5">
                 <div className="mb-3 flex items-center justify-between text-xs text-muted-foreground">
-                  <span>
-                    Pergunta {currentQuestion + 1}/{KIDS_QUIZ_QUESTIONS.length}
-                  </span>
+                  <span>Pergunta {currentQuestion + 1}/{KIDS_QUIZ_QUESTIONS.length}</span>
                   <span className="font-semibold text-primary">{quizScore} acertos</span>
                 </div>
                 <Progress value={((currentQuestion + 1) / KIDS_QUIZ_QUESTIONS.length) * 100} className="h-2" />
-
-                <h3 className="mt-4 text-base font-semibold text-foreground">
-                  {KIDS_QUIZ_QUESTIONS[currentQuestion].question}
-                </h3>
-
+                <h3 className="mt-4 text-base font-semibold text-foreground">{KIDS_QUIZ_QUESTIONS[currentQuestion].question}</h3>
                 <div className="mt-4 grid gap-2">
                   {KIDS_QUIZ_QUESTIONS[currentQuestion].options.map((option, index) => {
                     const isCorrect = index === KIDS_QUIZ_QUESTIONS[currentQuestion].correct;
                     const isSelected = selectedAnswer === index;
-
                     return (
-                      <button
-                        key={option}
-                        onClick={() => handleQuizAnswer(index)}
-                        disabled={selectedAnswer !== null}
+                      <button key={option} onClick={() => handleQuizAnswer(index)} disabled={selectedAnswer !== null}
                         className={`rounded-xl border px-3 py-3 text-left text-sm font-medium transition-colors ${
-                          selectedAnswer === null
-                            ? "border-border bg-card hover:border-primary/40"
-                            : isCorrect
-                            ? "border-primary bg-primary/10 text-foreground"
-                            : isSelected
-                            ? "border-destructive/50 bg-destructive/10"
+                          selectedAnswer === null ? "border-border bg-card hover:border-primary/40"
+                            : isCorrect ? "border-primary bg-primary/10 text-foreground"
+                            : isSelected ? "border-destructive/50 bg-destructive/10"
                             : "border-border bg-card text-muted-foreground"
-                        }`}
-                      >
+                        }`}>
                         {option}
                       </button>
                     );
@@ -474,37 +555,24 @@ const EspacoKids = () => {
           </motion.section>
         )}
 
+        {/* ═══ MISSIONS ═══ */}
         {activeTab === "missions" && (
           <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
             <h3 className="flex items-center gap-2 text-lg font-bold text-foreground">
-              <Target className="h-5 w-5 text-primary" /> Missões da semana ({CURRENT_WEEK})
+              <Target className="h-5 w-5 text-primary" /> Missões da Semana
             </h3>
-            <p className="text-sm text-muted-foreground">Cada missão concluída concede XP automaticamente.</p>
-
-            {KIDS_WEEKLY_MISSIONS.map((mission) => {
+            <p className="text-sm text-muted-foreground">Cada missão concede XP. Semana: {CURRENT_WEEK}</p>
+            {KIDS_WEEKLY_MISSIONS.map(mission => {
               const isDone = completedMissionsSet.has(mission.id);
               return (
-                <div
-                  key={mission.id}
-                  className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card p-4"
-                >
-                  <span className="text-2xl" aria-hidden>
-                    {mission.emoji}
-                  </span>
+                <div key={mission.id} className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card p-4">
+                  <span className="text-2xl">{mission.emoji}</span>
                   <div className="min-w-0 flex-1">
-                    <p className={`font-medium ${isDone ? "text-muted-foreground line-through" : "text-foreground"}`}>
-                      {mission.title}
-                    </p>
+                    <p className={`font-medium ${isDone ? "text-muted-foreground line-through" : "text-foreground"}`}>{mission.title}</p>
                     <p className="text-xs text-primary">+{mission.xp} XP</p>
                   </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant={isDone ? "outline" : "default"}
-                    className="rounded-full"
-                    onClick={() => handleCompleteMission(mission.id)}
-                    disabled={isDone}
-                  >
+                  <Button size="sm" variant={isDone ? "outline" : "default"} className="rounded-full"
+                    onClick={() => handleCompleteMission(mission.id)} disabled={isDone}>
                     {isDone ? "✅ Feita" : "Concluir"}
                   </Button>
                 </div>
@@ -513,40 +581,29 @@ const EspacoKids = () => {
           </motion.section>
         )}
 
+        {/* ═══ MEMORY GAME ═══ */}
         {activeTab === "memory" && (
           <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="flex items-center gap-2 text-lg font-bold text-foreground">
                 <Gamepad2 className="h-5 w-5 text-primary" /> Jogo da Memória Bíblica
               </h3>
-              <Button size="sm" variant="outline" className="rounded-full" onClick={initMemoryGame}>
-                Reiniciar
-              </Button>
+              <Button size="sm" variant="outline" className="rounded-full" onClick={initMemoryGame}>Reiniciar</Button>
             </div>
-
-            <p className="text-sm text-muted-foreground">
-              Combine os símbolos iguais. Ao completar, você recebe XP.
-            </p>
-
+            <p className="text-sm text-muted-foreground">Combine os pares e ganhe XP!</p>
             {memoryCompleted && (
               <div className="rounded-2xl border border-primary/30 bg-primary/10 p-3 text-sm text-foreground">
-                🎉 Você concluiu em <strong>{memoryMoves}</strong> jogadas.
+                🎉 Concluído em <strong>{memoryMoves}</strong> jogadas!
               </div>
             )}
-
             <div className="grid grid-cols-4 gap-2">
-              {memoryCards.map((card) => (
-                <button
-                  key={card.id}
-                  onClick={() => handleMemoryClick(card.id)}
-                  className={`aspect-square rounded-xl border text-2xl transition-colors ${
+              {memoryCards.map(card => (
+                <button key={card.id} onClick={() => handleMemoryClick(card.id)}
+                  className={`aspect-square rounded-xl border text-2xl transition-all ${
                     card.flipped || card.matched
-                      ? card.matched
-                        ? "border-primary/40 bg-primary/10"
-                        : "border-border bg-muted/40"
-                      : "border-border bg-card hover:border-primary/40"
-                  }`}
-                >
+                      ? card.matched ? "border-primary/40 bg-primary/10 scale-95" : "border-border bg-muted/40"
+                      : "border-border bg-card hover:border-primary/40 hover:scale-105"
+                  }`}>
                   {card.flipped || card.matched ? card.symbol : "❓"}
                 </button>
               ))}
@@ -554,27 +611,23 @@ const EspacoKids = () => {
           </motion.section>
         )}
 
+        {/* ═══ TRACKS ═══ */}
         {activeTab === "tracks" && (
           <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
             <h3 className="flex items-center gap-2 text-lg font-bold text-foreground">
-              <GraduationCap className="h-5 w-5 text-primary" /> Trilhas por faixa etária
+              <GraduationCap className="h-5 w-5 text-primary" /> Trilhas por Faixa Etária
             </h3>
-
             <div className="grid gap-3 sm:grid-cols-3">
-              {KIDS_TRACKS.map((track) => (
+              {KIDS_TRACKS.map(track => (
                 <div key={track.id} className="rounded-2xl border border-border/70 bg-card p-4">
                   <div className="mb-2 flex items-center justify-between">
                     <h4 className="font-semibold text-foreground">{track.title}</h4>
-                    <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] text-secondary-foreground">
-                      {track.ageGroup}
-                    </span>
+                    <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] text-secondary-foreground">{track.ageGroup}</span>
                   </div>
                   <p className="text-sm text-muted-foreground">{track.description}</p>
                   <div className="mt-3 flex flex-wrap gap-1.5">
-                    {track.focus.map((item) => (
-                      <span key={item} className="rounded-full bg-muted px-2 py-1 text-[11px] text-muted-foreground">
-                        {item}
-                      </span>
+                    {track.focus.map(item => (
+                      <span key={item} className="rounded-full bg-muted px-2 py-1 text-[11px] text-muted-foreground">{item}</span>
                     ))}
                   </div>
                 </div>
@@ -583,24 +636,18 @@ const EspacoKids = () => {
 
             <div className="rounded-2xl border border-border/70 bg-card p-4">
               <h4 className="mb-3 flex items-center gap-2 font-semibold text-foreground">
-                <Star className="h-4 w-4 text-primary" /> Versículos para memorizar
+                <Star className="h-4 w-4 text-primary" /> Versículos para Memorizar
               </h4>
-
               <div className="space-y-3">
-                {KIDS_MEMORY_VERSES.map((verse) => {
+                {KIDS_MEMORY_VERSES.map(verse => {
                   const done = memorizedVersesSet.has(verse.id);
                   return (
                     <div key={verse.id} className="rounded-xl border border-border/70 bg-muted/20 p-3">
                       <p className="text-sm text-foreground">{verse.text}</p>
                       <div className="mt-2 flex items-center justify-between gap-2">
                         <span className="text-xs font-medium text-primary">{verse.reference}</span>
-                        <Button
-                          size="sm"
-                          variant={done ? "outline" : "default"}
-                          className="rounded-full"
-                          onClick={() => handleMemorizeVerse(verse.id)}
-                          disabled={done}
-                        >
+                        <Button size="sm" variant={done ? "outline" : "default"} className="rounded-full"
+                          onClick={() => handleMemorizeVerse(verse.id)} disabled={done}>
                           {done ? "✅ Memorizei" : "Marcar"}
                         </Button>
                       </div>
@@ -614,12 +661,13 @@ const EspacoKids = () => {
       </main>
 
       <KidsStoryReaderDialog
-        open={isStoryReaderOpen}
-        onOpenChange={setIsStoryReaderOpen}
+        open={isStoryReaderOpen} onOpenChange={setIsStoryReaderOpen}
         story={selectedStory}
         isCompleted={selectedStory ? completedStoriesSet.has(selectedStory.id) : false}
         onComplete={handleCompleteStory}
       />
+
+      <BottomNavigation />
     </div>
   );
 };
