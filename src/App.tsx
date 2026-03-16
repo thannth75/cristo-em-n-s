@@ -55,6 +55,7 @@ const EspacoKids = lazy(() => import("./pages/EspacoKids"));
 const Biblia = lazy(() => import("./pages/Biblia"));
 const ModoDevocional = lazy(() => import("./pages/ModoDevocional"));
 const Cursos = lazy(() => import("./pages/Cursos"));
+const BibliotecaCrista = lazy(() => import("./pages/BibliotecaCrista"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const PageLoader = () => (
@@ -126,6 +127,7 @@ function AnimatedRoutes() {
             <Route path="/biblia" element={<Biblia />} />
             <Route path="/modo-devocional" element={<ModoDevocional />} />
             <Route path="/cursos" element={<Cursos />} />
+            <Route path="/biblioteca" element={<BibliotecaCrista />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

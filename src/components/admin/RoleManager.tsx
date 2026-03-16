@@ -21,6 +21,8 @@ const roles = [
   { value: "jovem", label: "Jovem", description: "Acesso a estudos, provas e comunidade" },
   { value: "membro", label: "Membro", description: "Comunidade e devocionais" },
   { value: "musico", label: "Músico", description: "Área de músicos e comunidade" },
+  { value: "kids", label: "Kids/Teen", description: "Acesso ao Espaço Kids & Teen" },
+  { value: "kids_leader", label: "Líder Kids", description: "Gerencia o Espaço Kids & Teen" },
   { value: "lider", label: "Líder", description: "Gerencia sua cidade" },
   { value: "admin", label: "Administrador", description: "Acesso total ao sistema" },
 ];
@@ -44,7 +46,7 @@ const RoleManager = ({ targetUserId, currentRole, adminUserId, onRoleChange }: R
       // Then insert new role
       const { error } = await supabase.from("user_roles").insert([{
         user_id: targetUserId,
-        role: newRole as "jovem" | "lider" | "admin" | "membro" | "musico",
+        role: newRole as "jovem" | "lider" | "admin" | "membro" | "musico" | "kids_leader" | "kids",
         assigned_by: adminUserId,
       }]);
 
