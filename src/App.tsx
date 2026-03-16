@@ -127,6 +127,7 @@ function AnimatedRoutes() {
             <Route path="/biblia" element={<Biblia />} />
             <Route path="/modo-devocional" element={<ModoDevocional />} />
             <Route path="/cursos" element={<Cursos />} />
+            <Route path="/biblioteca" element={<BibliotecaCrista />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
