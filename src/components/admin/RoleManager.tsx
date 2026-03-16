@@ -46,7 +46,7 @@ const RoleManager = ({ targetUserId, currentRole, adminUserId, onRoleChange }: R
       // Then insert new role
       const { error } = await supabase.from("user_roles").insert([{
         user_id: targetUserId,
-        role: newRole as "jovem" | "lider" | "admin" | "membro" | "musico",
+        role: newRole as "jovem" | "lider" | "admin" | "membro" | "musico" | "kids_leader" | "kids",
         assigned_by: adminUserId,
       }]);
 

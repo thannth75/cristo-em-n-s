@@ -137,6 +137,7 @@ const Dashboard = () => {
     { title: "Rádio de Louvores", description: "Ouça louvores 24h", icon: Radio, href: "/radio", badge: "🎵" },
     { title: "Plano de Leitura", description: "Leia a Bíblia em 1 ano", icon: Target, href: "/plano-leitura" },
     { title: "Espaço Kids/Teen", description: "Área infantil cristã", icon: Sparkles, href: "/espaco-kids", badge: "🌈" },
+    { title: "Biblioteca Cristã", description: "Livros da fé cristã", icon: BookOpen, href: "/biblioteca", badge: "📚" },
   ];
 
   const youthFeatures = [
