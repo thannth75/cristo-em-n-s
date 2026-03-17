@@ -58,34 +58,53 @@ Deno.serve(async (req) => {
       );
     }
 
-    const bookName = BOOK_MAP[abbrev.toLowerCase()];
-    if (!bookName) {
+    const key = String(abbrev).toLowerCase();
+    const primaryBook = BOOK_MAP_PT[key];
+    const fallbackBook = BOOK_MAP_EN_FALLBACK[key];
+
+    if (!primaryBook && !fallbackBook) {
       return new Response(
         JSON.stringify({ success: false, error: `Unknown book abbreviation: ${abbrev}` }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Usa bible-api.com com tradução Almeida (João Ferreira de Almeida)
-    const query = encodeURIComponent(`${bookName} ${chapter}`);
-    const apiUrl = `https://bible-api.com/${query}?translation=almeida`;
-
-    console.log(`Fetching: ${apiUrl}`);
-
-    const response = await fetch(apiUrl, {
-      headers: { "Accept": "application/json" },
-    });
-
-    if (!response.ok) {
-      const body = await response.text();
-      console.error(`API error: ${response.status} - ${body}`);
+    const chapterNumber = Number(chapter);
+    if (!Number.isFinite(chapterNumber) || chapterNumber < 1) {
       return new Response(
-        JSON.stringify({ success: false, error: `API returned ${response.status}` }),
-        { status: response.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ success: false, error: "Invalid chapter" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const data = await response.json();
+    const candidates = Array.from(new Set([primaryBook, fallbackBook].filter(Boolean))) as string[];
+
+    let data: any = null;
+    let lastStatus = 500;
+
+    for (const candidateBook of candidates) {
+      const query = encodeURIComponent(`${candidateBook} ${chapterNumber}`);
+      const apiUrl = `https://bible-api.com/${query}?translation=almeida`;
+
+      console.log(`Fetching: ${apiUrl}`);
+      const response = await fetch(apiUrl, { headers: { "Accept": "application/json" } });
+
+      if (response.ok) {
+        data = await response.json();
+        break;
+      }
+
+      lastStatus = response.status;
+      const body = await response.text();
+      console.error(`API error (${candidateBook}): ${response.status} - ${body}`);
+    }
+
+    if (!data) {
+      return new Response(
+        JSON.stringify({ success: false, error: `API returned ${lastStatus}` }),
+        { status: lastStatus, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // bible-api.com retorna: { verses: [{book_name, chapter, verse, text}], ... }
     // Transformar para o formato esperado pelo frontend
