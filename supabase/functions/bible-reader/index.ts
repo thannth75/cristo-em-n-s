@@ -117,8 +117,8 @@ Deno.serve(async (req) => {
       JSON.stringify({
         success: true,
         data: {
-          book: { name: data.verses?.[0]?.book_name || bookName },
-          chapter: { number: chapter },
+          book: { name: data.verses?.[0]?.book_name || primaryBook || fallbackBook },
+          chapter: { number: chapterNumber },
           verses,
         },
       }),
