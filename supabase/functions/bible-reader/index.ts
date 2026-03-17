@@ -4,13 +4,32 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Mapeamento de abreviações PT → nomes em inglês para a bible-api.com
-const BOOK_MAP: Record<string, string> = {
+// Mapeamento robusto de abreviações PT para consultas na bible-api.com
+const BOOK_MAP_PT: Record<string, string> = {
+  gn: "gênesis", ex: "êxodo", lv: "levítico", nm: "números", dt: "deuteronômio",
+  js: "josué", jz: "juízes", rt: "rute", "1sm": "1 samuel", "2sm": "2 samuel",
+  "1rs": "1 reis", "2rs": "2 reis", "1cr": "1 crônicas", "2cr": "2 crônicas",
+  ed: "esdras", ne: "neemias", et: "ester", jó: "jó", sl: "salmos",
+  pv: "provérbios", ec: "eclesiastes", ct: "cânticos",
+  is: "isaías", jr: "jeremias", lm: "lamentações", ez: "ezequiel", dn: "daniel",
+  os: "oseias", jl: "joel", am: "amós", ob: "obadias", jn: "jonas",
+  mq: "miquéias", na: "naum", hc: "habacuque", sf: "sofonias",
+  ag: "ageu", zc: "zacarias", ml: "malaquias",
+  mt: "mateus", mc: "marcos", lc: "lucas", jo: "joão", at: "atos",
+  rm: "romanos", "1co": "1 coríntios", "2co": "2 coríntios",
+  gl: "gálatas", ef: "efésios", fp: "filipenses", cl: "colossenses",
+  "1ts": "1 tessalonicenses", "2ts": "2 tessalonicenses",
+  "1tm": "1 timóteo", "2tm": "2 timóteo", tt: "tito", fm: "filemom",
+  hb: "hebreus", tg: "tiago", "1pe": "1 pedro", "2pe": "2 pedro",
+  "1jo": "1 joão", "2jo": "2 joão", "3jo": "3 joão", jd: "judas", ap: "apocalipse",
+};
+
+const BOOK_MAP_EN_FALLBACK: Record<string, string> = {
   gn: "genesis", ex: "exodus", lv: "leviticus", nm: "numbers", dt: "deuteronomy",
   js: "joshua", jz: "judges", rt: "ruth", "1sm": "1 samuel", "2sm": "2 samuel",
   "1rs": "1 kings", "2rs": "2 kings", "1cr": "1 chronicles", "2cr": "2 chronicles",
   ed: "ezra", ne: "nehemiah", et: "esther", jó: "job", sl: "psalms",
-  pv: "proverbs", ec: "ecclesiastes", ct: "song of solomon",
+  pv: "proverbs", ec: "ecclesiastes", ct: "song of songs",
   is: "isaiah", jr: "jeremiah", lm: "lamentations", ez: "ezekiel", dn: "daniel",
   os: "hosea", jl: "joel", am: "amos", ob: "obadiah", jn: "jonah",
   mq: "micah", na: "nahum", hc: "habakkuk", sf: "zephaniah",
@@ -21,7 +40,7 @@ const BOOK_MAP: Record<string, string> = {
   "1ts": "1 thessalonians", "2ts": "2 thessalonians",
   "1tm": "1 timothy", "2tm": "2 timothy", tt: "titus", fm: "philemon",
   hb: "hebrews", tg: "james", "1pe": "1 peter", "2pe": "2 peter",
-  "1jo": "1 john", "2jo": "2 john", "3jo": "3 john", jd: "jude", ap: "revelation",
+  "1jo": "1 john", "2jo": "2 john", "3jo": "3 john", jd: "jude", ap: "apocalypse",
 };
 
 Deno.serve(async (req) => {
