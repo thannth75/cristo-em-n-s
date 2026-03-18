@@ -130,7 +130,32 @@ const Biblia = () => {
     []
   );
 
-  // ─── Handlers de navegação ───
+  // ─── Strong's Concordance lookup ───
+  const lookupStrong = useCallback(async (word: string) => {
+    if (!word.trim()) return;
+    setStrongLoading(true);
+    setStrongResults([]);
+    try {
+      const { data, error } = await supabase.functions.invoke("bible-reader", {
+        body: { strongLookup: word.trim() },
+      });
+      if (error) throw error;
+      setStrongResults(data?.data?.results || []);
+    } catch (err) {
+      console.error("Strong lookup error:", err);
+    } finally {
+      setStrongLoading(false);
+    }
+  }, []);
+
+  const handleWordTap = (word: string) => {
+    const cleaned = word.replace(/[.,;:!?"""''()[\]{}]/g, "").toLowerCase().trim();
+    if (cleaned.length < 2) return;
+    setStrongWord(cleaned);
+    setShowStrong(true);
+    lookupStrong(cleaned);
+  };
+
   const handleSelectBook = (book: BibleBook) => {
     setSelectedBook(book);
     setView("chapters");
