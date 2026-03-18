@@ -63,6 +63,12 @@ const Biblia = () => {
   const [loadingVerses, setLoadingVerses] = useState(false);
   const [verseError, setVerseError] = useState<string | null>(null);
 
+  // Strong's Concordance
+  const [strongWord, setStrongWord] = useState("");
+  const [strongResults, setStrongResults] = useState<StrongResult[]>([]);
+  const [strongLoading, setStrongLoading] = useState(false);
+  const [showStrong, setShowStrong] = useState(false);
+
   // Auth guard
   useEffect(() => {
     if (!authLoading) {
