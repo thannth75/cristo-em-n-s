@@ -492,7 +492,16 @@ const Biblia = () => {
                         <sup className="text-primary font-bold mr-1 text-[0.65em] select-none">
                           {v.number}
                         </sup>
-                        {v.text}{" "}
+                        {v.text.split(/\s+/).map((word, wi) => (
+                          <span key={wi}>
+                            <span
+                              className="cursor-pointer hover:text-primary hover:underline decoration-primary/30 decoration-dotted underline-offset-4 transition-colors"
+                              onClick={() => handleWordTap(word)}
+                            >
+                              {word}
+                            </span>{" "}
+                          </span>
+                        ))}
                       </span>
                     ))}
                   </div>
