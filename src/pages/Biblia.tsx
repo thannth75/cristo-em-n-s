@@ -33,6 +33,14 @@ interface BibleVerse {
   text: string;
 }
 
+interface StrongResult {
+  id: string;
+  original: string;
+  transliteration: string;
+  meaning: string;
+  lang: string;
+}
+
 type ViewMode = "books" | "chapters" | "reading";
 
 // ─── Componente principal ───
