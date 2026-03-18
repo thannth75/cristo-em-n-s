@@ -249,9 +249,18 @@ const Biblia = () => {
             <p className="text-xs text-muted-foreground truncate">{headerSubtitle}</p>
           </div>
 
-          {/* Font size controls (only in reading mode) */}
+          {/* Font size + Strong's controls (only in reading mode) */}
           {view === "reading" && (
             <div className="flex items-center gap-1 shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 rounded-full"
+                onClick={() => { setShowStrong(true); setStrongWord(""); setStrongResults([]); }}
+                title="Concordância Strong"
+              >
+                <Languages className="h-4 w-4 text-primary" />
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"
