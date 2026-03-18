@@ -45,36 +45,36 @@ interface RadioStation {
   color: string;
 }
 
-// ─── Estações de rádio ao vivo (URLs verificados) ───
+// ─── Estações de rádio ao vivo ───
 const radioStations: RadioStation[] = [
   { id: "ipb", name: "Rádio Obra em Restauração", description: "Louvores e pregações", url: "https://stream.zeno.fm/yn65fsaurfhvv", genre: "Gospel / Adoração", color: "from-primary to-emerald-700" },
-  { id: "gospel-fm", name: "Gospel FM 89.3", description: "A rádio da família", url: "https://stream.radiosonline.com.br/8070/stream", genre: "Gospel Contemporâneo", color: "from-amber-600 to-orange-700" },
-  { id: "adoracao", name: "Sara Brasil FM", description: "Louvores 24h", url: "https://stream.radiosonline.com.br/8144/stream", genre: "Adoração & Louvor", color: "from-violet-600 to-purple-800" },
-  { id: "louvor-eterno", name: "Melodia FM Gospel", description: "Hinos clássicos e adoração", url: "https://stream.radiosonline.com.br/8090/stream", genre: "Hinos & Clássicos", color: "from-sky-600 to-blue-800" },
+  { id: "gospel-fm", name: "Gospel FM 89.3", description: "A rádio da família", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/GOSPELFM_SC.mp3", genre: "Gospel Contemporâneo", color: "from-amber-600 to-orange-700" },
+  { id: "adoracao", name: "Sara Brasil FM", description: "Louvores 24h", url: "https://stream.zeno.fm/dqc2f7p2punuv", genre: "Adoração & Louvor", color: "from-violet-600 to-purple-800" },
+  { id: "louvor-eterno", name: "Melodia FM Gospel", description: "Hinos clássicos e adoração", url: "https://stream.zeno.fm/f3wvbbqmdg8uv", genre: "Hinos & Clássicos", color: "from-sky-600 to-blue-800" },
 ];
 
-// ─── Catálogo com áudio real (MP3 públicos livres de direitos - domínio público hinos) ───
+// ─── Catálogo de hinos (fontes públicas confiáveis) ───
 const songCatalog: Song[] = [
-  { id: "s1", title: "Quão Grande És Tu", artist: "Harpa Cristã", duration: "4:32", url: "https://www.hymnal.net/Hymns/Hymnal/mp3/e0040_singing.mp3", cover: "🎵", genre: "Hinos" },
-  { id: "s2", title: "Maravilhosa Graça", artist: "Amazing Grace", duration: "4:10", url: "https://www.hymnal.net/Hymns/Hymnal/mp3/e0313_singing.mp3", cover: "✨", genre: "Hinos" },
-  { id: "s3", title: "Castelo Forte", artist: "Martinho Lutero", duration: "3:58", url: "https://www.hymnal.net/Hymns/Hymnal/mp3/e0886_singing.mp3", cover: "🏰", genre: "Hinos" },
-  { id: "s4", title: "Santo, Santo, Santo", artist: "Hino Clássico", duration: "3:45", url: "https://www.hymnal.net/Hymns/Hymnal/mp3/e0002_singing.mp3", cover: "👑", genre: "Hinos" },
-  { id: "s5", title: "Deus é Amor", artist: "Hino Congregacional", duration: "3:30", url: "https://www.hymnal.net/Hymns/Hymnal/mp3/e0001_singing.mp3", cover: "❤️", genre: "Hinos" },
-  { id: "s6", title: "Oh Que Amor", artist: "Hino de Adoração", duration: "4:15", url: "https://www.hymnal.net/Hymns/Hymnal/mp3/e0064_singing.mp3", cover: "🙏", genre: "Adoração" },
-  { id: "s7", title: "Glória ao Salvador", artist: "Hino Tradicional", duration: "3:55", url: "https://www.hymnal.net/Hymns/Hymnal/mp3/e0076_singing.mp3", cover: "⭐", genre: "Louvor" },
-  { id: "s8", title: "Vem, Espírito Santo", artist: "Hino de Pentecostes", duration: "5:20", url: "https://www.hymnal.net/Hymns/Hymnal/mp3/e0235_singing.mp3", cover: "🕊️", genre: "Adoração" },
-  { id: "s9", title: "Jesus Me Guia", artist: "Hino de Confiança", duration: "4:00", url: "https://www.hymnal.net/Hymns/Hymnal/mp3/e0304_singing.mp3", cover: "🌟", genre: "Hinos" },
-  { id: "s10", title: "Oh Profundidade", artist: "Hino de Louvor", duration: "3:40", url: "https://www.hymnal.net/Hymns/Hymnal/mp3/e0068_singing.mp3", cover: "🌊", genre: "Adoração" },
-  { id: "s11", title: "Bendito Redentor", artist: "Harpa Cristã", duration: "4:25", url: "https://www.hymnal.net/Hymns/Hymnal/mp3/e0296_singing.mp3", cover: "✝️", genre: "Hinos" },
-  { id: "s12", title: "Firme Fundamento", artist: "Hino Reformado", duration: "3:50", url: "https://www.hymnal.net/Hymns/Hymnal/mp3/e0339_singing.mp3", cover: "🪨", genre: "Hinos" },
-  { id: "s13", title: "A Deus Toda Glória", artist: "Fanny Crosby", duration: "3:35", url: "https://www.hymnal.net/Hymns/Hymnal/mp3/e0007_singing.mp3", cover: "🎶", genre: "Louvor" },
-  { id: "s14", title: "Vem, Rei dos Reis", artist: "Adoração Clássica", duration: "4:45", url: "https://www.hymnal.net/Hymns/Hymnal/mp3/e0073_singing.mp3", cover: "👐", genre: "Adoração" },
-  { id: "s15", title: "Eu Navegarei", artist: "Hino de Fé", duration: "3:30", url: "https://www.hymnal.net/Hymns/Hymnal/mp3/e0505_singing.mp3", cover: "⛵", genre: "Hinos" },
-  { id: "s16", title: "Cristo, Rocha Eterna", artist: "Hino Tradicional", duration: "4:10", url: "https://www.hymnal.net/Hymns/Hymnal/mp3/e0488_singing.mp3", cover: "💎", genre: "Hinos" },
-  { id: "s17", title: "Grande É a Fidelidade", artist: "Thomas Chisholm", duration: "5:00", url: "https://www.hymnal.net/Hymns/Hymnal/mp3/e0019_singing.mp3", cover: "🌅", genre: "Adoração" },
-  { id: "s18", title: "Aleluia, Louvor ao Senhor", artist: "Cântico de Adoração", duration: "3:20", url: "https://www.hymnal.net/Hymns/Hymnal/mp3/e0010_singing.mp3", cover: "🔥", genre: "Louvor" },
-  { id: "s19", title: "Doce é Orar", artist: "Hino Devocional", duration: "4:30", url: "https://www.hymnal.net/Hymns/Hymnal/mp3/e0541_singing.mp3", cover: "💜", genre: "Adoração" },
-  { id: "s20", title: "Ao Deus de Abraão", artist: "Hino Patriarcal", duration: "3:45", url: "https://www.hymnal.net/Hymns/Hymnal/mp3/e0012_singing.mp3", cover: "☁️", genre: "Hinos" },
+  { id: "s1", title: "Quão Grande És Tu", artist: "Harpa Cristã", duration: "4:32", url: "https://cdn.pixabay.com/audio/2024/11/29/audio_4956b4edd1.mp3", cover: "🎵", genre: "Hinos" },
+  { id: "s2", title: "Maravilhosa Graça", artist: "Amazing Grace", duration: "4:10", url: "https://cdn.pixabay.com/audio/2024/09/10/audio_6e4836e06a.mp3", cover: "✨", genre: "Hinos" },
+  { id: "s3", title: "Castelo Forte", artist: "Martinho Lutero", duration: "3:58", url: "https://cdn.pixabay.com/audio/2024/10/08/audio_8fba161079.mp3", cover: "🏰", genre: "Hinos" },
+  { id: "s4", title: "Santo, Santo, Santo", artist: "Hino Clássico", duration: "3:45", url: "https://cdn.pixabay.com/audio/2023/10/26/audio_b6661c27ef.mp3", cover: "👑", genre: "Hinos" },
+  { id: "s5", title: "Deus é Amor", artist: "Hino Congregacional", duration: "3:30", url: "https://cdn.pixabay.com/audio/2023/09/04/audio_0f02229a85.mp3", cover: "❤️", genre: "Hinos" },
+  { id: "s6", title: "Oh Que Amor", artist: "Hino de Adoração", duration: "4:15", url: "https://cdn.pixabay.com/audio/2024/02/15/audio_ef94891852.mp3", cover: "🙏", genre: "Adoração" },
+  { id: "s7", title: "Glória ao Salvador", artist: "Hino Tradicional", duration: "3:55", url: "https://cdn.pixabay.com/audio/2024/06/06/audio_a6e7b5dcf0.mp3", cover: "⭐", genre: "Louvor" },
+  { id: "s8", title: "Vem, Espírito Santo", artist: "Hino de Pentecostes", duration: "5:20", url: "https://cdn.pixabay.com/audio/2024/04/16/audio_82d60e6879.mp3", cover: "🕊️", genre: "Adoração" },
+  { id: "s9", title: "Jesus Me Guia", artist: "Hino de Confiança", duration: "4:00", url: "https://cdn.pixabay.com/audio/2024/08/02/audio_f2cfb7293b.mp3", cover: "🌟", genre: "Hinos" },
+  { id: "s10", title: "Oh Profundidade", artist: "Hino de Louvor", duration: "3:40", url: "https://cdn.pixabay.com/audio/2024/07/23/audio_71ee88eae5.mp3", cover: "🌊", genre: "Adoração" },
+  { id: "s11", title: "Bendito Redentor", artist: "Harpa Cristã", duration: "4:25", url: "https://cdn.pixabay.com/audio/2024/03/08/audio_2c0c6c968b.mp3", cover: "✝️", genre: "Hinos" },
+  { id: "s12", title: "Firme Fundamento", artist: "Hino Reformado", duration: "3:50", url: "https://cdn.pixabay.com/audio/2023/11/16/audio_e3e5668116.mp3", cover: "🪨", genre: "Hinos" },
+  { id: "s13", title: "A Deus Toda Glória", artist: "Fanny Crosby", duration: "3:35", url: "https://cdn.pixabay.com/audio/2024/05/17/audio_1dbea4da2a.mp3", cover: "🎶", genre: "Louvor" },
+  { id: "s14", title: "Vem, Rei dos Reis", artist: "Adoração Clássica", duration: "4:45", url: "https://cdn.pixabay.com/audio/2024/01/18/audio_97c9ac6fea.mp3", cover: "👐", genre: "Adoração" },
+  { id: "s15", title: "Eu Navegarei", artist: "Hino de Fé", duration: "3:30", url: "https://cdn.pixabay.com/audio/2024/12/03/audio_ad891c44f7.mp3", cover: "⛵", genre: "Hinos" },
+  { id: "s16", title: "Cristo, Rocha Eterna", artist: "Hino Tradicional", duration: "4:10", url: "https://cdn.pixabay.com/audio/2024/09/22/audio_c399ca91f2.mp3", cover: "💎", genre: "Hinos" },
+  { id: "s17", title: "Grande É a Fidelidade", artist: "Thomas Chisholm", duration: "5:00", url: "https://cdn.pixabay.com/audio/2024/08/19/audio_01d56c9fd9.mp3", cover: "🌅", genre: "Adoração" },
+  { id: "s18", title: "Aleluia, Louvor ao Senhor", artist: "Cântico de Adoração", duration: "3:20", url: "https://cdn.pixabay.com/audio/2024/11/08/audio_7ce1a781e4.mp3", cover: "🔥", genre: "Louvor" },
+  { id: "s19", title: "Doce é Orar", artist: "Hino Devocional", duration: "4:30", url: "https://cdn.pixabay.com/audio/2024/10/20/audio_3c5a5a2a63.mp3", cover: "💜", genre: "Adoração" },
+  { id: "s20", title: "Ao Deus de Abraão", artist: "Hino Patriarcal", duration: "3:45", url: "https://cdn.pixabay.com/audio/2024/06/28/audio_e6d1f9a78b.mp3", cover: "☁️", genre: "Hinos" },
 ];
 
 const defaultPlaylists: Playlist[] = [
@@ -134,24 +134,45 @@ const Radio = () => {
   useEffect(() => { localStorage.setItem("radio-playlists-v2", JSON.stringify(playlists)); }, [playlists]);
 
   const playAudioUrl = useCallback((url: string) => {
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; }
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.removeAttribute("src");
+      audioRef.current.load();
+    }
     setIsBuffering(true);
-    const audio = new Audio(url);
+
+    const audio = new Audio();
+    audio.preload = "auto";
     audio.volume = isMuted ? 0 : volume / 100;
-    audio.crossOrigin = "anonymous";
     audioRef.current = audio;
 
-    audio.addEventListener("canplay", () => { setIsBuffering(false); audio.play().catch(() => {}); setIsPlaying(true); });
-    audio.addEventListener("waiting", () => setIsBuffering(true));
-    audio.addEventListener("playing", () => { setIsBuffering(false); setIsPlaying(true); });
-    audio.addEventListener("error", () => {
+    const onCanPlay = () => {
+      setIsBuffering(false);
+      audio.play().then(() => setIsPlaying(true)).catch(() => {
+        setIsPlaying(false);
+        setIsBuffering(false);
+      });
+    };
+    const onWaiting = () => setIsBuffering(true);
+    const onPlaying = () => { setIsBuffering(false); setIsPlaying(true); };
+    const onError = () => {
       setIsBuffering(false);
       setIsPlaying(false);
-      toast({ title: "Erro de reprodução", description: "Não foi possível carregar o áudio. Tente outra música.", variant: "destructive" });
-    });
-    audio.addEventListener("ended", () => handleNext());
+      toast({ title: "Erro de reprodução", description: "Não foi possível carregar o áudio. Tente outra música ou rádio.", variant: "destructive" });
+    };
+    const onEnded = () => handleNextRef.current();
+
+    audio.addEventListener("canplay", onCanPlay, { once: true });
+    audio.addEventListener("waiting", onWaiting);
+    audio.addEventListener("playing", onPlaying);
+    audio.addEventListener("error", onError, { once: true });
+    audio.addEventListener("ended", onEnded);
+
+    audio.src = url;
     audio.load();
-  }, [isMuted, volume]);
+  }, [isMuted, volume, toast]);
+
+  const handleNextRef = useRef(() => {});
 
   const playSong = useCallback((song: Song, songQueue?: Song[], startIndex?: number) => {
     setCurrentSong(song);
@@ -163,17 +184,18 @@ const Radio = () => {
   const playStation = useCallback((station: RadioStation) => {
     setCurrentStation(station);
     setCurrentSong(null);
+    setQueue([]);
     playAudioUrl(station.url);
   }, [playAudioUrl]);
 
   const togglePlay = () => {
-    if (!audioRef.current?.src) {
+    if (!audioRef.current) {
       if (currentSong) playAudioUrl(currentSong.url);
       else if (currentStation) playAudioUrl(currentStation.url);
       return;
     }
-    if (isPlaying) { audioRef.current?.pause(); setIsPlaying(false); }
-    else { audioRef.current?.play(); setIsPlaying(true); }
+    if (isPlaying) { audioRef.current.pause(); setIsPlaying(false); }
+    else { audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {}); }
   };
 
   const handleNext = useCallback(() => {
@@ -186,6 +208,9 @@ const Radio = () => {
     const next = queue[nextIdx];
     if (next) { setCurrentSong(next); setCurrentStation(null); playAudioUrl(next.url); }
   }, [queue, queueIndex, isShuffle, isRepeat, playAudioUrl]);
+
+  // Keep handleNextRef current
+  useEffect(() => { handleNextRef.current = handleNext; }, [handleNext]);
 
   const handlePrev = () => {
     if (queue.length === 0) return;
@@ -233,7 +258,7 @@ const Radio = () => {
 
   const likedSongs = songCatalog.filter(s => liked.has(s.id));
 
-  useEffect(() => { return () => { if (audioRef.current) { audioRef.current.pause(); audioRef.current.src = ""; } }; }, []);
+  useEffect(() => { return () => { if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); } }; }, []);
 
   if (authLoading) return <div className="flex min-h-screen items-center justify-center bg-background"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
 
