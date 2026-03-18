@@ -93,16 +93,21 @@ const EspacoKids = () => {
   const [memoryCompleted, setMemoryCompleted] = useState(false);
   const [memoryChecking, setMemoryChecking] = useState(false);
 
-  // Access control: kids, kids_leader, leader, or admin
+  // Access control: ONLY kids, kids_leader, leader, or admin can access
   const canAccess = isKids || isKidsLeader || isLeader || isAdmin;
   const isManager = isKidsLeader || isLeader || isAdmin;
 
   useEffect(() => {
     if (!authLoading) {
-      if (!user) navigate("/auth");
-      else if (!isApproved) navigate("/pending");
+      if (!user) { navigate("/auth"); return; }
+      if (!isApproved) { navigate("/pending"); return; }
+      // Block non-kids users (jovem, membro, musico without kids role)
+      if (!canAccess) {
+        navigate("/dashboard");
+        return;
+      }
     }
-  }, [user, isApproved, authLoading, navigate]);
+  }, [user, isApproved, authLoading, navigate, canAccess]);
 
   useEffect(() => {
     if (!user) return;
