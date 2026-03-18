@@ -39,6 +39,17 @@ interface SearchResult {
   display_name: string;
 }
 
+// Inject Leaflet CSS once globally
+const ensureLeafletCSS = () => {
+  if (document.getElementById("leaflet-css-global")) return;
+  const link = document.createElement("link");
+  link.id = "leaflet-css-global";
+  link.rel = "stylesheet";
+  link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+  link.crossOrigin = "";
+  document.head.appendChild(link);
+};
+
 const EventMapPicker = ({
   open,
   onOpenChange,
@@ -51,6 +62,7 @@ const EventMapPicker = ({
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markerRef = useRef<any>(null);
+  const leafletRef = useRef<any>(null);
   const [address, setAddress] = useState(initialAddress);
   const [searchQuery, setSearchQuery] = useState("");
   const [lat, setLat] = useState(initialLat || -15.7801);
@@ -61,6 +73,7 @@ const EventMapPicker = ({
   const [isLocating, setIsLocating] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [autoLocated, setAutoLocated] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
 
   // Reset state when dialog opens
   useEffect(() => {
@@ -72,6 +85,7 @@ const EventMapPicker = ({
       setSearchQuery("");
       setSearchResults([]);
       setAutoLocated(false);
+      setMapReady(false);
     }
   }, [open, initialLat, initialLng, initialAddress, initialLocationType]);
 
@@ -110,67 +124,78 @@ const EventMapPicker = ({
         updateMapPosition(latitude, longitude, 16);
         reverseGeocode(latitude, longitude);
       },
-      () => {
-        // Use default (Brasília) if geolocation fails
-      },
+      () => {},
       { enableHighAccuracy: true, timeout: 8000 }
     );
   }, [open, autoLocated, initialLat, updateMapPosition, reverseGeocode]);
 
-  // Inject Leaflet CSS globally once
-  useEffect(() => {
-    if (document.getElementById('leaflet-css-global')) return;
-    const link = document.createElement('link');
-    link.id = 'leaflet-css-global';
-    link.rel = 'stylesheet';
-    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-    link.crossOrigin = '';
-    document.head.appendChild(link);
-  }, []);
-
+  // Initialize map
   useEffect(() => {
     if (!open || !mapRef.current) return;
+
+    ensureLeafletCSS();
 
     let cancelled = false;
 
     const initMap = async () => {
-      const L = await import("leaflet");
+      // Wait for CSS to load
+      await new Promise<void>((resolve) => {
+        const link = document.getElementById("leaflet-css-global") as HTMLLinkElement;
+        if (link && link.sheet) {
+          resolve();
+        } else if (link) {
+          link.onload = () => resolve();
+          setTimeout(resolve, 1000); // fallback
+        } else {
+          resolve();
+        }
+      });
 
       if (cancelled) return;
 
+      const L = (await import("leaflet")).default;
+      leafletRef.current = L;
+
+      if (cancelled) return;
+
+      // Cleanup previous instance
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
+        try { mapInstanceRef.current.remove(); } catch {}
         mapInstanceRef.current = null;
+        markerRef.current = null;
       }
 
       const container = mapRef.current!;
-      // Ensure container has dimensions before init
-      if (container.clientHeight === 0) {
-        await new Promise(r => setTimeout(r, 200));
+
+      // Wait for container to have dimensions
+      let retries = 0;
+      while (container.clientHeight === 0 && retries < 10) {
+        await new Promise((r) => setTimeout(r, 100));
+        retries++;
         if (cancelled) return;
       }
 
-      const map = L.default.map(container, {
+      const map = L.map(container, {
         center: [lat, lng],
         zoom: 15,
         zoomControl: false,
       });
 
-      L.default.control.zoom({ position: "bottomright" }).addTo(map);
+      L.control.zoom({ position: "bottomright" }).addTo(map);
 
-      const streetLayer = L.default.tileLayer(
+      const streetLayer = L.tileLayer(
         "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        { attribution: "© OSM", maxZoom: 19 }
+        { attribution: "© OpenStreetMap", maxZoom: 19 }
       );
 
-      const satelliteLayer = L.default.tileLayer(
+      const satelliteLayer = L.tileLayer(
         "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
         { attribution: "© Esri", maxZoom: 19 }
       );
 
       streetLayer.addTo(map);
 
-      const icon = L.default.divIcon({
+      const icon = L.divIcon({
         html: `<div style="background:hsl(var(--primary));border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 10px rgba(0,0,0,0.4)">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
         </div>`,
@@ -179,7 +204,7 @@ const EventMapPicker = ({
         iconAnchor: [18, 36],
       });
 
-      const marker = L.default.marker([lat, lng], { icon, draggable: true }).addTo(map);
+      const marker = L.marker([lat, lng], { icon, draggable: true }).addTo(map);
 
       marker.on("dragend", () => {
         const pos = marker.getLatLng();
@@ -201,29 +226,33 @@ const EventMapPicker = ({
       (map as any)._streetLayer = streetLayer;
       (map as any)._satelliteLayer = satelliteLayer;
 
-      // Aggressive invalidateSize to fix blank tiles in dialogs
-      const intervals = [100, 300, 600, 1000, 1500, 2000];
-      intervals.forEach(ms => {
+      // Aggressive invalidateSize for dialog rendering
+      const intervals = [50, 150, 300, 500, 800, 1200, 2000, 3000];
+      intervals.forEach((ms) => {
         setTimeout(() => {
           if (!cancelled && mapInstanceRef.current) {
             mapInstanceRef.current.invalidateSize();
           }
         }, ms);
       });
+
+      setMapReady(true);
     };
 
-    const timer = setTimeout(initMap, 300);
+    const timer = setTimeout(initMap, 200);
     return () => {
       cancelled = true;
       clearTimeout(timer);
       if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
+        try { mapInstanceRef.current.remove(); } catch {}
         mapInstanceRef.current = null;
+        markerRef.current = null;
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  // Toggle satellite/street view
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
@@ -233,10 +262,10 @@ const EventMapPicker = ({
 
     if (isSatellite) {
       map.removeLayer(streetLayer);
-      satelliteLayer.addTo(map);
+      if (!map.hasLayer(satelliteLayer)) satelliteLayer.addTo(map);
     } else {
       map.removeLayer(satelliteLayer);
-      streetLayer.addTo(map);
+      if (!map.hasLayer(streetLayer)) streetLayer.addTo(map);
     }
   }, [isSatellite]);
 
@@ -314,26 +343,15 @@ const EventMapPicker = ({
               placeholder="Pesquisar endereço..."
               className="rounded-xl text-sm flex-1 min-w-0"
             />
-            <Button
-              onClick={handleSearch}
-              size="icon"
-              className="rounded-xl shrink-0 h-10 w-10"
-              disabled={isSearching}
-            >
+            <Button onClick={handleSearch} size="icon" className="rounded-xl shrink-0 h-10 w-10" disabled={isSearching}>
               {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
             </Button>
-            <Button
-              onClick={handleLocateMe}
-              size="icon"
-              variant="outline"
-              className="rounded-xl shrink-0 h-10 w-10"
-              disabled={isLocating}
-            >
+            <Button onClick={handleLocateMe} size="icon" variant="outline" className="rounded-xl shrink-0 h-10 w-10" disabled={isLocating}>
               {isLocating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Locate className="h-4 w-4" />}
             </Button>
           </div>
 
-          {/* Search results dropdown */}
+          {/* Search results */}
           {searchResults.length > 0 && (
             <div className="rounded-xl border border-border bg-card shadow-lg max-h-36 overflow-y-auto">
               {searchResults.map((result, i) => (
@@ -350,7 +368,12 @@ const EventMapPicker = ({
 
           {/* Map */}
           <div className="relative rounded-xl overflow-hidden border border-border">
-            <div ref={mapRef} className="h-[200px] sm:h-[260px] w-full" />
+            <div ref={mapRef} className="h-[220px] sm:h-[280px] w-full" style={{ zIndex: 0 }} />
+            {!mapReady && (
+              <div className="absolute inset-0 flex items-center justify-center bg-muted/80">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            )}
             <Button
               variant="secondary"
               size="sm"
@@ -376,18 +399,12 @@ const EventMapPicker = ({
           {/* Location type */}
           <div>
             <Label className="text-xs font-medium mb-1.5 block">Tipo de local</Label>
-            <RadioGroup
-              value={locationType}
-              onValueChange={setLocationType}
-              className="grid grid-cols-2 gap-1.5"
-            >
+            <RadioGroup value={locationType} onValueChange={setLocationType} className="grid grid-cols-2 gap-1.5">
               {LOCATION_TYPES.map((type) => (
                 <label
                   key={type.value}
                   className={`flex items-center gap-1.5 rounded-xl border p-2.5 cursor-pointer transition-colors ${
-                    locationType === type.value
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:bg-muted/50"
+                    locationType === type.value ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
                   }`}
                 >
                   <RadioGroupItem value={type.value} className="sr-only" />
