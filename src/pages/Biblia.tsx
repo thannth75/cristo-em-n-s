@@ -566,6 +566,98 @@ const Biblia = () => {
         </AnimatePresence>
       </main>
 
+      {/* Strong's Concordance Dialog */}
+      <Dialog open={showStrong} onOpenChange={setShowStrong}>
+        <DialogContent className="sm:max-w-md max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Languages className="h-5 w-5 text-primary" />
+              Concordância Strong
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-xs text-muted-foreground">
+              Toque em qualquer palavra do texto bíblico ou pesquise abaixo para ver o significado original em hebraico/grego.
+            </p>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Ex: graça, amor, fé, Deus..."
+                value={strongWord}
+                onChange={(e) => setStrongWord(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && lookupStrong(strongWord)}
+                className="rounded-xl text-sm"
+              />
+              <Button
+                size="icon"
+                className="rounded-xl shrink-0"
+                onClick={() => lookupStrong(strongWord)}
+                disabled={strongLoading || !strongWord.trim()}
+              >
+                {strongLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+              </Button>
+            </div>
+
+            {strongResults.length > 0 && (
+              <div className="space-y-3">
+                {strongResults.map((result) => (
+                  <motion.div
+                    key={result.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="rounded-xl border border-border bg-card p-4 space-y-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-mono font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                        {result.id}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                        {result.lang}
+                      </span>
+                    </div>
+                    <div className="text-center py-2">
+                      <p className="text-2xl font-serif" dir={result.lang === "Hebraico" ? "rtl" : "ltr"}>
+                        {result.original}
+                      </p>
+                      <p className="text-sm font-medium text-primary mt-1">{result.transliteration}</p>
+                    </div>
+                    <div className="rounded-lg bg-muted/50 p-3">
+                      <p className="text-xs font-medium text-muted-foreground mb-0.5">Significado:</p>
+                      <p className="text-sm text-foreground">{result.meaning}</p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+
+            {strongWord && !strongLoading && strongResults.length === 0 && (
+              <div className="text-center py-6">
+                <BookOpen className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  Palavra não encontrada na concordância.
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Tente: deus, amor, fé, graça, paz, salvação, jesus, cristo, espírito, santo...
+                </p>
+              </div>
+            )}
+
+            {!strongWord && (
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-foreground">Palavras populares:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {["Deus", "Jesus", "Cristo", "Amor", "Fé", "Graça", "Paz", "Salvação", "Espírito", "Santo", "Glória", "Reino", "Evangelho", "Igreja"].map(w => (
+                    <button key={w} onClick={() => { setStrongWord(w.toLowerCase()); lookupStrong(w.toLowerCase()); }}
+                      className="rounded-full bg-muted px-3 py-1.5 text-xs text-foreground hover:bg-primary/10 hover:text-primary transition-colors">
+                      {w}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <BottomNavigation />
     </div>
   );
