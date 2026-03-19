@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { MapPin, Search, Church, Home, Globe, MoreHorizontal, Locate, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
 interface EventMapPickerProps {
   open: boolean;
@@ -39,16 +42,53 @@ interface SearchResult {
   display_name: string;
 }
 
-// Inject Leaflet CSS once globally
-const ensureLeafletCSS = () => {
-  if (document.getElementById("leaflet-css-global")) return;
-  const link = document.createElement("link");
-  link.id = "leaflet-css-global";
-  link.rel = "stylesheet";
-  link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-  link.crossOrigin = "";
-  document.head.appendChild(link);
+const createPickerIcon = () =>
+  L.divIcon({
+    html: `<div style="background:hsl(142,40%,20%);border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 10px rgba(0,0,0,0.4)">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    </div>`,
+    className: "",
+    iconSize: [36, 36],
+    iconAnchor: [18, 36],
+  });
+
+// Handles map clicks and auto-resize
+const MapInteraction = ({
+  onPositionChange,
+}: {
+  onPositionChange: (lat: number, lng: number) => void;
+}) => {
+  const map = useMap();
+
+  useEffect(() => {
+    const intervals = [100, 300, 600, 1000, 2000, 3000];
+    const timers = intervals.map((ms) =>
+      setTimeout(() => map.invalidateSize(), ms)
+    );
+    return () => timers.forEach(clearTimeout);
+  }, [map]);
+
+  useMapEvents({
+    click(e) {
+      onPositionChange(e.latlng.lat, e.latlng.lng);
+    },
+  });
+
+  return null;
 };
+
+// Moves map view programmatically
+const MapController = ({ center, zoom }: { center: [number, number]; zoom?: number }) => {
+  const map = useMap();
+  useEffect(() => {
+    map.setView(center, zoom || map.getZoom());
+    setTimeout(() => map.invalidateSize(), 100);
+  }, [center, zoom, map]);
+  return null;
+};
+
+const STREET_URL = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+const SATELLITE_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 
 const EventMapPicker = ({
   open,
@@ -59,10 +99,6 @@ const EventMapPicker = ({
   initialAddress = "",
   initialLocationType = "igreja",
 }: EventMapPickerProps) => {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<any>(null);
-  const markerRef = useRef<any>(null);
-  const leafletRef = useRef<any>(null);
   const [address, setAddress] = useState(initialAddress);
   const [searchQuery, setSearchQuery] = useState("");
   const [lat, setLat] = useState(initialLat || -15.7801);
@@ -72,31 +108,45 @@ const EventMapPicker = ({
   const [isSatellite, setIsSatellite] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [autoLocated, setAutoLocated] = useState(false);
-  const [mapReady, setMapReady] = useState(false);
+  const [mapCenter, setMapCenter] = useState<[number, number]>([initialLat || -15.7801, initialLng || -47.9292]);
+  const [mapZoom, setMapZoom] = useState(15);
+  // Key to force re-mount MapContainer when dialog reopens
+  const [mapKey, setMapKey] = useState(0);
+
+  const markerIcon = useMemo(() => createPickerIcon(), []);
 
   // Reset state when dialog opens
   useEffect(() => {
     if (open) {
-      setLat(initialLat || -15.7801);
-      setLng(initialLng || -47.9292);
+      const newLat = initialLat || -15.7801;
+      const newLng = initialLng || -47.9292;
+      setLat(newLat);
+      setLng(newLng);
       setAddress(initialAddress);
       setLocationType(initialLocationType);
       setSearchQuery("");
       setSearchResults([]);
-      setAutoLocated(false);
-      setMapReady(false);
+      setMapCenter([newLat, newLng]);
+      setMapZoom(15);
+      setMapKey((k) => k + 1);
+
+      // Auto-locate if no initial coords
+      if (!initialLat && navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const { latitude, longitude } = pos.coords;
+            setLat(latitude);
+            setLng(longitude);
+            setMapCenter([latitude, longitude]);
+            setMapZoom(16);
+            reverseGeocode(latitude, longitude);
+          },
+          () => {},
+          { enableHighAccuracy: true, timeout: 8000 }
+        );
+      }
     }
   }, [open, initialLat, initialLng, initialAddress, initialLocationType]);
-
-  const updateMapPosition = useCallback((newLat: number, newLng: number, zoom?: number) => {
-    if (mapInstanceRef.current && markerRef.current) {
-      mapInstanceRef.current.setView([newLat, newLng], zoom || mapInstanceRef.current.getZoom());
-      markerRef.current.setLatLng([newLat, newLng]);
-    }
-    setLat(newLat);
-    setLng(newLng);
-  }, []);
 
   const reverseGeocode = useCallback(async (latitude: number, longitude: number) => {
     try {
@@ -112,170 +162,25 @@ const EventMapPicker = ({
     }
   }, []);
 
-  // Auto-locate user when opening without initial coordinates
-  useEffect(() => {
-    if (!open || autoLocated || initialLat) return;
-    if (!navigator.geolocation) return;
-
-    setAutoLocated(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        updateMapPosition(latitude, longitude, 16);
-        reverseGeocode(latitude, longitude);
-      },
-      () => {},
-      { enableHighAccuracy: true, timeout: 8000 }
-    );
-  }, [open, autoLocated, initialLat, updateMapPosition, reverseGeocode]);
-
-  // Initialize map
-  useEffect(() => {
-    if (!open || !mapRef.current) return;
-
-    ensureLeafletCSS();
-
-    let cancelled = false;
-
-    const initMap = async () => {
-      // Wait for CSS to load
-      await new Promise<void>((resolve) => {
-        const link = document.getElementById("leaflet-css-global") as HTMLLinkElement;
-        if (link && link.sheet) {
-          resolve();
-        } else if (link) {
-          link.onload = () => resolve();
-          setTimeout(resolve, 1000); // fallback
-        } else {
-          resolve();
-        }
-      });
-
-      if (cancelled) return;
-
-      const L = (await import("leaflet")).default;
-      leafletRef.current = L;
-
-      if (cancelled) return;
-
-      // Cleanup previous instance
-      if (mapInstanceRef.current) {
-        try { mapInstanceRef.current.remove(); } catch {}
-        mapInstanceRef.current = null;
-        markerRef.current = null;
-      }
-
-      const container = mapRef.current!;
-
-      // Wait for container to have dimensions
-      let retries = 0;
-      while (container.clientHeight === 0 && retries < 10) {
-        await new Promise((r) => setTimeout(r, 100));
-        retries++;
-        if (cancelled) return;
-      }
-
-      const map = L.map(container, {
-        center: [lat, lng],
-        zoom: 15,
-        zoomControl: false,
-      });
-
-      L.control.zoom({ position: "bottomright" }).addTo(map);
-
-      const streetLayer = L.tileLayer(
-        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        { attribution: "© OpenStreetMap", maxZoom: 19 }
-      );
-
-      const satelliteLayer = L.tileLayer(
-        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-        { attribution: "© Esri", maxZoom: 19 }
-      );
-
-      streetLayer.addTo(map);
-
-      const icon = L.divIcon({
-        html: `<div style="background:hsl(var(--primary));border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:3px solid white;box-shadow:0 2px 10px rgba(0,0,0,0.4)">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-        </div>`,
-        className: "",
-        iconSize: [36, 36],
-        iconAnchor: [18, 36],
-      });
-
-      const marker = L.marker([lat, lng], { icon, draggable: true }).addTo(map);
-
-      marker.on("dragend", () => {
-        const pos = marker.getLatLng();
-        setLat(pos.lat);
-        setLng(pos.lng);
-        reverseGeocode(pos.lat, pos.lng);
-      });
-
-      map.on("click", (e: any) => {
-        const { lat: newLat, lng: newLng } = e.latlng;
-        marker.setLatLng([newLat, newLng]);
-        setLat(newLat);
-        setLng(newLng);
-        reverseGeocode(newLat, newLng);
-      });
-
-      mapInstanceRef.current = map;
-      markerRef.current = marker;
-      (map as any)._streetLayer = streetLayer;
-      (map as any)._satelliteLayer = satelliteLayer;
-
-      // Aggressive invalidateSize for dialog rendering
-      const intervals = [50, 150, 300, 500, 800, 1200, 2000, 3000];
-      intervals.forEach((ms) => {
-        setTimeout(() => {
-          if (!cancelled && mapInstanceRef.current) {
-            mapInstanceRef.current.invalidateSize();
-          }
-        }, ms);
-      });
-
-      setMapReady(true);
-    };
-
-    const timer = setTimeout(initMap, 200);
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-      if (mapInstanceRef.current) {
-        try { mapInstanceRef.current.remove(); } catch {}
-        mapInstanceRef.current = null;
-        markerRef.current = null;
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
-
-  // Toggle satellite/street view
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map) return;
-    const streetLayer = map._streetLayer;
-    const satelliteLayer = map._satelliteLayer;
-    if (!streetLayer || !satelliteLayer) return;
-
-    if (isSatellite) {
-      map.removeLayer(streetLayer);
-      if (!map.hasLayer(satelliteLayer)) satelliteLayer.addTo(map);
-    } else {
-      map.removeLayer(satelliteLayer);
-      if (!map.hasLayer(streetLayer)) streetLayer.addTo(map);
-    }
-  }, [isSatellite]);
+  const handlePositionChange = useCallback(
+    (newLat: number, newLng: number) => {
+      setLat(newLat);
+      setLng(newLng);
+      reverseGeocode(newLat, newLng);
+    },
+    [reverseGeocode]
+  );
 
   const handleLocateMe = () => {
     if (!navigator.geolocation) return;
     setIsLocating(true);
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        updateMapPosition(latitude, longitude, 17);
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setLat(latitude);
+        setLng(longitude);
+        setMapCenter([latitude, longitude]);
+        setMapZoom(17);
         reverseGeocode(latitude, longitude);
         setIsLocating(false);
       },
@@ -307,8 +212,11 @@ const EventMapPicker = ({
   const selectSearchResult = (result: SearchResult) => {
     const nLat = parseFloat(result.lat);
     const nLng = parseFloat(result.lon);
+    setLat(nLat);
+    setLng(nLng);
     setAddress(result.display_name);
-    updateMapPosition(nLat, nLng, 16);
+    setMapCenter([nLat, nLng]);
+    setMapZoom(16);
     setSearchResults([]);
     setSearchQuery("");
   };
@@ -367,22 +275,45 @@ const EventMapPicker = ({
           )}
 
           {/* Map */}
-          <div className="relative rounded-xl overflow-hidden border border-border">
-            <div ref={mapRef} className="h-[220px] sm:h-[280px] w-full" style={{ zIndex: 0 }} />
-            {!mapReady && (
-              <div className="absolute inset-0 flex items-center justify-center bg-muted/80">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              </div>
-            )}
-            <Button
-              variant="secondary"
-              size="sm"
-              className="absolute top-2 right-2 z-[1000] rounded-lg text-[10px] sm:text-xs shadow-md h-7 px-2"
-              onClick={() => setIsSatellite(!isSatellite)}
-            >
-              {isSatellite ? "🗺️ Mapa" : "🛰️ Satélite"}
-            </Button>
-          </div>
+          {open && (
+            <div className="relative rounded-xl overflow-hidden border border-border">
+              <MapContainer
+                key={mapKey}
+                center={mapCenter}
+                zoom={mapZoom}
+                zoomControl={false}
+                className="h-[220px] sm:h-[280px] w-full"
+                style={{ zIndex: 0 }}
+              >
+                <TileLayer
+                  url={isSatellite ? SATELLITE_URL : STREET_URL}
+                  attribution={isSatellite ? "© Esri" : "© OSM"}
+                  maxZoom={19}
+                />
+                <Marker
+                  position={[lat, lng]}
+                  icon={markerIcon}
+                  draggable
+                  eventHandlers={{
+                    dragend: (e) => {
+                      const pos = e.target.getLatLng();
+                      handlePositionChange(pos.lat, pos.lng);
+                    },
+                  }}
+                />
+                <MapInteraction onPositionChange={handlePositionChange} />
+                <MapController center={mapCenter} zoom={mapZoom} />
+              </MapContainer>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="absolute top-2 right-2 z-[1000] rounded-lg text-[10px] sm:text-xs shadow-md h-7 px-2"
+                onClick={() => setIsSatellite(!isSatellite)}
+              >
+                {isSatellite ? "🗺️ Mapa" : "🛰️ Satélite"}
+              </Button>
+            </div>
+          )}
 
           <p className="text-[10px] text-muted-foreground text-center">
             Toque no mapa ou arraste o marcador para ajustar
