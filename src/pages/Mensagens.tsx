@@ -650,23 +650,33 @@ const Mensagens = () => {
           </motion.div>
         ) : (
           <motion.div key="list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pb-24">
-            {/* Header */}
-            <header className="sticky top-0 z-20 bg-primary px-4 py-3" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top, 12px))' }}>
+            {/* Header with gradient */}
+            <header className="sticky top-0 z-20 bg-gradient-to-b from-primary to-primary/90 px-4 py-3" style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top, 12px))' }}>
               <div className="flex items-center justify-between">
                 <h1 className="font-serif text-xl font-semibold text-primary-foreground">Mensagens</h1>
-                <Button variant="ghost" size="icon" onClick={() => setShowNewChat(true)} className="text-primary-foreground hover:bg-primary-foreground/10">
-                  <Plus className="h-5 w-5" />
-                </Button>
+                <motion.div whileTap={{ scale: 0.9 }}>
+                  <Button variant="ghost" size="icon" onClick={() => setShowNewChat(true)} className="text-primary-foreground hover:bg-primary-foreground/10">
+                    <Plus className="h-5 w-5" />
+                  </Button>
+                </motion.div>
               </div>
               <div className="mt-3 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Pesquisar..." className="pl-10 rounded-full bg-background/90 border-0" />
+                <Input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} placeholder="Pesquisar..." className="pl-10 rounded-full bg-background/90 border-0 shadow-sm" />
               </div>
               <div className="mt-3 flex gap-2">
-                <button onClick={() => setActiveTab('conversas')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${activeTab === 'conversas' ? 'bg-primary-foreground text-primary' : 'bg-primary-foreground/20 text-primary-foreground'}`}>Conversas</button>
-                <button onClick={() => setActiveTab('grupos')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${activeTab === 'grupos' ? 'bg-primary-foreground text-primary' : 'bg-primary-foreground/20 text-primary-foreground'}`}>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setActiveTab('conversas')}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === 'conversas' ? 'bg-primary-foreground text-primary shadow-md' : 'bg-primary-foreground/20 text-primary-foreground'}`}
+                >Conversas</motion.button>
+                <motion.button
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setActiveTab('grupos')}
+                  className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${activeTab === 'grupos' ? 'bg-primary-foreground text-primary shadow-md' : 'bg-primary-foreground/20 text-primary-foreground'}`}
+                >
                   <Users className="h-3.5 w-3.5 inline mr-1" />Grupos
-                </button>
+                </motion.button>
               </div>
             </header>
 
@@ -680,10 +690,15 @@ const Mensagens = () => {
                     </div>
                     <div className="max-h-60 overflow-y-auto space-y-1">
                       {filteredProfiles.slice(0, 15).map((p) => (
-                        <button key={p.user_id} onClick={() => startNewConversation(p.user_id)} className="flex w-full items-center gap-3 rounded-xl p-3 hover:bg-muted transition-colors">
+                        <motion.button
+                          key={p.user_id}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => startNewConversation(p.user_id)}
+                          className="flex w-full items-center gap-3 rounded-xl p-3 hover:bg-muted transition-colors"
+                        >
                           <Avatar className="h-11 w-11"><AvatarImage src={p.avatar_url || ""} /><AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">{getInitials(p.full_name)}</AvatarFallback></Avatar>
                           <span className="font-medium text-foreground">{p.full_name}</span>
-                        </button>
+                        </motion.button>
                       ))}
                       {filteredProfiles.length === 0 && <p className="text-center text-sm text-muted-foreground py-6">Nenhuma pessoa encontrada</p>}
                     </div>
@@ -698,7 +713,13 @@ const Mensagens = () => {
                   <div className="flex items-center justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
                 ) : conversations.length === 0 ? (
                   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl bg-card p-8 text-center shadow-md mt-4">
-                    <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10"><MessageCircle className="h-8 w-8 text-primary" /></div>
+                    <motion.div
+                      className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10"
+                      animate={{ scale: [1, 1.05, 1] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    >
+                      <MessageCircle className="h-8 w-8 text-primary" />
+                    </motion.div>
                     <h3 className="font-semibold text-lg mb-2">Nenhuma conversa</h3>
                     <p className="text-sm text-muted-foreground mb-4">Comece uma conversa com alguém da comunidade</p>
                     <Button onClick={() => setShowNewChat(true)} className="rounded-full"><Plus className="h-4 w-4 mr-2" />Nova conversa</Button>
@@ -706,19 +727,33 @@ const Mensagens = () => {
                 ) : (
                   <div className="space-y-1">
                     {conversations.filter(conv => !searchQuery || conv.partnerName.toLowerCase().includes(searchQuery.toLowerCase())).map((conv, index) => (
-                      <motion.button key={conv.partnerId} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.03 }} onClick={() => setSelectedConversation(conv.partnerId)} className="flex w-full items-center gap-3 rounded-xl p-3 hover:bg-muted/50 transition-colors">
+                      <motion.button
+                        key={conv.partnerId}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.03 }}
+                        whileTap={{ scale: 0.98, backgroundColor: "hsl(var(--muted))" }}
+                        onClick={() => setSelectedConversation(conv.partnerId)}
+                        className={`flex w-full items-center gap-3 rounded-xl p-3 transition-colors ${conv.unreadCount > 0 ? "bg-primary/5 hover:bg-primary/10" : "hover:bg-muted/50"}`}
+                      >
                         <div className="relative">
-                          <Avatar className="h-12 w-12"><AvatarImage src={conv.partnerAvatar || ""} /><AvatarFallback className="bg-primary/10 text-primary font-semibold">{getInitials(conv.partnerName)}</AvatarFallback></Avatar>
+                          <Avatar className="h-12 w-12 ring-2 ring-background"><AvatarImage src={conv.partnerAvatar || ""} /><AvatarFallback className="bg-primary/10 text-primary font-semibold">{getInitials(conv.partnerName)}</AvatarFallback></Avatar>
                           <div className="absolute -bottom-0.5 -right-0.5"><OnlineStatusBadge lastSeen={conv.partnerLastSeen} /></div>
                         </div>
                         <div className="flex-1 min-w-0 text-left">
                           <div className="flex items-center justify-between gap-2">
-                            <h3 className="font-semibold text-foreground truncate">{conv.partnerName || "Usuário"}</h3>
+                            <h3 className={`truncate ${conv.unreadCount > 0 ? "font-bold text-foreground" : "font-semibold text-foreground"}`}>{conv.partnerName || "Usuário"}</h3>
                             <span className={`text-xs shrink-0 ${conv.unreadCount > 0 ? 'text-primary font-semibold' : 'text-muted-foreground'}`}>{formatTime(conv.lastMessageAt)}</span>
                           </div>
                           <div className="flex items-center justify-between gap-2 mt-0.5">
-                            <p className="text-sm text-muted-foreground truncate">{getLastMessagePreview(conv)}</p>
-                            {conv.unreadCount > 0 && <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground px-1.5 font-medium shrink-0">{conv.unreadCount}</span>}
+                            <p className={`text-sm truncate ${conv.unreadCount > 0 ? "text-foreground font-medium" : "text-muted-foreground"}`}>{getLastMessagePreview(conv)}</p>
+                            {conv.unreadCount > 0 && (
+                              <motion.span
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground px-1.5 font-medium shrink-0"
+                              >{conv.unreadCount}</motion.span>
+                            )}
                           </div>
                         </div>
                       </motion.button>
