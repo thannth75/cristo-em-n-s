@@ -248,8 +248,8 @@ const EspacoKids = () => {
 
   return (
     <div className="min-h-screen bg-background" style={{ paddingBottom: "calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))" }}>
-      {/* Header */}
-      <div className="sticky top-0 z-40 border-b border-border/60 bg-card/95 backdrop-blur px-4 py-3"
+      {/* Header with gradient */}
+      <div className="sticky top-0 z-40 border-b border-border/60 bg-gradient-to-r from-primary/5 via-card/95 to-accent/5 backdrop-blur px-4 py-3"
         style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top, 12px))" }}>
         <div className="mx-auto flex max-w-3xl items-center gap-3">
           <Button variant="ghost" size="icon" onClick={() => navigate("/dashboard")} className="h-9 w-9 rounded-full">
@@ -257,19 +257,26 @@ const EspacoKids = () => {
           </Button>
           <div className="min-w-0 flex-1">
             <h1 className="flex items-center gap-2 text-base font-bold text-foreground sm:text-lg">
-              <Sparkles className="h-4 w-4 text-primary" /> Espaço Kids & Teen
+              <motion.span animate={{ rotate: [0, 15, -15, 0] }} transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}>
+                <Sparkles className="h-4 w-4 text-primary" />
+              </motion.span>
+              Espaço Kids & Teen
             </h1>
             <p className="text-xs text-muted-foreground">Crescendo na fé com alegria! 🌟</p>
           </div>
           <div className="flex items-center gap-2">
             {isManager && (
-              <Badge className="bg-primary/10 text-primary text-[10px] gap-1">
+              <Badge className="bg-primary/10 text-primary text-[10px] gap-1 animate-pulse">
                 <Shield className="h-3 w-3" /> Líder
               </Badge>
             )}
-            <div className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+            <motion.div
+              className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
+              animate={totalProgress > 0 ? { scale: [1, 1.05, 1] } : {}}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
               ⭐ {totalProgress}/{maxProgress}
-            </div>
+            </motion.div>
           </div>
         </div>
       </div>
