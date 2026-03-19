@@ -344,24 +344,55 @@ const EspacoKids = () => {
         {/* HOME */}
         {activeTab === "home" && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-            <div className="rounded-2xl bg-gradient-to-br from-yellow-400/20 via-primary/10 to-pink-400/20 border border-primary/15 p-5 text-center">
-              <p className="text-4xl mb-2">🌈</p>
+            {/* Welcome banner with animated elements */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-yellow-400/20 via-primary/10 to-pink-400/20 border border-primary/15 p-5 text-center"
+            >
+              <motion.p
+                className="text-4xl mb-2"
+                animate={{ y: [0, -5, 0] }}
+                transition={{ duration: 3, repeat: Infinity }}
+              >🌈</motion.p>
               <h2 className="font-serif text-lg font-bold text-foreground">Bem-vindo ao Espaço Kids & Teen!</h2>
               <p className="text-sm text-muted-foreground mt-1">Um lugar especial para aprender sobre Deus.</p>
-            </div>
+              {/* Floating decorative elements */}
+              <motion.span className="absolute top-2 right-3 text-lg opacity-40" animate={{ y: [0, -8, 0], rotate: [0, 15, 0] }} transition={{ duration: 4, repeat: Infinity }}>⭐</motion.span>
+              <motion.span className="absolute bottom-2 left-3 text-lg opacity-30" animate={{ y: [0, -6, 0], rotate: [0, -10, 0] }} transition={{ duration: 5, repeat: Infinity, delay: 1 }}>✨</motion.span>
+            </motion.div>
+
+            {/* Daily streak/tip */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              className="rounded-xl bg-primary/5 border border-primary/15 p-3 flex items-center gap-3"
+            >
+              <motion.span className="text-2xl" animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity }}>🔥</motion.span>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-foreground">Dica do dia</p>
+                <p className="text-[11px] text-muted-foreground">Leia uma história bíblica e ganhe XP! Cada progresso conta.</p>
+              </div>
+            </motion.div>
 
             <div className="grid grid-cols-2 gap-2.5">
               {[
-                { tab: "stories" as KidsTab, icon: BookOpen, label: "Histórias Bíblicas", color: "bg-blue-500/10 text-blue-600", count: `${filteredStories.length} disponíveis` },
-                { tab: "devocional" as KidsTab, icon: Lightbulb, label: "Devocional", color: "bg-amber-500/10 text-amber-600", count: `${filteredDevotionals.length} lições` },
-                { tab: "quiz" as KidsTab, icon: Brain, label: "Quiz Bíblico", color: "bg-purple-500/10 text-purple-600", count: `${KIDS_QUIZ_QUESTIONS.length} perguntas` },
-                { tab: "missions" as KidsTab, icon: Target, label: "Missões da Semana", color: "bg-green-500/10 text-green-600", count: `${completedMissions.length}/${KIDS_WEEKLY_MISSIONS.length}` },
-                { tab: "memory" as KidsTab, icon: Gamepad2, label: "Jogos Bíblicos", color: "bg-pink-500/10 text-pink-600", count: "Memória Ghibli" },
-                { tab: "tracks" as KidsTab, icon: GraduationCap, label: "Trilhas de Fé", color: "bg-teal-500/10 text-teal-600", count: "3 trilhas" },
+                { tab: "stories" as KidsTab, icon: BookOpen, label: "Histórias Bíblicas", color: "bg-blue-500/10 text-blue-600", count: `${filteredStories.length} disponíveis`, delay: 0.05 },
+                { tab: "devocional" as KidsTab, icon: Lightbulb, label: "Devocional", color: "bg-amber-500/10 text-amber-600", count: `${filteredDevotionals.length} lições`, delay: 0.1 },
+                { tab: "quiz" as KidsTab, icon: Brain, label: "Quiz Bíblico", color: "bg-purple-500/10 text-purple-600", count: `${KIDS_QUIZ_QUESTIONS.length} perguntas`, delay: 0.15 },
+                { tab: "missions" as KidsTab, icon: Target, label: "Missões da Semana", color: "bg-green-500/10 text-green-600", count: `${completedMissions.length}/${KIDS_WEEKLY_MISSIONS.length}`, delay: 0.2 },
+                { tab: "memory" as KidsTab, icon: Gamepad2, label: "Jogos Bíblicos", color: "bg-pink-500/10 text-pink-600", count: "Memória Ghibli", delay: 0.25 },
+                { tab: "tracks" as KidsTab, icon: GraduationCap, label: "Trilhas de Fé", color: "bg-teal-500/10 text-teal-600", count: "3 trilhas", delay: 0.3 },
               ].map(item => (
-                <motion.button key={item.tab} whileTap={{ scale: 0.97 }}
+                <motion.button key={item.tab}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: item.delay }}
+                  whileTap={{ scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
                   onClick={() => { setActiveTab(item.tab); if (item.tab === "memory" && memoryCards.length === 0) initMemoryGame(); }}
-                  className="flex flex-col items-center gap-2 rounded-2xl border border-border/70 bg-card p-4 hover:bg-accent/50 transition-colors">
+                  className="flex flex-col items-center gap-2 rounded-2xl border border-border/70 bg-card p-4 hover:bg-accent/50 hover:shadow-md transition-all">
                   <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${item.color}`}><item.icon className="h-5 w-5" /></div>
                   <p className="font-medium text-sm text-foreground text-center">{item.label}</p>
                   <p className="text-[10px] text-muted-foreground">{item.count}</p>
@@ -369,35 +400,50 @@ const EspacoKids = () => {
               ))}
             </div>
 
+            {/* Devotional highlight card */}
             {filteredDevotionals.length > 0 && (
-              <div className="rounded-2xl border border-amber-500/20 bg-amber-50/5 p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-2xl">{filteredDevotionals[0].emoji}</span>
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.35 }}
+                className="rounded-2xl border border-amber-500/20 bg-gradient-to-br from-amber-50/10 to-amber-100/5 p-4 shadow-sm"
+              >
+                <div className="flex items-center gap-3 mb-2">
+                  <motion.span className="text-2xl" animate={{ scale: [1, 1.15, 1] }} transition={{ duration: 2, repeat: Infinity }}>{filteredDevotionals[0].emoji}</motion.span>
                   <div>
                     <h3 className="font-semibold text-sm text-foreground">{filteredDevotionals[0].title}</h3>
-                    <p className="text-xs text-primary">{filteredDevotionals[0].verse}</p>
+                    <p className="text-xs text-primary font-medium">{filteredDevotionals[0].verse}</p>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground italic">"{filteredDevotionals[0].verseText}"</p>
-                <Button size="sm" className="rounded-full mt-3" onClick={() => setActiveTab("devocional")}>Ler devocional</Button>
-              </div>
+                <p className="text-sm text-muted-foreground italic leading-relaxed">"{filteredDevotionals[0].verseText}"</p>
+                <Button size="sm" className="rounded-full mt-3 gap-1.5" onClick={() => setActiveTab("devocional")}>
+                  <Lightbulb className="h-3.5 w-3.5" /> Ler devocional
+                </Button>
+              </motion.div>
             )}
 
+            {/* Creative Activities */}
             <div>
               <h3 className="flex items-center gap-2 text-base font-bold text-foreground mb-3"><Palette className="h-4 w-4 text-primary" /> Atividades Criativas</h3>
               <div className="grid grid-cols-2 gap-2">
-                {CREATIVE_ACTIVITIES.map(activity => {
+                {CREATIVE_ACTIVITIES.map((activity, idx) => {
                   const isDone = completedActivitiesSet.has(activity.id);
                   return (
-                    <div key={activity.id} className="rounded-xl border border-border/70 bg-card p-3">
-                      <span className="text-2xl">{activity.emoji}</span>
+                    <motion.div
+                      key={activity.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 + idx * 0.05 }}
+                      className={`rounded-xl border bg-card p-3 transition-all ${isDone ? "border-primary/20 bg-primary/5" : "border-border/70 hover:shadow-sm"}`}
+                    >
+                      <motion.span className="text-2xl block" whileHover={{ scale: 1.2, rotate: 10 }}>{activity.emoji}</motion.span>
                       <p className={`font-medium text-xs mt-1 ${isDone ? "text-muted-foreground line-through" : "text-foreground"}`}>{activity.title}</p>
                       <p className="text-[10px] text-muted-foreground mt-0.5">{activity.description}</p>
                       <Button size="sm" variant={isDone ? "outline" : "default"} className="w-full rounded-full mt-2 text-xs h-7"
                         onClick={() => handleCompleteActivity(activity.id)} disabled={isDone}>
-                        {isDone ? "✅" : `+${activity.xp} XP`}
+                        {isDone ? "✅ Feito" : `+${activity.xp} XP`}
                       </Button>
-                    </div>
+                    </motion.div>
                   );
                 })}
               </div>
