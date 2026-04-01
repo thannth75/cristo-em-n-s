@@ -5,7 +5,7 @@ import {
   Radio as RadioIcon, Play, Pause, Volume2, VolumeX,
   SkipForward, SkipBack, Music2, Heart, Globe,
   Headphones, Waves, Search, Plus, ListMusic, Shuffle,
-  Repeat, Trash2, ChevronDown,
+  Repeat, Trash2, ChevronDown, Timer, Moon,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import AppHeader from "@/components/AppHeader";
@@ -118,6 +118,8 @@ const Radio = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [queue, setQueue] = useState<Song[]>([]);
   const [queueIndex, setQueueIndex] = useState(0);
+  const [sleepTimer, setSleepTimer] = useState<number | null>(null);
+  const [sleepTimeLeft, setSleepTimeLeft] = useState(0);
 
   useEffect(() => {
     if (!authLoading) {
@@ -132,6 +134,25 @@ const Radio = () => {
 
   useEffect(() => { localStorage.setItem("radio-liked", JSON.stringify([...liked])); }, [liked]);
   useEffect(() => { localStorage.setItem("radio-playlists-v2", JSON.stringify(playlists)); }, [playlists]);
+
+  // Sleep timer
+  useEffect(() => {
+    if (sleepTimer === null) return;
+    setSleepTimeLeft(sleepTimer * 60);
+    const interval = setInterval(() => {
+      setSleepTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setSleepTimer(null);
+          if (audioRef.current) { audioRef.current.pause(); setIsPlaying(false); }
+          toast({ title: "⏰ Sleep timer", description: "A reprodução foi pausada." });
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [sleepTimer, toast]);
 
   const playAudioUrl = useCallback((url: string) => {
     if (audioRef.current) {
@@ -503,7 +524,14 @@ const Radio = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm text-foreground truncate">{currentSong?.title || currentStation?.name}</p>
-                  <p className="text-xs text-muted-foreground truncate">{currentSong?.artist || currentStation?.genre}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-muted-foreground truncate">{currentSong?.artist || currentStation?.genre}</p>
+                    {sleepTimer !== null && (
+                      <span className="text-[10px] font-mono text-primary shrink-0">
+                        ⏰ {Math.floor(sleepTimeLeft / 60)}:{String(sleepTimeLeft % 60).padStart(2, "0")}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   {currentSong && <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={handlePrev}><SkipBack className="h-4 w-4" /></Button>}
@@ -534,6 +562,10 @@ const Radio = () => {
                     <Heart className={cn("h-3.5 w-3.5", liked.has(currentSong.id) && "fill-red-500 text-red-500")} />
                   </Button>
                 )}
+                <Button size="icon" variant="ghost" className={cn("h-7 w-7 rounded-full", sleepTimer !== null && "text-primary")}
+                  onClick={() => sleepTimer !== null ? setSleepTimer(null) : setSleepTimer(30)}>
+                  <Moon className="h-3.5 w-3.5" />
+                </Button>
               </div>
             </div>
           </motion.div>
