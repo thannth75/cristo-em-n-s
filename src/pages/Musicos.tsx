@@ -337,10 +337,15 @@ const Musicos = () => {
                         </span>
                       </div>
                     </div>
-                    <Badge className="bg-primary/10 text-primary">
-                      <CheckCircle className="mr-1 h-3 w-3" />
-                      Ativa
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-primary/10 text-primary">
+                        <CheckCircle className="mr-1 h-3 w-3" />
+                        Ativa
+                      </Badge>
+                      {canManage && (
+                        <ScaleActions scaleId={scale.id} currentNotes={scale.notes} onUpdated={fetchData} />
+                      )}
+                    </div>
                   </div>
                   {scale.notes && (
                     <p className="mt-2 text-sm text-muted-foreground">{scale.notes}</p>
