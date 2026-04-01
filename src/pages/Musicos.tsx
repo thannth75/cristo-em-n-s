@@ -27,6 +27,8 @@ import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import CreateScaleDialog from "@/components/musicos/CreateScaleDialog";
 import AddMusicianDialog from "@/components/musicos/AddMusicianDialog";
+import ScaleActions from "@/components/musicos/ScaleActions";
+import SongActions from "@/components/musicos/SongActions";
 import { songSchema, validateInput } from "@/lib/validation";
 
 interface MusicScale {
@@ -334,10 +336,15 @@ const Musicos = () => {
                         </span>
                       </div>
                     </div>
-                    <Badge className="bg-primary/10 text-primary">
-                      <CheckCircle className="mr-1 h-3 w-3" />
-                      Ativa
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge className="bg-primary/10 text-primary">
+                        <CheckCircle className="mr-1 h-3 w-3" />
+                        Ativa
+                      </Badge>
+                      {canManage && (
+                        <ScaleActions scaleId={scale.id} currentNotes={scale.notes} onUpdated={fetchData} />
+                      )}
+                    </div>
                   </div>
                   {scale.notes && (
                     <p className="mt-2 text-sm text-muted-foreground">{scale.notes}</p>
@@ -382,10 +389,13 @@ const Musicos = () => {
                       {song.artist || "Artista desconhecido"}
                     </p>
                   </div>
-                  {song.key && (
+                   {song.key && (
                     <Badge variant="secondary" className="text-xs">
                       {song.key}
                     </Badge>
+                  )}
+                  {canManage && (
+                    <SongActions song={song} onUpdated={fetchData} />
                   )}
                 </motion.div>
               ))}

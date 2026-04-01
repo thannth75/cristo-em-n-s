@@ -78,6 +78,7 @@ const Auth = () => {
       else if (error.message?.includes("User already registered")) errorMessage = "Este e-mail já está cadastrado.";
       else if (error.message?.includes("Password should be at least")) errorMessage = "A senha deve ter pelo menos 6 caracteres.";
       else if (error.message?.includes("Unable to validate email address")) errorMessage = "E-mail inválido. Verifique o formato.";
+      else if (error.message?.includes("Database error")) errorMessage = "Erro interno ao salvar cadastro. Tente novamente em alguns segundos.";
       else if (error.message?.includes("Network")) errorMessage = "Erro de conexão. Verifique sua internet.";
       else if (error.message) errorMessage = error.message;
       toast({ title: "Erro", description: errorMessage, variant: "destructive" });
