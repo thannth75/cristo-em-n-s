@@ -135,6 +135,25 @@ const Radio = () => {
   useEffect(() => { localStorage.setItem("radio-liked", JSON.stringify([...liked])); }, [liked]);
   useEffect(() => { localStorage.setItem("radio-playlists-v2", JSON.stringify(playlists)); }, [playlists]);
 
+  // Sleep timer
+  useEffect(() => {
+    if (sleepTimer === null) return;
+    setSleepTimeLeft(sleepTimer * 60);
+    const interval = setInterval(() => {
+      setSleepTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setSleepTimer(null);
+          if (audioRef.current) { audioRef.current.pause(); setIsPlaying(false); }
+          toast({ title: "⏰ Sleep timer", description: "A reprodução foi pausada." });
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [sleepTimer, toast]);
+
   const playAudioUrl = useCallback((url: string) => {
     if (audioRef.current) {
       audioRef.current.pause();
