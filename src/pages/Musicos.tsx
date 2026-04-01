@@ -390,10 +390,13 @@ const Musicos = () => {
                       {song.artist || "Artista desconhecido"}
                     </p>
                   </div>
-                  {song.key && (
+                   {song.key && (
                     <Badge variant="secondary" className="text-xs">
                       {song.key}
                     </Badge>
+                  )}
+                  {canManage && (
+                    <SongActions song={song} onUpdated={fetchData} />
                   )}
                 </motion.div>
               ))}
