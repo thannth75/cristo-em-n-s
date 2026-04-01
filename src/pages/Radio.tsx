@@ -5,7 +5,7 @@ import {
   Radio as RadioIcon, Play, Pause, Volume2, VolumeX,
   SkipForward, SkipBack, Music2, Heart, Globe,
   Headphones, Waves, Search, Plus, ListMusic, Shuffle,
-  Repeat, Trash2, ChevronDown,
+  Repeat, Trash2, ChevronDown, Timer, Moon,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import AppHeader from "@/components/AppHeader";
