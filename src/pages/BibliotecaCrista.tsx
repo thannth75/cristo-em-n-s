@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { BookOpen, Search, ExternalLink, Star, ChevronRight } from "lucide-react";
+import { BookOpen, Search, ExternalLink, Heart, BookMarked } from "lucide-react";
 import PageHeader from "@/components/PageHeader";
 import ResponsiveContainer from "@/components/layout/ResponsiveContainer";
 import BottomNavigation from "@/components/BottomNavigation";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 interface Book {
   id: string;
@@ -36,16 +37,37 @@ const CHRISTIAN_BOOKS: Book[] = [
   { id: "12", title: "Oração: A Comunicação com Deus", author: "A.W. Tozer", category: "Vida Cristã", cover: "https://m.media-amazon.com/images/I/51WfDN5fVfL._AC_UF1000,1000_QL80_.jpg", description: "Reflexões sobre a importância e prática da oração na vida cristã.", year: "1955", pages: "160", readUrl: "#" },
 ];
 
-const categories = ["Todos", "Clássico", "Devocional", "Teologia", "Apologética", "Vida Cristã", "Ficção Cristã", "Kids"];
+const categories = ["Todos", "Favoritos", "Clássico", "Devocional", "Teologia", "Apologética", "Vida Cristã", "Ficção Cristã", "Kids"];
 
 export default function BibliotecaCrista() {
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Todos");
+  const { toast } = useToast();
+  const [favorites, setFavorites] = useState<Set<string>>(() => {
+    const saved = localStorage.getItem("library-favorites");
+    return saved ? new Set(JSON.parse(saved)) : new Set();
+  });
+
+  const toggleFavorite = (id: string) => {
+    setFavorites(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+        toast({ title: "Removido dos favoritos" });
+      } else {
+        next.add(id);
+        toast({ title: "Adicionado aos favoritos! ❤️" });
+      }
+      localStorage.setItem("library-favorites", JSON.stringify([...next]));
+      return next;
+    });
+  };
 
   const filtered = CHRISTIAN_BOOKS.filter(book => {
     const matchSearch = !search.trim() ||
       book.title.toLowerCase().includes(search.toLowerCase()) ||
       book.author.toLowerCase().includes(search.toLowerCase());
+    if (selectedCategory === "Favoritos") return matchSearch && favorites.has(book.id);
     const matchCategory = selectedCategory === "Todos" || book.category === selectedCategory;
     return matchSearch && matchCategory;
   });
@@ -64,7 +86,9 @@ export default function BibliotecaCrista() {
             </div>
             <div>
               <h1 className="font-serif text-lg font-bold text-foreground">Biblioteca Cristã</h1>
-              <p className="text-xs text-muted-foreground">{CHRISTIAN_BOOKS.length} livros clássicos da fé cristã</p>
+              <p className="text-xs text-muted-foreground">
+                {CHRISTIAN_BOOKS.length} livros · {favorites.size} favorito{favorites.size !== 1 ? "s" : ""}
+              </p>
             </div>
           </div>
         </motion.div>
@@ -80,8 +104,9 @@ export default function BibliotecaCrista() {
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
           {categories.map(cat => (
             <button key={cat} onClick={() => setSelectedCategory(cat)}
-              className={cn("rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors shrink-0",
+              className={cn("rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors shrink-0 flex items-center gap-1",
                 selectedCategory === cat ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:text-foreground")}>
+              {cat === "Favoritos" && <Heart className="h-3 w-3" />}
               {cat}
             </button>
           ))}
@@ -92,7 +117,12 @@ export default function BibliotecaCrista() {
           {filtered.map((book, i) => (
             <motion.div key={book.id}
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
-              className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow group">
+              className="rounded-2xl border border-border/70 bg-card overflow-hidden shadow-sm hover:shadow-md transition-shadow group relative">
+              {/* Favorite button */}
+              <button onClick={() => toggleFavorite(book.id)}
+                className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-card/80 backdrop-blur-sm shadow-sm hover:bg-card transition-colors">
+                <Heart className={cn("h-3.5 w-3.5 transition-colors", favorites.has(book.id) ? "fill-red-500 text-red-500" : "text-muted-foreground")} />
+              </button>
               <div className="aspect-[3/4] overflow-hidden bg-muted relative">
                 <img src={book.cover} alt={book.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
@@ -122,8 +152,18 @@ export default function BibliotecaCrista() {
 
         {filtered.length === 0 && (
           <div className="text-center py-12">
-            <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">Nenhum livro encontrado</p>
+            {selectedCategory === "Favoritos" ? (
+              <>
+                <Heart className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">Nenhum favorito ainda</p>
+                <p className="text-xs text-muted-foreground mt-1">Toque no ❤️ para salvar livros</p>
+              </>
+            ) : (
+              <>
+                <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                <p className="text-sm text-muted-foreground">Nenhum livro encontrado</p>
+              </>
+            )}
           </div>
         )}
       </ResponsiveContainer>

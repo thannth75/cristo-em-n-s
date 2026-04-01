@@ -118,6 +118,8 @@ const Radio = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [queue, setQueue] = useState<Song[]>([]);
   const [queueIndex, setQueueIndex] = useState(0);
+  const [sleepTimer, setSleepTimer] = useState<number | null>(null);
+  const [sleepTimeLeft, setSleepTimeLeft] = useState(0);
 
   useEffect(() => {
     if (!authLoading) {
