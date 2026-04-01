@@ -27,6 +27,9 @@ import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import CreateScaleDialog from "@/components/musicos/CreateScaleDialog";
 import AddMusicianDialog from "@/components/musicos/AddMusicianDialog";
+import ScaleActions from "@/components/musicos/ScaleActions";
+import SongActions from "@/components/musicos/SongActions";
+import { songSchema, validateInput } from "@/lib/validation";
 import { songSchema, validateInput } from "@/lib/validation";
 
 interface MusicScale {
