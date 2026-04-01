@@ -524,7 +524,14 @@ const Radio = () => {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm text-foreground truncate">{currentSong?.title || currentStation?.name}</p>
-                  <p className="text-xs text-muted-foreground truncate">{currentSong?.artist || currentStation?.genre}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-muted-foreground truncate">{currentSong?.artist || currentStation?.genre}</p>
+                    {sleepTimer !== null && (
+                      <span className="text-[10px] font-mono text-primary shrink-0">
+                        ⏰ {Math.floor(sleepTimeLeft / 60)}:{String(sleepTimeLeft % 60).padStart(2, "0")}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
                   {currentSong && <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full" onClick={handlePrev}><SkipBack className="h-4 w-4" /></Button>}
