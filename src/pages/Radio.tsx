@@ -48,8 +48,8 @@ interface RadioStation {
 // ─── Estações de rádio ao vivo ───
 const radioStations: RadioStation[] = [
   { id: "ipb", name: "Rádio Obra em Restauração", description: "Louvores e pregações", url: "https://stream.zeno.fm/yn65fsaurfhvv", genre: "Gospel / Adoração", color: "from-primary to-emerald-700" },
-  { id: "gospel-fm", name: "Gospel FM 89.3", description: "A rádio da família", url: "https://playerservices.streamtheworld.com/api/livestream-redirect/GOSPELFM_SC.mp3", genre: "Gospel Contemporâneo", color: "from-amber-600 to-orange-700" },
-  { id: "adoracao", name: "Sara Brasil FM", description: "Louvores 24h", url: "https://stream.zeno.fm/dqc2f7p2punuv", genre: "Adoração & Louvor", color: "from-violet-600 to-purple-800" },
+  { id: "gospel-fm", name: "Gospel FM 89.3", description: "A rádio da família", url: "https://ice.fabricahost.com.br/gospelfm893", genre: "Gospel Contemporâneo", color: "from-amber-600 to-orange-700" },
+  { id: "adoracao", name: "Sara Brasil FM", description: "Louvores 24h", url: "https://sarago.crossradio.com.br/stream/1;", genre: "Adoração & Louvor", color: "from-violet-600 to-purple-800" },
   { id: "louvor-eterno", name: "Melodia FM Gospel", description: "Hinos clássicos e adoração", url: "https://stream.zeno.fm/f3wvbbqmdg8uv", genre: "Hinos & Clássicos", color: "from-sky-600 to-blue-800" },
 ];
 
