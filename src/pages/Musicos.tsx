@@ -104,9 +104,6 @@ const Musicos = () => {
             title,
             event_date,
             start_time
-          ),
-          profiles:created_by (
-            full_name
           )
         `)
         .order("created_at", { ascending: false })
@@ -117,7 +114,24 @@ const Musicos = () => {
         .order("title"),
     ]);
 
-    setScales((scalesRes.data as any) || []);
+    let scalesData = (scalesRes.data as any) || [];
+    
+    // Fetch creator names
+    if (scalesData.length > 0) {
+      const creatorIds = [...new Set(scalesData.map((s: any) => s.created_by))];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name")
+        .in("user_id", creatorIds);
+      
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p.full_name]) || []);
+      scalesData = scalesData.map((s: any) => ({
+        ...s,
+        creatorName: profileMap.get(s.created_by) || null,
+      }));
+    }
+
+    setScales(scalesData);
     setSongs(songsRes.data || []);
     setIsLoading(false);
   };
