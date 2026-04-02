@@ -338,6 +338,34 @@
 ::-webkit-scrollbar-thumb { @apply bg-muted-foreground/20 rounded-full; }
 ::-webkit-scrollbar-thumb:hover { @apply bg-muted-foreground/30; }
 
+/* ====== LEAFLET MAP FIXES ====== */
+.leaflet-container {
+  background: #e0e0e0 !important;
+  z-index: 0 !important;
+}
+
+.leaflet-tile-pane {
+  filter: none !important;
+  opacity: 1 !important;
+}
+
+.leaflet-tile {
+  filter: none !important;
+  visibility: visible !important;
+}
+
+.leaflet-control-container {
+  z-index: 800 !important;
+}
+
+.dark .leaflet-container {
+  background: #1a1a1a !important;
+}
+
+.dark .leaflet-tile-pane {
+  filter: brightness(0.85) contrast(1.1) !important;
+}
+
 /* ====== iOS FIXES ====== */
 .scroll-touch { -webkit-overflow-scrolling: touch; }
 
