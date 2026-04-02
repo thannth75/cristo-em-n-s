@@ -99,10 +99,14 @@ const Musicos = () => {
           id,
           event_id,
           notes,
+          created_by,
           events (
             title,
             event_date,
             start_time
+          ),
+          profiles:created_by (
+            full_name
           )
         `)
         .order("created_at", { ascending: false })
