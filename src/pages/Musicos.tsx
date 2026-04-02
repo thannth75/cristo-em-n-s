@@ -355,9 +355,9 @@ const Musicos = () => {
                           , {scale.events?.start_time?.slice(0, 5) || ""}
                         </span>
                       </div>
-                      {scale.profiles && (
+                      {scale.creatorName && (
                         <p className="text-xs text-muted-foreground mt-0.5">
-                          Criada por: <span className="font-medium text-foreground">{scale.profiles.full_name}</span>
+                          Criada por: <span className="font-medium text-foreground">{scale.creatorName}</span>
                         </p>
                       )}
                     </div>
