@@ -35,6 +35,8 @@ interface MusicScale {
   id: string;
   event_id: string;
   notes: string | null;
+  created_by: string;
+  creatorName?: string | null;
   events: {
     title: string;
     event_date: string;
@@ -95,6 +97,7 @@ const Musicos = () => {
           id,
           event_id,
           notes,
+          created_by,
           events (
             title,
             event_date,
@@ -109,7 +112,24 @@ const Musicos = () => {
         .order("title"),
     ]);
 
-    setScales((scalesRes.data as any) || []);
+    let scalesData = (scalesRes.data as any) || [];
+    
+    // Fetch creator names
+    if (scalesData.length > 0) {
+      const creatorIds = [...new Set(scalesData.map((s: any) => s.created_by))] as string[];
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name")
+        .in("user_id", creatorIds);
+      
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p.full_name]) || []);
+      scalesData = scalesData.map((s: any) => ({
+        ...s,
+        creatorName: profileMap.get(s.created_by) || null,
+      }));
+    }
+
+    setScales(scalesData);
     setSongs(songsRes.data || []);
     setIsLoading(false);
   };
@@ -326,7 +346,7 @@ const Musicos = () => {
                       <h3 className="font-semibold text-foreground">
                         {scale.events?.title || "Evento"}
                       </h3>
-                      <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
                         <Calendar className="h-3.5 w-3.5" />
                         <span>
                           {scale.events?.event_date
@@ -335,6 +355,11 @@ const Musicos = () => {
                           , {scale.events?.start_time?.slice(0, 5) || ""}
                         </span>
                       </div>
+                      {scale.creatorName && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Criada por: <span className="font-medium text-foreground">{scale.creatorName}</span>
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge className="bg-primary/10 text-primary">

@@ -79,7 +79,7 @@ const EventMapPreview = ({
 
   return (
     <div className="space-y-2">
-      <div className="relative rounded-xl overflow-hidden border border-border">
+      <div className="relative rounded-xl overflow-hidden border border-border" style={{ background: "#ddd" }}>
         <MapContainer
           center={[latitude, longitude]}
           zoom={16}
@@ -87,8 +87,7 @@ const EventMapPreview = ({
           dragging={!compact}
           scrollWheelZoom={false}
           touchZoom={!compact}
-          className={compact ? "h-[100px]" : "h-[140px] sm:h-[180px]"}
-          style={{ zIndex: 0 }}
+          style={{ zIndex: 0, height: compact ? "100px" : "180px", width: "100%", background: "#ddd" }}
         >
           <TileLayer
             url={isSatellite ? SATELLITE_URL : STREET_URL}

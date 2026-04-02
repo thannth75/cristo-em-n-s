@@ -276,14 +276,13 @@ const EventMapPicker = ({
 
           {/* Map */}
           {open && (
-            <div className="relative rounded-xl overflow-hidden border border-border" style={{ minHeight: "220px" }}>
+            <div className="relative rounded-xl overflow-hidden border border-border" style={{ minHeight: "280px", background: "#ddd" }}>
               <MapContainer
                 key={mapKey}
                 center={mapCenter}
                 zoom={mapZoom}
                 zoomControl={false}
-                className="w-full"
-                style={{ zIndex: 0, height: "280px" }}
+                style={{ zIndex: 0, height: "280px", width: "100%", background: "#ddd" }}
               >
                 <TileLayer
                   url={isSatellite ? SATELLITE_URL : STREET_URL}
