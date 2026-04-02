@@ -334,7 +334,7 @@ const Musicos = () => {
                       <h3 className="font-semibold text-foreground">
                         {scale.events?.title || "Evento"}
                       </h3>
-                      <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                    <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
                         <Calendar className="h-3.5 w-3.5" />
                         <span>
                           {scale.events?.event_date
@@ -343,6 +343,11 @@ const Musicos = () => {
                           , {scale.events?.start_time?.slice(0, 5) || ""}
                         </span>
                       </div>
+                      {scale.profiles && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Criada por: <span className="font-medium text-foreground">{scale.profiles.full_name}</span>
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge className="bg-primary/10 text-primary">
