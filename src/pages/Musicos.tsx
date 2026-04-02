@@ -36,14 +36,12 @@ interface MusicScale {
   event_id: string;
   notes: string | null;
   created_by: string;
+  creatorName?: string | null;
   events: {
     title: string;
     event_date: string;
     start_time: string;
   };
-  profiles: {
-    full_name: string;
-  } | null;
 }
 
 interface Song {
