@@ -116,7 +116,7 @@ const Musicos = () => {
     
     // Fetch creator names
     if (scalesData.length > 0) {
-      const creatorIds = [...new Set(scalesData.map((s: any) => s.created_by))];
+      const creatorIds = [...new Set(scalesData.map((s: any) => s.created_by))] as string[];
       const { data: profiles } = await supabase
         .from("profiles")
         .select("user_id, full_name")
