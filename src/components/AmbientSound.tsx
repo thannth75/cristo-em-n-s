@@ -1,22 +1,20 @@
 import { useState, forwardRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ExternalLink, Radio, X } from "lucide-react";
+import { Radio, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const RADIO_WIDGET_URL =
   "https://public-player-widget.webradiosite.com/?source=widget_embeded&locale=pt-br&info=https%3A%2F%2Fpublic-player-widget.webradiosite.com%2Fapp%2Fplayer%2Finfo%2F3001%3Fhash%3D40baa3aa9377e413d27100e209d7c2d24ba5afd1&theme=light&color=3&cover=0&current_track=1&schedules=1&link=1&link_to=https%3A%2F%2Fwww.obraemrestauracao.org&share=1&popup=1&embed=1&auto_play=0";
 
 const AmbientSound = forwardRef<HTMLDivElement>(function AmbientSound(_, ref) {
-  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <div
       ref={ref}
-      className="fixed right-4 z-40"
+      className="fixed right-4 z-50"
       style={{
-        bottom: "calc(10rem + max(0.5rem, env(safe-area-inset-bottom, 8px)))",
+        bottom: "calc(6rem + max(0.5rem, env(safe-area-inset-bottom, 8px)))",
       }}
     >
       <AnimatePresence mode="wait">
@@ -29,7 +27,7 @@ const AmbientSound = forwardRef<HTMLDivElement>(function AmbientSound(_, ref) {
             className="w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-border/70 bg-card shadow-xl"
           >
             <div className="flex items-center justify-between border-b border-border/60 bg-muted/30 px-3 py-2">
-              <p className="text-sm font-semibold text-foreground">Rádio de Louvores</p>
+              <p className="text-sm font-semibold text-foreground">🎵 Rádio Obra em Restauração</p>
               <Button
                 variant="ghost"
                 size="icon"
@@ -53,17 +51,8 @@ const AmbientSound = forwardRef<HTMLDivElement>(function AmbientSound(_, ref) {
               />
             </div>
 
-            <div className="flex items-center justify-between gap-2 border-t border-border/60 px-3 py-2">
-              <span className="text-xs text-muted-foreground">Música cristã 24h</span>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 rounded-full gap-1.5"
-                onClick={() => navigate("/radio")}
-              >
-                Abrir página
-                <ExternalLink className="h-3.5 w-3.5" />
-              </Button>
+            <div className="px-3 py-2 border-t border-border/60">
+              <span className="text-xs text-muted-foreground">Música cristã 24h • Toca em segundo plano</span>
             </div>
           </motion.div>
         ) : (
@@ -71,7 +60,7 @@ const AmbientSound = forwardRef<HTMLDivElement>(function AmbientSound(_, ref) {
             key="radio-button"
             onClick={() => setIsOpen(true)}
             whileTap={{ scale: 0.94 }}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-card/95 text-primary shadow-lg backdrop-blur"
+            className="flex h-12 w-12 items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-primary shadow-lg backdrop-blur-sm"
             aria-label="Abrir rádio de louvores"
           >
             <Radio className="h-5 w-5" />
