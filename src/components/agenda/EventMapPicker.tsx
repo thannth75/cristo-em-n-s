@@ -116,6 +116,20 @@ const EventMapPicker = ({
 
   const markerIcon = useMemo(() => createPickerIcon(), []);
 
+  const reverseGeocode = useCallback(async (latitude: number, longitude: number) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=pt-BR&addressdetails=1`
+      );
+      const data = await res.json();
+      if (data.display_name) {
+        setAddress(data.display_name);
+      }
+    } catch {
+      // silent
+    }
+  }, []);
+
   // Reset state when dialog opens
   useEffect(() => {
     if (!open) {
@@ -157,20 +171,6 @@ const EventMapPicker = ({
 
     return () => window.clearTimeout(renderTimer);
   }, [open, initialLat, initialLng, initialAddress, initialLocationType, reverseGeocode]);
-
-  const reverseGeocode = useCallback(async (latitude: number, longitude: number) => {
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=pt-BR&addressdetails=1`
-      );
-      const data = await res.json();
-      if (data.display_name) {
-        setAddress(data.display_name);
-      }
-    } catch {
-      // silent
-    }
-  }, []);
 
   const handlePositionChange = useCallback(
     (newLat: number, newLng: number) => {
