@@ -400,7 +400,7 @@ const Dashboard = () => {
         </motion.div>
       </main>
 
-      <AmbientSound />
+      
       <AIFloatingButton type="general" />
       <BottomNavigation />
     </div>
