@@ -534,8 +534,11 @@ const Agenda = () => {
       {/* Create Map Picker */}
       <EventMapPicker
         open={isMapPickerOpen}
-        onOpenChange={setIsMapPickerOpen}
-        onLocationSelect={(data) => setNewEvent((prev) => ({ ...prev, address: data.address, latitude: data.latitude, longitude: data.longitude, location_type: data.location_type }))}
+        onOpenChange={handleCreateMapPickerOpenChange}
+        onLocationSelect={(data) => {
+          setNewEvent((prev) => ({ ...prev, address: data.address, latitude: data.latitude, longitude: data.longitude, location_type: data.location_type }));
+          setIsDialogOpen(true);
+        }}
         initialLat={newEvent.latitude}
         initialLng={newEvent.longitude}
         initialAddress={newEvent.address}
@@ -545,7 +548,7 @@ const Agenda = () => {
       {/* Edit Map Picker */}
       <EventMapPicker
         open={isEditMapPickerOpen}
-        onOpenChange={setIsEditMapPickerOpen}
+        onOpenChange={handleEditMapPickerOpenChange}
         onLocationSelect={(data) => setEditingEvent((prev) => prev ? { ...prev, address: data.address, latitude: data.latitude, longitude: data.longitude, location_type: data.location_type } : null)}
         initialLat={editingEvent?.latitude}
         initialLng={editingEvent?.longitude}
