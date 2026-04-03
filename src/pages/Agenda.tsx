@@ -88,6 +88,25 @@ const Agenda = () => {
   const [deletingEvent, setDeletingEvent] = useState<Event | null>(null);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [isEditMapPickerOpen, setIsEditMapPickerOpen] = useState(false);
+
+  const openCreateMapPicker = () => {
+    setIsDialogOpen(false);
+    setIsMapPickerOpen(true);
+  };
+
+  const handleCreateMapPickerOpenChange = (open: boolean) => {
+    setIsMapPickerOpen(open);
+    if (!open) setIsDialogOpen(true);
+  };
+
+  const openEditMapPicker = () => {
+    setEditingEvent((prev) => (prev ? { ...prev } : prev));
+    setIsEditMapPickerOpen(true);
+  };
+
+  const handleEditMapPickerOpenChange = (open: boolean) => {
+    setIsEditMapPickerOpen(open);
+  };
   const [newEvent, setNewEvent] = useState({
     title: "", description: "", event_type: "culto", event_date: "",
     start_time: "", end_time: "", location: "", address: "",
@@ -383,7 +402,7 @@ const Agenda = () => {
                     <Label className="text-xs sm:text-sm font-medium">Local</Label>
                     <Input value={newEvent.location} onChange={(e) => setNewEvent({ ...newEvent, location: e.target.value })} placeholder="Ex: Igreja Vida em Cristo" className="rounded-xl text-sm" />
                   </div>
-                  <Button type="button" variant="outline" className="w-full rounded-xl gap-2 text-xs h-9" onClick={() => setIsMapPickerOpen(true)}>
+                  <Button type="button" variant="outline" className="w-full rounded-xl gap-2 text-xs h-9" onClick={openCreateMapPicker}>
                     <MapPin className="h-4 w-4" />
                     {newEvent.latitude ? "✅ Local no mapa — Alterar" : "Selecionar no Mapa"}
                   </Button>
@@ -515,8 +534,11 @@ const Agenda = () => {
       {/* Create Map Picker */}
       <EventMapPicker
         open={isMapPickerOpen}
-        onOpenChange={setIsMapPickerOpen}
-        onLocationSelect={(data) => setNewEvent((prev) => ({ ...prev, address: data.address, latitude: data.latitude, longitude: data.longitude, location_type: data.location_type }))}
+        onOpenChange={handleCreateMapPickerOpenChange}
+        onLocationSelect={(data) => {
+          setNewEvent((prev) => ({ ...prev, address: data.address, latitude: data.latitude, longitude: data.longitude, location_type: data.location_type }));
+          setIsDialogOpen(true);
+        }}
         initialLat={newEvent.latitude}
         initialLng={newEvent.longitude}
         initialAddress={newEvent.address}
@@ -526,7 +548,7 @@ const Agenda = () => {
       {/* Edit Map Picker */}
       <EventMapPicker
         open={isEditMapPickerOpen}
-        onOpenChange={setIsEditMapPickerOpen}
+        onOpenChange={handleEditMapPickerOpenChange}
         onLocationSelect={(data) => setEditingEvent((prev) => prev ? { ...prev, address: data.address, latitude: data.latitude, longitude: data.longitude, location_type: data.location_type } : null)}
         initialLat={editingEvent?.latitude}
         initialLng={editingEvent?.longitude}
@@ -590,7 +612,7 @@ const Agenda = () => {
               </div>
 
               <Input value={editingEvent.location || ""} onChange={(e) => setEditingEvent({ ...editingEvent, location: e.target.value })} placeholder="Local" className="rounded-xl text-sm" />
-              <Button type="button" variant="outline" className="w-full rounded-xl gap-2 text-xs h-9" onClick={() => setIsEditMapPickerOpen(true)}>
+              <Button type="button" variant="outline" className="w-full rounded-xl gap-2 text-xs h-9" onClick={openEditMapPicker}>
                 <MapPin className="h-4 w-4" />
                 {editingEvent.latitude ? "✅ Alterar local no mapa" : "Adicionar no mapa"}
               </Button>

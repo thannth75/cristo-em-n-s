@@ -70,7 +70,7 @@ const EventDetailDialog = ({ event, open, onOpenChange, canManage, onEdit, onDel
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100%-1.5rem)] max-w-lg max-h-[92vh] overflow-y-auto rounded-2xl p-4 sm:p-6">
+      <DialogContent className="top-[max(1rem,env(safe-area-inset-top,16px))] translate-y-0 w-[calc(100%-1.5rem)] max-w-lg max-h-[92vh] overflow-y-auto rounded-2xl p-4 sm:p-6">
         <DialogHeader>
           <div className="flex items-start gap-2">
             <div className="flex-1 min-w-0">

@@ -110,43 +110,11 @@ const EventMapPicker = ({
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [mapCenter, setMapCenter] = useState<[number, number]>([initialLat || -15.7801, initialLng || -47.9292]);
   const [mapZoom, setMapZoom] = useState(15);
+  const [showMap, setShowMap] = useState(false);
   // Key to force re-mount MapContainer when dialog reopens
   const [mapKey, setMapKey] = useState(0);
 
   const markerIcon = useMemo(() => createPickerIcon(), []);
-
-  // Reset state when dialog opens
-  useEffect(() => {
-    if (open) {
-      const newLat = initialLat || -15.7801;
-      const newLng = initialLng || -47.9292;
-      setLat(newLat);
-      setLng(newLng);
-      setAddress(initialAddress);
-      setLocationType(initialLocationType);
-      setSearchQuery("");
-      setSearchResults([]);
-      setMapCenter([newLat, newLng]);
-      setMapZoom(15);
-      setMapKey((k) => k + 1);
-
-      // Auto-locate if no initial coords
-      if (!initialLat && navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const { latitude, longitude } = pos.coords;
-            setLat(latitude);
-            setLng(longitude);
-            setMapCenter([latitude, longitude]);
-            setMapZoom(16);
-            reverseGeocode(latitude, longitude);
-          },
-          () => {},
-          { enableHighAccuracy: true, timeout: 8000 }
-        );
-      }
-    }
-  }, [open, initialLat, initialLng, initialAddress, initialLocationType]);
 
   const reverseGeocode = useCallback(async (latitude: number, longitude: number) => {
     try {
@@ -161,6 +129,48 @@ const EventMapPicker = ({
       // silent
     }
   }, []);
+
+  // Reset state when dialog opens
+  useEffect(() => {
+    if (!open) {
+      setShowMap(false);
+      return;
+    }
+
+    const newLat = initialLat || -15.7801;
+    const newLng = initialLng || -47.9292;
+    setLat(newLat);
+    setLng(newLng);
+    setAddress(initialAddress);
+    setLocationType(initialLocationType);
+    setSearchQuery("");
+    setSearchResults([]);
+    setMapCenter([newLat, newLng]);
+    setMapZoom(15);
+    setMapKey((k) => k + 1);
+    setShowMap(false);
+
+    const renderTimer = window.setTimeout(() => {
+      setShowMap(true);
+    }, 180);
+
+    if (!initialLat && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          setLat(latitude);
+          setLng(longitude);
+          setMapCenter([latitude, longitude]);
+          setMapZoom(16);
+          reverseGeocode(latitude, longitude);
+        },
+        () => {},
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    }
+
+    return () => window.clearTimeout(renderTimer);
+  }, [open, initialLat, initialLng, initialAddress, initialLocationType, reverseGeocode]);
 
   const handlePositionChange = useCallback(
     (newLat: number, newLng: number) => {
@@ -233,7 +243,7 @@ const EventMapPicker = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100%-1rem)] sm:w-[calc(100%-1.5rem)] max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl p-3 sm:p-5">
+      <DialogContent className="top-[max(1rem,env(safe-area-inset-top,16px))] translate-y-0 w-[calc(100%-1rem)] sm:w-[calc(100%-1.5rem)] max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl p-3 sm:p-5">
         <DialogHeader>
           <DialogTitle className="font-serif flex items-center gap-2 text-base sm:text-lg">
             <MapPin className="h-5 w-5 text-primary shrink-0" />
@@ -275,14 +285,14 @@ const EventMapPicker = ({
           )}
 
           {/* Map */}
-          {open && (
-            <div className="relative rounded-xl overflow-hidden border border-border" style={{ minHeight: "280px", background: "#ddd" }}>
+          {open && showMap ? (
+            <div className="relative h-[280px] rounded-xl overflow-hidden border border-border bg-muted">
               <MapContainer
                 key={mapKey}
                 center={mapCenter}
                 zoom={mapZoom}
                 zoomControl={false}
-                style={{ zIndex: 0, height: "280px", width: "100%", background: "#ddd" }}
+                style={{ zIndex: 0, height: "100%", width: "100%" }}
               >
                 <TileLayer
                   url={isSatellite ? SATELLITE_URL : STREET_URL}
@@ -311,6 +321,10 @@ const EventMapPicker = ({
               >
                 {isSatellite ? "🗺️ Mapa" : "🛰️ Satélite"}
               </Button>
+            </div>
+          ) : (
+            <div className="flex h-[280px] items-center justify-center rounded-xl border border-border bg-muted/50">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
           )}
 
