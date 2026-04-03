@@ -612,7 +612,7 @@ const Agenda = () => {
               </div>
 
               <Input value={editingEvent.location || ""} onChange={(e) => setEditingEvent({ ...editingEvent, location: e.target.value })} placeholder="Local" className="rounded-xl text-sm" />
-              <Button type="button" variant="outline" className="w-full rounded-xl gap-2 text-xs h-9" onClick={() => setIsEditMapPickerOpen(true)}>
+              <Button type="button" variant="outline" className="w-full rounded-xl gap-2 text-xs h-9" onClick={openEditMapPicker}>
                 <MapPin className="h-4 w-4" />
                 {editingEvent.latitude ? "✅ Alterar local no mapa" : "Adicionar no mapa"}
               </Button>

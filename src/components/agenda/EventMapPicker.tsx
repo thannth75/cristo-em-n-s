@@ -243,7 +243,7 @@ const EventMapPicker = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[calc(100%-1rem)] sm:w-[calc(100%-1.5rem)] max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl p-3 sm:p-5">
+      <DialogContent className="top-[max(1rem,env(safe-area-inset-top,16px))] translate-y-0 w-[calc(100%-1rem)] sm:w-[calc(100%-1.5rem)] max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl p-3 sm:p-5">
         <DialogHeader>
           <DialogTitle className="font-serif flex items-center gap-2 text-base sm:text-lg">
             <MapPin className="h-5 w-5 text-primary shrink-0" />
@@ -285,14 +285,14 @@ const EventMapPicker = ({
           )}
 
           {/* Map */}
-          {open && (
-            <div className="relative rounded-xl overflow-hidden border border-border" style={{ minHeight: "280px", background: "#ddd" }}>
+          {open && showMap ? (
+            <div className="relative h-[280px] rounded-xl overflow-hidden border border-border bg-muted">
               <MapContainer
                 key={mapKey}
                 center={mapCenter}
                 zoom={mapZoom}
                 zoomControl={false}
-                style={{ zIndex: 0, height: "280px", width: "100%", background: "#ddd" }}
+                style={{ zIndex: 0, height: "100%", width: "100%" }}
               >
                 <TileLayer
                   url={isSatellite ? SATELLITE_URL : STREET_URL}
@@ -321,6 +321,10 @@ const EventMapPicker = ({
               >
                 {isSatellite ? "🗺️ Mapa" : "🛰️ Satélite"}
               </Button>
+            </div>
+          ) : (
+            <div className="flex h-[280px] items-center justify-center rounded-xl border border-border bg-muted/50">
+              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
           )}
 
