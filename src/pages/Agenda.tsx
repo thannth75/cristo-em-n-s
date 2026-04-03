@@ -402,7 +402,7 @@ const Agenda = () => {
                     <Label className="text-xs sm:text-sm font-medium">Local</Label>
                     <Input value={newEvent.location} onChange={(e) => setNewEvent({ ...newEvent, location: e.target.value })} placeholder="Ex: Igreja Vida em Cristo" className="rounded-xl text-sm" />
                   </div>
-                  <Button type="button" variant="outline" className="w-full rounded-xl gap-2 text-xs h-9" onClick={() => setIsMapPickerOpen(true)}>
+                  <Button type="button" variant="outline" className="w-full rounded-xl gap-2 text-xs h-9" onClick={openCreateMapPicker}>
                     <MapPin className="h-4 w-4" />
                     {newEvent.latitude ? "✅ Local no mapa — Alterar" : "Selecionar no Mapa"}
                   </Button>
