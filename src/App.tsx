@@ -11,6 +11,7 @@ import InAppNotificationToast from "@/components/InAppNotificationToast";
 import { useNativePushNotifications } from "@/hooks/useNativePushNotifications";
 import { useAutoWebPush } from "@/hooks/useAutoWebPush";
 import { lazy, Suspense } from "react";
+import AmbientSound from "@/components/AmbientSound";
 
 // Eager load critical path
 import Index from "./pages/Index";
