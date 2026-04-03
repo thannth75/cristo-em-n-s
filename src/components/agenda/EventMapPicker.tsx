@@ -110,6 +110,7 @@ const EventMapPicker = ({
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [mapCenter, setMapCenter] = useState<[number, number]>([initialLat || -15.7801, initialLng || -47.9292]);
   const [mapZoom, setMapZoom] = useState(15);
+  const [showMap, setShowMap] = useState(false);
   // Key to force re-mount MapContainer when dialog reopens
   const [mapKey, setMapKey] = useState(0);
 

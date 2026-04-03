@@ -88,6 +88,25 @@ const Agenda = () => {
   const [deletingEvent, setDeletingEvent] = useState<Event | null>(null);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
   const [isEditMapPickerOpen, setIsEditMapPickerOpen] = useState(false);
+
+  const openCreateMapPicker = () => {
+    setIsDialogOpen(false);
+    setIsMapPickerOpen(true);
+  };
+
+  const handleCreateMapPickerOpenChange = (open: boolean) => {
+    setIsMapPickerOpen(open);
+    if (!open) setIsDialogOpen(true);
+  };
+
+  const openEditMapPicker = () => {
+    setEditingEvent((prev) => (prev ? { ...prev } : prev));
+    setIsEditMapPickerOpen(true);
+  };
+
+  const handleEditMapPickerOpenChange = (open: boolean) => {
+    setIsEditMapPickerOpen(open);
+  };
   const [newEvent, setNewEvent] = useState({
     title: "", description: "", event_type: "culto", event_date: "",
     start_time: "", end_time: "", location: "", address: "",
