@@ -149,6 +149,7 @@ const App = () => (
         <InAppNotificationToast />
         <BrowserRouter>
           <AnimatedRoutes />
+          <AmbientSound />
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>
