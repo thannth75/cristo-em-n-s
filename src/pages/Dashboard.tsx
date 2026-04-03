@@ -24,7 +24,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { AdFeed } from "@/components/ads/AdBanner";
 import AIFloatingButton from "@/components/ai/AIFloatingButton";
-import AmbientSound from "@/components/AmbientSound";
+
 import JourneyCarousel, { type JourneyItem } from "@/components/dashboard/JourneyCarousel";
 import StreakCard from "@/components/dashboard/StreakCard";
 import WeeklySummaryCard from "@/components/dashboard/WeeklySummaryCard";
@@ -400,7 +400,7 @@ const Dashboard = () => {
         </motion.div>
       </main>
 
-      <AmbientSound />
+      
       <AIFloatingButton type="general" />
       <BottomNavigation />
     </div>
