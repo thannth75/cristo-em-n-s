@@ -118,36 +118,45 @@ const EventMapPicker = ({
 
   // Reset state when dialog opens
   useEffect(() => {
-    if (open) {
-      const newLat = initialLat || -15.7801;
-      const newLng = initialLng || -47.9292;
-      setLat(newLat);
-      setLng(newLng);
-      setAddress(initialAddress);
-      setLocationType(initialLocationType);
-      setSearchQuery("");
-      setSearchResults([]);
-      setMapCenter([newLat, newLng]);
-      setMapZoom(15);
-      setMapKey((k) => k + 1);
-
-      // Auto-locate if no initial coords
-      if (!initialLat && navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const { latitude, longitude } = pos.coords;
-            setLat(latitude);
-            setLng(longitude);
-            setMapCenter([latitude, longitude]);
-            setMapZoom(16);
-            reverseGeocode(latitude, longitude);
-          },
-          () => {},
-          { enableHighAccuracy: true, timeout: 8000 }
-        );
-      }
+    if (!open) {
+      setShowMap(false);
+      return;
     }
-  }, [open, initialLat, initialLng, initialAddress, initialLocationType]);
+
+    const newLat = initialLat || -15.7801;
+    const newLng = initialLng || -47.9292;
+    setLat(newLat);
+    setLng(newLng);
+    setAddress(initialAddress);
+    setLocationType(initialLocationType);
+    setSearchQuery("");
+    setSearchResults([]);
+    setMapCenter([newLat, newLng]);
+    setMapZoom(15);
+    setMapKey((k) => k + 1);
+    setShowMap(false);
+
+    const renderTimer = window.setTimeout(() => {
+      setShowMap(true);
+    }, 180);
+
+    if (!initialLat && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          setLat(latitude);
+          setLng(longitude);
+          setMapCenter([latitude, longitude]);
+          setMapZoom(16);
+          reverseGeocode(latitude, longitude);
+        },
+        () => {},
+        { enableHighAccuracy: true, timeout: 8000 }
+      );
+    }
+
+    return () => window.clearTimeout(renderTimer);
+  }, [open, initialLat, initialLng, initialAddress, initialLocationType, reverseGeocode]);
 
   const reverseGeocode = useCallback(async (latitude: number, longitude: number) => {
     try {
