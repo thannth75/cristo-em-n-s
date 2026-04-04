@@ -61,11 +61,22 @@ const MapInteraction = ({
   const map = useMap();
 
   useEffect(() => {
-    const intervals = [100, 300, 600, 1000, 2000, 3000];
+    const intervals = [0, 100, 300, 600, 1000, 2000, 3000];
     const timers = intervals.map((ms) =>
       setTimeout(() => map.invalidateSize(), ms)
     );
-    return () => timers.forEach(clearTimeout);
+
+    const container = map.getContainer();
+    const observer = typeof ResizeObserver !== "undefined"
+      ? new ResizeObserver(() => map.invalidateSize())
+      : null;
+
+    observer?.observe(container);
+
+    return () => {
+      timers.forEach(clearTimeout);
+      observer?.disconnect();
+    };
   }, [map]);
 
   useMapEvents({
@@ -87,8 +98,24 @@ const MapController = ({ center, zoom }: { center: [number, number]; zoom?: numb
   return null;
 };
 
-const STREET_URL = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
-const SATELLITE_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+const STREET_TILE_SOURCES = [
+  {
+    key: "osm",
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution: "© OpenStreetMap contributors",
+  },
+  {
+    key: "carto",
+    url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+    attribution: "© OpenStreetMap contributors © CARTO",
+  },
+] as const;
+
+const SATELLITE_TILE_SOURCE = {
+  key: "esri",
+  url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+  attribution: "Tiles © Esri",
+} as const;
 
 const EventMapPicker = ({
   open,
@@ -113,6 +140,7 @@ const EventMapPicker = ({
   const [showMap, setShowMap] = useState(false);
   // Key to force re-mount MapContainer when dialog reopens
   const [mapKey, setMapKey] = useState(0);
+  const [streetTileIndex, setStreetTileIndex] = useState(0);
 
   const markerIcon = useMemo(() => createPickerIcon(), []);
 
@@ -148,6 +176,7 @@ const EventMapPicker = ({
     setMapCenter([newLat, newLng]);
     setMapZoom(15);
     setMapKey((k) => k + 1);
+    setStreetTileIndex(0);
     setShowMap(false);
 
     const renderTimer = window.setTimeout(() => {
@@ -241,6 +270,18 @@ const EventMapPicker = ({
     onOpenChange(false);
   };
 
+  const activeTileSource = isSatellite
+    ? SATELLITE_TILE_SOURCE
+    : STREET_TILE_SOURCES[Math.min(streetTileIndex, STREET_TILE_SOURCES.length - 1)];
+
+  const handleTileError = useCallback(() => {
+    if (isSatellite) return;
+
+    setStreetTileIndex((currentIndex) =>
+      currentIndex < STREET_TILE_SOURCES.length - 1 ? currentIndex + 1 : currentIndex
+    );
+  }, [isSatellite]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="top-[max(1rem,env(safe-area-inset-top,16px))] translate-y-0 w-[calc(100%-1rem)] sm:w-[calc(100%-1.5rem)] max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl p-3 sm:p-5">
@@ -292,11 +333,14 @@ const EventMapPicker = ({
                 center={mapCenter}
                 zoom={mapZoom}
                 zoomControl={false}
+                preferCanvas
                 style={{ zIndex: 0, height: "100%", width: "100%" }}
               >
                 <TileLayer
-                  url={isSatellite ? SATELLITE_URL : STREET_URL}
-                  attribution={isSatellite ? "© Esri" : "© OSM"}
+                  key={activeTileSource.key}
+                  url={activeTileSource.url}
+                  attribution={activeTileSource.attribution}
+                  eventHandlers={{ tileerror: handleTileError }}
                   maxZoom={19}
                 />
                 <Marker
@@ -326,6 +370,12 @@ const EventMapPicker = ({
             <div className="flex h-[280px] items-center justify-center rounded-xl border border-border bg-muted/50">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
             </div>
+          )}
+
+          {!isSatellite && streetTileIndex > 0 && (
+            <p className="text-[10px] text-center text-muted-foreground">
+              Mapa alternativo ativado para melhorar o carregamento.
+            </p>
           )}
 
           <p className="text-[10px] text-muted-foreground text-center">

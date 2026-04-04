@@ -87,6 +87,7 @@ const Agenda = () => {
   const [isMapPickerOpen, setIsMapPickerOpen] = useState(false);
   const [deletingEvent, setDeletingEvent] = useState<Event | null>(null);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isEditMapPickerOpen, setIsEditMapPickerOpen] = useState(false);
 
   const openCreateMapPicker = () => {
@@ -100,12 +101,13 @@ const Agenda = () => {
   };
 
   const openEditMapPicker = () => {
-    setEditingEvent((prev) => (prev ? { ...prev } : prev));
+    setIsEditDialogOpen(false);
     setIsEditMapPickerOpen(true);
   };
 
   const handleEditMapPickerOpenChange = (open: boolean) => {
     setIsEditMapPickerOpen(open);
+    if (!open && editingEvent) setIsEditDialogOpen(true);
   };
   const [newEvent, setNewEvent] = useState({
     title: "", description: "", event_type: "culto", event_date: "",
@@ -289,6 +291,7 @@ const Agenda = () => {
       toast({ title: "Evento atualizado! ✓" });
       fetchEvents();
     }
+    setIsEditDialogOpen(false);
     setEditingEvent(null);
   };
 
@@ -502,7 +505,10 @@ const Agenda = () => {
                 {canManage && (
                   <div className="flex border-t border-border">
                     <button
-                      onClick={() => setEditingEvent({ ...evento })}
+                      onClick={() => {
+                        setEditingEvent({ ...evento });
+                        setIsEditDialogOpen(true);
+                      }}
                       className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors"
                     >
                       <Pencil className="h-3 w-3" /> Editar
@@ -529,7 +535,7 @@ const Agenda = () => {
       </main>
 
       {/* Detail Dialog */}
-      <EventDetailDialog event={selectedEvent} open={isDetailOpen} onOpenChange={setIsDetailOpen} canManage={canManage} onEdit={(e) => { setIsDetailOpen(false); setEditingEvent(e as Event); }} onDelete={(e) => { setIsDetailOpen(false); setDeletingEvent(e as Event); }} />
+      <EventDetailDialog event={selectedEvent} open={isDetailOpen} onOpenChange={setIsDetailOpen} canManage={canManage} onEdit={(e) => { setIsDetailOpen(false); setEditingEvent(e as Event); setIsEditDialogOpen(true); }} onDelete={(e) => { setIsDetailOpen(false); setDeletingEvent(e as Event); }} />
 
       {/* Create Map Picker */}
       <EventMapPicker
@@ -549,7 +555,10 @@ const Agenda = () => {
       <EventMapPicker
         open={isEditMapPickerOpen}
         onOpenChange={handleEditMapPickerOpenChange}
-        onLocationSelect={(data) => setEditingEvent((prev) => prev ? { ...prev, address: data.address, latitude: data.latitude, longitude: data.longitude, location_type: data.location_type } : null)}
+        onLocationSelect={(data) => {
+          setEditingEvent((prev) => prev ? { ...prev, address: data.address, latitude: data.latitude, longitude: data.longitude, location_type: data.location_type } : null);
+          setIsEditDialogOpen(true);
+        }}
         initialLat={editingEvent?.latitude}
         initialLng={editingEvent?.longitude}
         initialAddress={editingEvent?.address || ""}
@@ -557,7 +566,13 @@ const Agenda = () => {
       />
 
       {/* Edit Event Dialog */}
-      <Dialog open={!!editingEvent} onOpenChange={(open) => !open && setEditingEvent(null)}>
+      <Dialog
+        open={!!editingEvent && isEditDialogOpen}
+        onOpenChange={(open) => {
+          setIsEditDialogOpen(open);
+          if (!open && !isEditMapPickerOpen) setEditingEvent(null);
+        }}
+      >
         <DialogContent className="w-[calc(100%-1.5rem)] max-w-lg max-h-[92vh] overflow-y-auto rounded-2xl p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="font-serif">Editar Evento</DialogTitle>

@@ -18,9 +18,9 @@ const AIFloatingButton = forwardRef<HTMLDivElement, AIFloatingButtonProps>(
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={() => setIsOpen(true)}
-          className="fixed right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/30"
+          className="fixed right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/30"
           style={{
-            bottom: "calc(6rem + max(0.5rem, env(safe-area-inset-bottom, 8px)))",
+            bottom: "calc(10rem + max(0.75rem, env(safe-area-inset-bottom, 8px)))",
           }}
         >
           <motion.div
