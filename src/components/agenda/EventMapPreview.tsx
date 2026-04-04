@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { Navigation, MapPin, ExternalLink, Church, Home, Globe, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet";
@@ -35,44 +35,17 @@ const createMarkerIcon = () =>
 const MapResizer = () => {
   const map = useMap();
   useEffect(() => {
-    const intervals = [0, 100, 300, 600, 1000, 2000];
+    const intervals = [100, 300, 600, 1000, 2000];
     const timers = intervals.map((ms) =>
       setTimeout(() => map.invalidateSize(), ms)
     );
-
-    const container = map.getContainer();
-    const observer = typeof ResizeObserver !== "undefined"
-      ? new ResizeObserver(() => map.invalidateSize())
-      : null;
-
-    observer?.observe(container);
-
-    return () => {
-      timers.forEach(clearTimeout);
-      observer?.disconnect();
-    };
+    return () => timers.forEach(clearTimeout);
   }, [map]);
   return null;
 };
 
-const STREET_TILE_SOURCES = [
-  {
-    key: "osm",
-    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    attribution: "© OpenStreetMap contributors",
-  },
-  {
-    key: "carto",
-    url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-    attribution: "© OpenStreetMap contributors © CARTO",
-  },
-] as const;
-
-const SATELLITE_TILE_SOURCE = {
-  key: "esri",
-  url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-  attribution: "Tiles © Esri",
-} as const;
+const STREET_URL = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
+const SATELLITE_URL = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
 
 const EventMapPreview = ({
   latitude,
@@ -83,8 +56,7 @@ const EventMapPreview = ({
   compact = false,
 }: EventMapPreviewProps) => {
   const [isSatellite, setIsSatellite] = useState(false);
-  const [streetTileIndex, setStreetTileIndex] = useState(0);
-  const markerIcon = useMemo(() => createMarkerIcon(), []);
+  const markerIcon = createMarkerIcon();
 
   const openNavigation = () => {
     window.open(
@@ -104,21 +76,10 @@ const EventMapPreview = ({
 
   const typeInfo = locationType ? LOCATION_TYPE_INFO[locationType] : null;
   const TypeIcon = typeInfo?.icon || MapPin;
-  const activeTileSource = isSatellite
-    ? SATELLITE_TILE_SOURCE
-    : STREET_TILE_SOURCES[Math.min(streetTileIndex, STREET_TILE_SOURCES.length - 1)];
-
-  const handleTileError = useCallback(() => {
-    if (isSatellite) return;
-
-    setStreetTileIndex((currentIndex) =>
-      currentIndex < STREET_TILE_SOURCES.length - 1 ? currentIndex + 1 : currentIndex
-    );
-  }, [isSatellite]);
 
   return (
     <div className="space-y-2">
-      <div className="relative rounded-xl overflow-hidden border border-border bg-muted">
+      <div className="relative rounded-xl overflow-hidden border border-border">
         <MapContainer
           center={[latitude, longitude]}
           zoom={16}
@@ -126,14 +87,12 @@ const EventMapPreview = ({
           dragging={!compact}
           scrollWheelZoom={false}
           touchZoom={!compact}
-          preferCanvas
-          style={{ zIndex: 0, height: compact ? "100px" : "180px", width: "100%" }}
+          className={compact ? "h-[100px]" : "h-[140px] sm:h-[180px]"}
+          style={{ zIndex: 0 }}
         >
           <TileLayer
-            key={activeTileSource.key}
-            url={activeTileSource.url}
-            attribution={activeTileSource.attribution}
-            eventHandlers={{ tileerror: handleTileError }}
+            url={isSatellite ? SATELLITE_URL : STREET_URL}
+            attribution={isSatellite ? "© Esri" : "© OSM"}
             maxZoom={19}
           />
           <Marker position={[latitude, longitude]} icon={markerIcon} />
@@ -150,12 +109,6 @@ const EventMapPreview = ({
           </Button>
         )}
       </div>
-
-      {!isSatellite && streetTileIndex > 0 && (
-        <p className="text-[10px] text-center text-muted-foreground">
-          Mapa alternativo ativado para melhorar o carregamento.
-        </p>
-      )}
 
       {(address || typeInfo) && (
         <div className="rounded-xl bg-muted/50 p-2.5">
