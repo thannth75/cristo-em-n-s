@@ -1,16 +1,11 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
-import { MapPin, Search, Church, Home, Globe, MoreHorizontal, Locate, Loader2 } from "lucide-react";
+import { MapPin, Search, Church, Home, Globe, MoreHorizontal, Locate, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-leaflet";
+import { cn } from "@/lib/utils";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -52,7 +47,6 @@ const createPickerIcon = () =>
     iconAnchor: [18, 36],
   });
 
-// Handles map clicks and auto-resize
 const MapInteraction = ({
   onPositionChange,
 }: {
@@ -62,9 +56,7 @@ const MapInteraction = ({
 
   useEffect(() => {
     const intervals = [0, 100, 300, 600, 1000, 2000, 3000];
-    const timers = intervals.map((ms) =>
-      setTimeout(() => map.invalidateSize(), ms)
-    );
+    const timers = intervals.map((ms) => window.setTimeout(() => map.invalidateSize(), ms));
 
     const container = map.getContainer();
     const observer = typeof ResizeObserver !== "undefined"
@@ -74,7 +66,7 @@ const MapInteraction = ({
     observer?.observe(container);
 
     return () => {
-      timers.forEach(clearTimeout);
+      timers.forEach(window.clearTimeout);
       observer?.disconnect();
     };
   }, [map]);
@@ -88,13 +80,16 @@ const MapInteraction = ({
   return null;
 };
 
-// Moves map view programmatically
 const MapController = ({ center, zoom }: { center: [number, number]; zoom?: number }) => {
   const map = useMap();
+
   useEffect(() => {
-    map.setView(center, zoom || map.getZoom());
-    setTimeout(() => map.invalidateSize(), 100);
+    map.setView(center, zoom || map.getZoom(), { animate: false });
+    const timer = window.setTimeout(() => map.invalidateSize(), 50);
+
+    return () => window.clearTimeout(timer);
   }, [center, zoom, map]);
+
   return null;
 };
 
@@ -117,6 +112,8 @@ const SATELLITE_TILE_SOURCE = {
   attribution: "Tiles © Esri",
 } as const;
 
+const DEFAULT_POSITION: [number, number] = [-15.7801, -47.9292];
+
 const EventMapPicker = ({
   open,
   onOpenChange,
@@ -128,17 +125,18 @@ const EventMapPicker = ({
 }: EventMapPickerProps) => {
   const [address, setAddress] = useState(initialAddress);
   const [searchQuery, setSearchQuery] = useState("");
-  const [lat, setLat] = useState(initialLat || -15.7801);
-  const [lng, setLng] = useState(initialLng || -47.9292);
+  const [lat, setLat] = useState(initialLat || DEFAULT_POSITION[0]);
+  const [lng, setLng] = useState(initialLng || DEFAULT_POSITION[1]);
   const [locationType, setLocationType] = useState(initialLocationType);
   const [isSearching, setIsSearching] = useState(false);
   const [isSatellite, setIsSatellite] = useState(false);
   const [isLocating, setIsLocating] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [mapCenter, setMapCenter] = useState<[number, number]>([initialLat || -15.7801, initialLng || -47.9292]);
-  const [mapZoom, setMapZoom] = useState(15);
-  const [showMap, setShowMap] = useState(false);
-  // Key to force re-mount MapContainer when dialog reopens
+  const [mapCenter, setMapCenter] = useState<[number, number]>([
+    initialLat || DEFAULT_POSITION[0],
+    initialLng || DEFAULT_POSITION[1],
+  ]);
+  const [mapZoom, setMapZoom] = useState(initialLat && initialLng ? 16 : 15);
   const [mapKey, setMapKey] = useState(0);
   const [streetTileIndex, setStreetTileIndex] = useState(0);
 
@@ -158,15 +156,11 @@ const EventMapPicker = ({
     }
   }, []);
 
-  // Reset state when dialog opens
   useEffect(() => {
-    if (!open) {
-      setShowMap(false);
-      return;
-    }
+    if (!open) return;
 
-    const newLat = initialLat || -15.7801;
-    const newLng = initialLng || -47.9292;
+    const newLat = initialLat || DEFAULT_POSITION[0];
+    const newLng = initialLng || DEFAULT_POSITION[1];
     setLat(newLat);
     setLng(newLng);
     setAddress(initialAddress);
@@ -174,37 +168,40 @@ const EventMapPicker = ({
     setSearchQuery("");
     setSearchResults([]);
     setMapCenter([newLat, newLng]);
-    setMapZoom(15);
+    setMapZoom(initialLat && initialLng ? 16 : 15);
     setMapKey((k) => k + 1);
     setStreetTileIndex(0);
-    setShowMap(false);
 
-    const renderTimer = window.setTimeout(() => {
-      setShowMap(true);
-    }, 180);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
 
-    if (!initialLat && navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const { latitude, longitude } = pos.coords;
-          setLat(latitude);
-          setLng(longitude);
-          setMapCenter([latitude, longitude]);
-          setMapZoom(16);
-          reverseGeocode(latitude, longitude);
-        },
-        () => {},
-        { enableHighAccuracy: true, timeout: 8000 }
-      );
-    }
-
-    return () => window.clearTimeout(renderTimer);
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
   }, [open, initialLat, initialLng, initialAddress, initialLocationType, reverseGeocode]);
+
+  useEffect(() => {
+    if (!open || initialLat || !navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setLat(latitude);
+        setLng(longitude);
+        setMapCenter([latitude, longitude]);
+        setMapZoom(16);
+        reverseGeocode(latitude, longitude);
+      },
+      () => {},
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  }, [open, initialLat, reverseGeocode]);
 
   const handlePositionChange = useCallback(
     (newLat: number, newLng: number) => {
       setLat(newLat);
       setLng(newLng);
+      setMapCenter([newLat, newLng]);
       reverseGeocode(newLat, newLng);
     },
     [reverseGeocode]
@@ -237,8 +234,16 @@ const EventMapPicker = ({
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=5&accept-language=pt-BR&countrycodes=br`
       );
       const data: SearchResult[] = await res.json();
-      if (data.length === 1) {
-        selectSearchResult(data[0]);
+        if (data.length === 1) {
+          const result = data[0];
+          const nLat = parseFloat(result.lat);
+          const nLng = parseFloat(result.lon);
+          setLat(nLat);
+          setLng(nLng);
+          setAddress(result.display_name);
+          setMapCenter([nLat, nLng]);
+          setMapZoom(16);
+          setSearchQuery("");
       } else if (data.length > 1) {
         setSearchResults(data);
       }
@@ -282,59 +287,74 @@ const EventMapPicker = ({
     );
   }, [isSatellite]);
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="top-[max(1rem,env(safe-area-inset-top,16px))] translate-y-0 w-[calc(100%-1rem)] sm:w-[calc(100%-1.5rem)] max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl p-3 sm:p-5">
-        <DialogHeader>
-          <DialogTitle className="font-serif flex items-center gap-2 text-base sm:text-lg">
-            <MapPin className="h-5 w-5 text-primary shrink-0" />
-            Selecionar Local
-          </DialogTitle>
-        </DialogHeader>
+  if (!open) return null;
 
-        <div className="space-y-3">
-          {/* Search + Locate */}
-          <div className="flex gap-1.5">
-            <Input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              placeholder="Pesquisar endereço..."
-              className="rounded-xl text-sm flex-1 min-w-0"
-            />
-            <Button onClick={handleSearch} size="icon" className="rounded-xl shrink-0 h-10 w-10" disabled={isSearching}>
-              {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-            </Button>
-            <Button onClick={handleLocateMe} size="icon" variant="outline" className="rounded-xl shrink-0 h-10 w-10" disabled={isLocating}>
-              {isLocating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Locate className="h-4 w-4" />}
-            </Button>
+  return (
+    <div className="fixed inset-0 z-[120] bg-background/96 backdrop-blur-sm">
+      <div className="flex h-full flex-col">
+        <div
+          className="flex items-center justify-between border-b border-border bg-background/95 px-4 py-3"
+          style={{ paddingTop: "max(0.75rem, env(safe-area-inset-top, 12px))" }}
+        >
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <MapPin className="h-4 w-4 text-primary" />
+              Selecionar Local
+            </p>
+            <p className="text-xs text-muted-foreground">Toque no mapa para marcar com precisão</p>
           </div>
 
-          {/* Search results */}
-          {searchResults.length > 0 && (
-            <div className="rounded-xl border border-border bg-card shadow-lg max-h-36 overflow-y-auto">
-              {searchResults.map((result, i) => (
-                <button
-                  key={i}
-                  onClick={() => selectSearchResult(result)}
-                  className="w-full text-left px-3 py-2.5 text-xs hover:bg-muted/50 border-b border-border last:border-b-0 transition-colors"
-                >
-                  <span className="line-clamp-2">{result.display_name}</span>
-                </button>
-              ))}
-            </div>
-          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="shrink-0 rounded-full"
+            onClick={() => onOpenChange(false)}
+            aria-label="Fechar mapa"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
 
-          {/* Map */}
-          {open && showMap ? (
-            <div className="relative h-[280px] rounded-xl overflow-hidden border border-border bg-muted">
+        <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
+          <div className="order-2 flex min-h-0 flex-1 flex-col border-t border-border lg:order-1 lg:border-r lg:border-t-0">
+            <div className="flex items-center gap-2 px-3 py-3">
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                placeholder="Pesquisar endereço..."
+                className="rounded-xl text-sm"
+              />
+              <Button onClick={handleSearch} size="icon" className="rounded-xl shrink-0" disabled={isSearching}>
+                {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+              </Button>
+              <Button onClick={handleLocateMe} size="icon" variant="outline" className="rounded-xl shrink-0" disabled={isLocating}>
+                {isLocating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Locate className="h-4 w-4" />}
+              </Button>
+            </div>
+
+            {searchResults.length > 0 && (
+              <div className="mx-3 mb-3 overflow-y-auto rounded-xl border border-border bg-card shadow-lg">
+                {searchResults.map((result, index) => (
+                  <button
+                    key={`${result.lat}-${result.lon}-${index}`}
+                    onClick={() => selectSearchResult(result)}
+                    className="w-full border-b border-border px-3 py-3 text-left text-xs transition-colors last:border-b-0 hover:bg-muted/50"
+                  >
+                    <span className="line-clamp-2">{result.display_name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="relative min-h-0 flex-1 bg-muted">
               <MapContainer
                 key={mapKey}
                 center={mapCenter}
                 zoom={mapZoom}
                 zoomControl={false}
                 preferCanvas
-                style={{ zIndex: 0, height: "100%", width: "100%" }}
+                className="h-full w-full"
               >
                 <TileLayer
                   key={activeTileSource.key}
@@ -348,73 +368,85 @@ const EventMapPicker = ({
                   icon={markerIcon}
                   draggable
                   eventHandlers={{
-                    dragend: (e) => {
-                      const pos = e.target.getLatLng();
-                      handlePositionChange(pos.lat, pos.lng);
+                    dragend: (event) => {
+                      const position = event.target.getLatLng();
+                      handlePositionChange(position.lat, position.lng);
                     },
                   }}
                 />
                 <MapInteraction onPositionChange={handlePositionChange} />
                 <MapController center={mapCenter} zoom={mapZoom} />
               </MapContainer>
+
               <Button
                 variant="secondary"
                 size="sm"
-                className="absolute top-2 right-2 z-[1000] rounded-lg text-[10px] sm:text-xs shadow-md h-7 px-2"
-                onClick={() => setIsSatellite(!isSatellite)}
+                className="absolute right-3 top-3 z-[1000] rounded-lg shadow-md"
+                onClick={() => setIsSatellite((current) => !current)}
               >
                 {isSatellite ? "🗺️ Mapa" : "🛰️ Satélite"}
               </Button>
             </div>
-          ) : (
-            <div className="flex h-[280px] items-center justify-center rounded-xl border border-border bg-muted/50">
-              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-            </div>
-          )}
-
-          {!isSatellite && streetTileIndex > 0 && (
-            <p className="text-[10px] text-center text-muted-foreground">
-              Mapa alternativo ativado para melhorar o carregamento.
-            </p>
-          )}
-
-          <p className="text-[10px] text-muted-foreground text-center">
-            Toque no mapa ou arraste o marcador para ajustar
-          </p>
-
-          {/* Address preview */}
-          {address && (
-            <div className="rounded-xl bg-muted/50 p-2.5">
-              <p className="text-[10px] text-muted-foreground mb-0.5">Endereço:</p>
-              <p className="text-xs font-medium text-foreground break-words line-clamp-3">{address}</p>
-            </div>
-          )}
-
-          {/* Location type */}
-          <div>
-            <Label className="text-xs font-medium mb-1.5 block">Tipo de local</Label>
-            <RadioGroup value={locationType} onValueChange={setLocationType} className="grid grid-cols-2 gap-1.5">
-              {LOCATION_TYPES.map((type) => (
-                <label
-                  key={type.value}
-                  className={`flex items-center gap-1.5 rounded-xl border p-2.5 cursor-pointer transition-colors ${
-                    locationType === type.value ? "border-primary bg-primary/5" : "border-border hover:bg-muted/50"
-                  }`}
-                >
-                  <RadioGroupItem value={type.value} className="sr-only" />
-                  <type.icon className="h-3.5 w-3.5 text-primary shrink-0" />
-                  <span className="text-xs">{type.label}</span>
-                </label>
-              ))}
-            </RadioGroup>
           </div>
 
-          <Button onClick={handleConfirm} className="w-full rounded-xl text-sm h-10">
-            ✅ Confirmar Local
-          </Button>
+          <div
+            className="order-1 w-full shrink-0 overflow-y-auto border-b border-border bg-background p-4 lg:order-2 lg:w-[360px] lg:border-b-0"
+            style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom, 16px))" }}
+          >
+            <div className="space-y-4">
+              {!isSatellite && streetTileIndex > 0 && (
+                <div className="rounded-xl border border-border bg-muted/50 px-3 py-2 text-[11px] text-muted-foreground">
+                  Mapa alternativo ativado para melhorar o carregamento.
+                </div>
+              )}
+
+              <div>
+                <p className="text-xs font-medium text-foreground">Coordenadas</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {lat.toFixed(6)}, {lng.toFixed(6)}
+                </p>
+              </div>
+
+              {address && (
+                <div className="rounded-xl bg-muted/50 p-3">
+                  <p className="mb-1 text-[10px] text-muted-foreground">Endereço</p>
+                  <p className="text-xs font-medium text-foreground break-words">{address}</p>
+                </div>
+              )}
+
+              <div>
+                <Label className="mb-2 block text-xs font-medium">Tipo de local</Label>
+                <RadioGroup value={locationType} onValueChange={setLocationType} className="grid grid-cols-2 gap-2">
+                  {LOCATION_TYPES.map((type) => (
+                    <label
+                      key={type.value}
+                      className={cn(
+                        "flex cursor-pointer items-center gap-2 rounded-xl border p-3 transition-colors",
+                        locationType === type.value
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:bg-muted/50"
+                      )}
+                    >
+                      <RadioGroupItem value={type.value} className="sr-only" />
+                      <type.icon className="h-4 w-4 shrink-0 text-primary" />
+                      <span className="text-xs text-foreground">{type.label}</span>
+                    </label>
+                  ))}
+                </RadioGroup>
+              </div>
+
+              <p className="text-[11px] text-muted-foreground">
+                Toque no mapa ou arraste o marcador para posicionar com precisão.
+              </p>
+
+              <Button onClick={handleConfirm} className="w-full rounded-xl">
+                ✅ Confirmar Local
+              </Button>
+            </div>
+          </div>
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </div>
   );
 };
 
