@@ -340,7 +340,7 @@
 
 /* ====== LEAFLET MAP FIXES ====== */
 .leaflet-container {
-  background: #e0e0e0 !important;
+  background: hsl(var(--muted)) !important;
   z-index: 0 !important;
 }
 
@@ -359,11 +359,7 @@
 }
 
 .dark .leaflet-container {
-  background: #1a1a1a !important;
-}
-
-.dark .leaflet-tile-pane {
-  filter: brightness(0.85) contrast(1.1) !important;
+  background: hsl(var(--muted)) !important;
 }
 
 /* ====== iOS FIXES ====== */
