@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Clock, MapPin, Plus, Trash2, Navigation, Repeat, Pencil, ChevronRight } from "lucide-react";
+import { Calendar, Clock, MapPin, Plus, Trash2, Repeat, Pencil, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
