@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Clock, MapPin, Plus, Trash2, Navigation, Repeat, Pencil, ChevronRight } from "lucide-react";
+import { Calendar, Clock, MapPin, Plus, Trash2, Repeat, Pencil, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -37,7 +37,7 @@ import {
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import EventDetailDialog from "@/components/agenda/EventDetailDialog";
-import EventMapPicker from "@/components/agenda/EventMapPicker";
+
 import { eventSchema, validateInput } from "@/lib/validation";
 
 interface Event {
@@ -84,10 +84,10 @@ const Agenda = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<DisplayEvent | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  const [isMapPickerOpen, setIsMapPickerOpen] = useState(false);
+  
   const [deletingEvent, setDeletingEvent] = useState<Event | null>(null);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
-  const [isEditMapPickerOpen, setIsEditMapPickerOpen] = useState(false);
+  
   const [newEvent, setNewEvent] = useState({
     title: "", description: "", event_type: "culto", event_date: "",
     start_time: "", end_time: "", location: "", address: "",
@@ -383,10 +383,6 @@ const Agenda = () => {
                     <Label className="text-xs sm:text-sm font-medium">Local</Label>
                     <Input value={newEvent.location} onChange={(e) => setNewEvent({ ...newEvent, location: e.target.value })} placeholder="Ex: Igreja Vida em Cristo" className="rounded-xl text-sm" />
                   </div>
-                  <Button type="button" variant="outline" className="w-full rounded-xl gap-2 text-xs h-9" onClick={() => setIsMapPickerOpen(true)}>
-                    <MapPin className="h-4 w-4" />
-                    {newEvent.latitude ? "✅ Local no mapa — Alterar" : "Selecionar no Mapa"}
-                  </Button>
                   <Textarea value={newEvent.description} onChange={(e) => setNewEvent({ ...newEvent, description: e.target.value })} placeholder="Descrição (opcional)" className="rounded-xl text-sm min-h-[60px]" />
                   <Button onClick={handleCreateEvent} className="w-full rounded-xl">Criar Evento</Button>
                 </div>
@@ -512,27 +508,6 @@ const Agenda = () => {
       {/* Detail Dialog */}
       <EventDetailDialog event={selectedEvent} open={isDetailOpen} onOpenChange={setIsDetailOpen} canManage={canManage} onEdit={(e) => { setIsDetailOpen(false); setEditingEvent(e as Event); }} onDelete={(e) => { setIsDetailOpen(false); setDeletingEvent(e as Event); }} />
 
-      {/* Create Map Picker */}
-      <EventMapPicker
-        open={isMapPickerOpen}
-        onOpenChange={setIsMapPickerOpen}
-        onLocationSelect={(data) => setNewEvent((prev) => ({ ...prev, address: data.address, latitude: data.latitude, longitude: data.longitude, location_type: data.location_type }))}
-        initialLat={newEvent.latitude}
-        initialLng={newEvent.longitude}
-        initialAddress={newEvent.address}
-        initialLocationType={newEvent.location_type}
-      />
-
-      {/* Edit Map Picker */}
-      <EventMapPicker
-        open={isEditMapPickerOpen}
-        onOpenChange={setIsEditMapPickerOpen}
-        onLocationSelect={(data) => setEditingEvent((prev) => prev ? { ...prev, address: data.address, latitude: data.latitude, longitude: data.longitude, location_type: data.location_type } : null)}
-        initialLat={editingEvent?.latitude}
-        initialLng={editingEvent?.longitude}
-        initialAddress={editingEvent?.address || ""}
-        initialLocationType={editingEvent?.location_type || "igreja"}
-      />
 
       {/* Edit Event Dialog */}
       <Dialog open={!!editingEvent} onOpenChange={(open) => !open && setEditingEvent(null)}>
@@ -590,10 +565,6 @@ const Agenda = () => {
               </div>
 
               <Input value={editingEvent.location || ""} onChange={(e) => setEditingEvent({ ...editingEvent, location: e.target.value })} placeholder="Local" className="rounded-xl text-sm" />
-              <Button type="button" variant="outline" className="w-full rounded-xl gap-2 text-xs h-9" onClick={() => setIsEditMapPickerOpen(true)}>
-                <MapPin className="h-4 w-4" />
-                {editingEvent.latitude ? "✅ Alterar local no mapa" : "Adicionar no mapa"}
-              </Button>
               <Textarea value={editingEvent.description || ""} onChange={(e) => setEditingEvent({ ...editingEvent, description: e.target.value })} placeholder="Descrição" className="rounded-xl text-sm min-h-[60px]" />
               <Button onClick={handleEditEvent} className="w-full rounded-xl">Salvar Alterações</Button>
             </div>
