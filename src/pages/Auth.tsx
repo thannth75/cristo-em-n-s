@@ -166,12 +166,14 @@ const Auth = () => {
         </div>
 
         <AnimatePresence mode="wait">
-          <motion.form
+          <motion.div
             key={isLogin ? "login" : "register"}
             initial={{ opacity: 0, x: isLogin ? -20 : 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: isLogin ? 20 : -20 }}
             transition={{ duration: 0.2 }}
+          >
+          <form
             onSubmit={handleSubmit}
             className="space-y-3"
           >
@@ -276,7 +278,8 @@ const Auth = () => {
                 </>
               )}
             </Button>
-          </motion.form>
+          </form>
+          </motion.div>
         </AnimatePresence>
       </motion.div>
 
