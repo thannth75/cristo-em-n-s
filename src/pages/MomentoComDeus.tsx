@@ -166,7 +166,7 @@ const MomentoComDeus = () => {
 
     // Award XP
     if (user) {
-      await awardXp("oracao", undefined, `Momento com Deus (${Math.round(totalTimeSpent / 60)} min)`);
+      await awardXp("prayer_request", undefined, `Momento com Deus (${Math.round(totalTimeSpent / 60)} min)`);
     }
 
     setPhase("complete");

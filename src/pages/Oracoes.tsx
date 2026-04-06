@@ -108,7 +108,7 @@ const Oracoes = () => {
     if (error) {
       toast({ title: "Erro", description: "Não foi possível enviar o pedido.", variant: "destructive" });
     } else {
-      await awardXp("oracao", insertedData?.id, "Pedido de oração");
+      await awardXp("prayer_request", insertedData?.id, "Pedido de oração");
       toast({ title: "Pedido enviado! 🙏", description: "Todos os irmãos poderão orar por você." });
       setIsDialogOpen(false);
       setNewPrayer({ title: "", content: "" });
@@ -125,7 +125,7 @@ const Oracoes = () => {
     if (error) {
       toast({ title: "Erro", description: "Não foi possível atualizar.", variant: "destructive" });
     } else {
-      await awardXp("oracao", prayerId, "Oração respondida!");
+      await awardXp("prayer_request", prayerId, "Oração respondida!");
       toast({ title: "Oração respondida! 🎉" });
       fetchPrayers();
     }

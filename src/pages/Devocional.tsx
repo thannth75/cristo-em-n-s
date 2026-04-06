@@ -150,7 +150,7 @@ const Devocional = () => {
     } else {
       // Award XP only for new completions
       if (!isAlreadyCompleted) {
-        await awardXp("devotional_complete", selectedDevotional.id, "Devocional concluído");
+        await awardXp("complete_devotional", selectedDevotional.id, "Devocional concluído");
       }
       toast({
         title: "Devocional concluído! 🙏",
