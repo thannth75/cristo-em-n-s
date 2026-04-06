@@ -7,7 +7,7 @@ const corsHeaders = {
 };
 
 const SEED_VERSES = [
-  { ref: "Salmos 23:1", text: "O Senhor é o meu pastor; nada me faltará." },
+  { ref: "Salmos 23:1-6", text: "O Senhor é o meu pastor; nada me faltará." },
   { ref: "Filipenses 4:13", text: "Tudo posso naquele que me fortalece." },
   { ref: "Isaías 40:31", text: "Mas os que esperam no Senhor renovarão as suas forças." },
   { ref: "Provérbios 3:5-6", text: "Confia no Senhor de todo o teu coração e não te estribes no teu próprio entendimento." },
@@ -22,6 +22,21 @@ const SEED_VERSES = [
   { ref: "Efésios 6:10", text: "No demais, irmãos meus, fortalecei-vos no Senhor e na força do seu poder." },
   { ref: "1 Pedro 5:7", text: "Lançando sobre ele toda a vossa ansiedade, porque ele tem cuidado de vós." },
   { ref: "Salmos 91:1", text: "Aquele que habita no esconderijo do Altíssimo, à sombra do Onipotente descansará." },
+  { ref: "Romanos 12:2", text: "E não vos conformeis com este mundo, mas transformai-vos pela renovação do vosso entendimento." },
+  { ref: "Hebreus 11:1", text: "Ora, a fé é o firme fundamento das coisas que se esperam e a prova das coisas que se não veem." },
+  { ref: "Tiago 1:2-4", text: "Meus irmãos, tende grande gozo quando cairdes em várias tentações, sabendo que a prova da vossa fé produz a paciência." },
+  { ref: "João 3:16", text: "Porque Deus amou o mundo de tal maneira que deu o seu Filho unigênito, para que todo aquele que nele crê não pereça, mas tenha a vida eterna." },
+  { ref: "Salmos 119:105", text: "Lâmpada para os meus pés é tua palavra e luz para o meu caminho." },
+  { ref: "Mateus 6:33", text: "Mas buscai primeiro o Reino de Deus e a sua justiça, e todas estas coisas vos serão acrescentadas." },
+  { ref: "Isaías 41:10", text: "Não temas, porque eu sou contigo; não te assombres, porque eu sou o teu Deus." },
+  { ref: "Salmos 37:5", text: "Entrega o teu caminho ao Senhor; confia nele e ele tudo fará." },
+  { ref: "Colossenses 3:23", text: "Tudo quanto fizerdes, fazei-o de todo o coração, como para o Senhor e não para homens." },
+  { ref: "2 Timóteo 1:7", text: "Porque Deus não nos deu o espírito de temor, mas de fortaleza, de amor e de moderação." },
+  { ref: "Salmos 27:1", text: "O Senhor é a minha luz e a minha salvação; a quem temerei?" },
+  { ref: "Provérbios 16:3", text: "Confia ao Senhor as tuas obras e teus pensamentos serão estabelecidos." },
+  { ref: "1 Coríntios 10:13", text: "Não veio sobre vós tentação, senão humana; mas fiel é Deus, que vos não deixará tentar acima do que podeis." },
+  { ref: "João 15:5", text: "Eu sou a videira, vós as varas; quem está em mim, e eu nele, este dá muito fruto." },
+  { ref: "Romanos 8:37", text: "Mas em todas estas coisas somos mais do que vencedores, por aquele que nos amou." },
 ];
 
 serve(async (req) => {
@@ -30,14 +45,12 @@ serve(async (req) => {
   }
 
   try {
-    // Accept any authorized call (cron uses anon key, manual uses service role)
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Check if today's devotional already exists
     const today = new Date().toISOString().split("T")[0];
     
     const { data: existingDevotional } = await supabase
@@ -53,7 +66,20 @@ serve(async (req) => {
       );
     }
 
-    const seedVerse = SEED_VERSES[Math.floor(Math.random() * SEED_VERSES.length)];
+    // Get recently used verses (last 30 days) to avoid repetition
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 86400000).toISOString().split("T")[0];
+    const { data: recentDevotionals } = await supabase
+      .from("daily_devotionals")
+      .select("bible_reference")
+      .gte("devotional_date", thirtyDaysAgo);
+
+    const recentRefs = new Set((recentDevotionals || []).map(d => d.bible_reference));
+    
+    // Filter out recently used verses
+    const availableVerses = SEED_VERSES.filter(v => !recentRefs.has(v.ref));
+    const versePool = availableVerses.length > 0 ? availableVerses : SEED_VERSES;
+    const seedVerse = versePool[Math.floor(Math.random() * versePool.length)];
+
     const dayOfWeek = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"][new Date().getDay()];
 
     const { data: adminUser } = await supabase
@@ -74,30 +100,31 @@ serve(async (req) => {
 
     if (lovableApiKey) {
       try {
-        const prompt = `Você é um pastor cristão experiente escrevendo um devocional diário para jovens cristãos.
+        const prompt = `Você é um pastor cristão profundo e experiente, escrevendo um devocional que TRANSFORMA VIDAS para jovens cristãos da Obra em Restauração.
 
-CONTEXTO: Hoje é ${dayOfWeek}, ${today}. 
+CONTEXTO: Hoje é ${dayOfWeek}, ${today}.
 
-Baseado no versículo "${seedVerse.text}" (${seedVerse.ref}), crie um devocional inspirador e ORIGINAL com:
+Baseado no versículo "${seedVerse.text}" (${seedVerse.ref}), crie um devocional PODEROSO e TRANSFORMADOR:
 
-1. Um título criativo e cativante (máximo 60 caracteres) - NÃO use "Meditando em..."
-2. Uma reflexão espiritual de 3-4 parágrafos (aproximadamente 250 palavras) que:
-   - Conecte o versículo com a vida cotidiana dos jovens de hoje
-   - Traga exemplos práticos e aplicáveis
-   - Ofereça encorajamento genuíno e profundo
-   - Mantenha linguagem acessível mas teologicamente sólida
-   - Inclua pelo menos uma história ou ilustração
-3. 3 perguntas de reflexão pessoal
-4. Um foco de oração para o dia
+REQUISITOS OBRIGATÓRIOS:
+1. TÍTULO: Criativo, impactante, máximo 50 caracteres. PROIBIDO usar: "Meditando em...", "Reflexão sobre...", "O poder de..."
+2. REFLEXÃO (350-450 palavras, 4-5 parágrafos):
+   - Primeiro parágrafo: Uma pergunta ou situação que TODO jovem se identifica
+   - Segundo parágrafo: Contexto bíblico-histórico do versículo (quem escreveu, por quê, para quem)
+   - Terceiro parágrafo: Aplicação PRÁTICA e ESPECÍFICA para o dia a dia (redes sociais, relacionamentos, estudos, trabalho, ansiedade)
+   - Quarto parágrafo: Uma ilustração ou história real que toque o coração
+   - Quinto parágrafo: Chamado à ação - algo concreto para fazer HOJE
+   - Tom: Íntimo como um amigo sábio, não religioso. Use linguagem natural.
+   - PROIBIDO: clichês como "querido jovem", "amado irmão", generalidades vagas
+3. PERGUNTAS DE REFLEXÃO: 3 perguntas profundas que levem ao autoexame genuíno
+4. FOCO DE ORAÇÃO: Uma oração guiada de 3-4 frases, pessoal e específica
 
-IMPORTANTE: Seja criativo e original. Evite clichês religiosos.
-
-Responda APENAS em JSON válido no formato:
+Responda APENAS em JSON válido:
 {
-  "title": "Título criativo do devocional",
-  "content": "Texto completo da reflexão com parágrafos separados por \\n\\n",
-  "reflection_questions": ["Pergunta 1?", "Pergunta 2?", "Pergunta 3?"],
-  "prayer_focus": "Foco de oração específico..."
+  "title": "...",
+  "content": "...",
+  "reflection_questions": ["...", "...", "..."],
+  "prayer_focus": "..."
 }`;
 
         const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -107,12 +134,12 @@ Responda APENAS em JSON válido no formato:
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            model: "google/gemini-3-flash-preview",
+            model: "google/gemini-2.5-flash",
             messages: [
-              { role: "system", content: "Você é um pastor cristão que escreve devocionais edificantes para jovens." },
+              { role: "system", content: "Você é um pastor e escritor cristão reconhecido por devocionais que transformam vidas. Sua escrita é profunda mas acessível, pessoal mas universal." },
               { role: "user", content: prompt }
             ],
-            temperature: 0.7,
+            temperature: 0.85,
           }),
         });
 
@@ -158,7 +185,7 @@ Responda APENAS em JSON válido no formato:
 
     await supabase.from("auto_devotional_log").insert({
       devotional_id: newDevotional.id,
-      model_used: lovableApiKey ? "google/gemini-3-flash-preview" : "fallback-template",
+      model_used: lovableApiKey ? "google/gemini-2.5-flash" : "fallback-template",
       prompt_used: `Seed verse: ${seedVerse.ref}`,
     });
 
@@ -188,6 +215,6 @@ function generateFallbackDevotional(seedVerse: { ref: string; text: string }) {
       "De que forma você pode praticar esta verdade hoje?",
       "Há algo que precisa entregar a Deus neste momento?"
     ],
-    prayer_focus: "Peça a Deus sabedoria para aplicar Sua Palavra no seu cotidiano e força para viver de acordo com Seus princípios."
+    prayer_focus: "Senhor, ajuda-me a aplicar Tua Palavra no meu cotidiano. Dá-me sabedoria para viver de acordo com Teus princípios e força para enfrentar os desafios de hoje com fé e confiança em Ti. Amém."
   };
 }
