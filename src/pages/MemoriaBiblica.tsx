@@ -147,7 +147,7 @@ export default function MemoriaBiblica() {
 
     if (user) {
       const xpAmount = difficulty === "facil" ? 20 : difficulty === "medio" ? 35 : 50;
-      await awardXp("quiz", `memoria-${Date.now()}`, `Memória Bíblica - ${difficulty}`);
+      await awardXp("quiz_complete", `memoria-${Date.now()}`, `Memória Bíblica - ${difficulty}`);
       toast.success("🎉 Jogo concluído!", { description: `+${xpAmount} XP ganhos!` });
     }
   };
