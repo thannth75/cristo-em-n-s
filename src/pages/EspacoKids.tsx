@@ -230,7 +230,7 @@ const EspacoKids = () => {
       setSelectedAnswer(null);
       if (currentQuestion < KIDS_QUIZ_QUESTIONS.length - 1) { setCurrentQuestion(prev => prev + 1); return; }
       setQuizFinished(true);
-      if (user) await awardXp("quiz", `kids-quiz-${CURRENT_WEEK}-${Date.now()}`, `Quiz Kids (${updatedScore}/${KIDS_QUIZ_QUESTIONS.length})`);
+      if (user) await awardXp("quiz_complete", `kids-quiz-${CURRENT_WEEK}-${Date.now()}`, `Quiz Kids (${updatedScore}/${KIDS_QUIZ_QUESTIONS.length})`);
     }, 800);
   };
 

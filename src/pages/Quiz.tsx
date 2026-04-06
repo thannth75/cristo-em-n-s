@@ -172,7 +172,7 @@ const Quiz = () => {
       });
 
       // Award XP based on performance
-      await awardXp("quiz", activeQuiz?.id, percentage >= 80 ? `Quiz perfeito: ${activeQuiz?.title}` : `Quiz: ${activeQuiz?.title}`);
+      await awardXp(percentage >= 80 ? "quiz_perfect" : "quiz_complete", activeQuiz?.id, percentage >= 80 ? `Quiz perfeito: ${activeQuiz?.title}` : `Quiz: ${activeQuiz?.title}`);
 
       toast({
         title: "Quiz concluído! 🎉",

@@ -6,6 +6,8 @@ export interface WeeklySummary {
   prayersCreated: number;
   readingsCompleted: number;
   postsCreated: number;
+  quizzesCompleted: number;
+  journalEntries: number;
   xpEarned: number;
   isLoading: boolean;
 }
@@ -16,6 +18,8 @@ export function useWeeklySummary(userId: string | undefined): WeeklySummary {
     prayersCreated: 0,
     readingsCompleted: 0,
     postsCreated: 0,
+    quizzesCompleted: 0,
+    journalEntries: 0,
     xpEarned: 0,
     isLoading: true,
   });
@@ -23,10 +27,10 @@ export function useWeeklySummary(userId: string | undefined): WeeklySummary {
   useEffect(() => {
     if (!userId) return;
 
-    const fetch = async () => {
+    const fetchSummary = async () => {
       const weekAgo = new Date(Date.now() - 7 * 86400000).toISOString();
 
-      const [devRes, prayerRes, readingRes, postsRes, xpRes] = await Promise.all([
+      const [devRes, prayerRes, readingRes, postsRes, journalRes, xpRes] = await Promise.all([
         supabase
           .from("devotional_progress")
           .select("id", { count: "exact", head: true })
@@ -48,6 +52,11 @@ export function useWeeklySummary(userId: string | undefined): WeeklySummary {
           .eq("user_id", userId)
           .gte("created_at", weekAgo),
         supabase
+          .from("journal_entries")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .gte("created_at", weekAgo),
+        supabase
           .from("xp_transactions")
           .select("xp_amount")
           .eq("user_id", userId)
@@ -56,17 +65,24 @@ export function useWeeklySummary(userId: string | undefined): WeeklySummary {
 
       const xpTotal = (xpRes.data || []).reduce((sum, r) => sum + r.xp_amount, 0);
 
+      // Count quizzes from xp_transactions
+      const quizCount = (xpRes.data || []).filter((r: any) => 
+        r.activity_type === "quiz_complete" || r.activity_type === "quiz_perfect"
+      ).length;
+
       setData({
         devotionalsCompleted: devRes.count || 0,
         prayersCreated: prayerRes.count || 0,
         readingsCompleted: readingRes.count || 0,
         postsCreated: postsRes.count || 0,
+        quizzesCompleted: quizCount,
+        journalEntries: journalRes.count || 0,
         xpEarned: xpTotal,
         isLoading: false,
       });
     };
 
-    fetch();
+    fetchSummary();
   }, [userId]);
 
   return data;
