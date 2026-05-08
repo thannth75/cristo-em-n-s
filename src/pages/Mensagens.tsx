@@ -150,6 +150,10 @@ const Mensagens = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, partnerTyping]);
 
+  useEffect(() => {
+    if (selectedConversation) setChatTheme(getStoredChatTheme(selectedConversation));
+  }, [selectedConversation]);
+
   // Fetch reactions for visible messages
   useEffect(() => {
     if (messages.length === 0) return;
