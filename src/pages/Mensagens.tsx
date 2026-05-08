@@ -473,6 +473,9 @@ const Mensagens = () => {
                 <Button variant="ghost" size="icon" onClick={() => setShowChatSearch(!showChatSearch)} className="shrink-0 text-primary-foreground hover:bg-primary-foreground/10">
                   <Search className="h-5 w-5" />
                 </Button>
+                {selectedConversation && (
+                  <ChatThemeMenu conversationId={selectedConversation} onChange={setChatTheme} />
+                )}
               </div>
               {showChatSearch && (
                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="mt-2 flex items-center gap-2">
