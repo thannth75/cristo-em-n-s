@@ -18,6 +18,7 @@ import { MessageActions, MessageReactionsDisplay } from "@/components/chat/Messa
 import AudioRecorder, { AudioMessagePlayer } from "@/components/chat/AudioRecorder";
 import FileUploader, { FileMessageBubble } from "@/components/chat/FileUploader";
 import ForwardMessageDialog from "@/components/chat/ForwardMessageDialog";
+import ChatThemeMenu, { ChatTheme, getStoredChatTheme } from "@/components/chat/ChatThemeMenu";
 
 interface Profile {
   user_id: string;
