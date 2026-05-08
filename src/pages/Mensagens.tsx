@@ -18,6 +18,7 @@ import { MessageActions, MessageReactionsDisplay } from "@/components/chat/Messa
 import AudioRecorder, { AudioMessagePlayer } from "@/components/chat/AudioRecorder";
 import FileUploader, { FileMessageBubble } from "@/components/chat/FileUploader";
 import ForwardMessageDialog from "@/components/chat/ForwardMessageDialog";
+import ChatThemeMenu, { ChatTheme, getStoredChatTheme } from "@/components/chat/ChatThemeMenu";
 
 interface Profile {
   user_id: string;
@@ -79,6 +80,7 @@ const Mensagens = () => {
   const [showChatSearch, setShowChatSearch] = useState(false);
   const [forwardMsg, setForwardMsg] = useState<Message | null>(null);
   const [replyToMsg, setReplyToMsg] = useState<Message | null>(null);
+  const [chatTheme, setChatTheme] = useState<ChatTheme | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -147,6 +149,10 @@ const Mensagens = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, partnerTyping]);
+
+  useEffect(() => {
+    if (selectedConversation) setChatTheme(getStoredChatTheme(selectedConversation));
+  }, [selectedConversation]);
 
   // Fetch reactions for visible messages
   useEffect(() => {
@@ -467,6 +473,9 @@ const Mensagens = () => {
                 <Button variant="ghost" size="icon" onClick={() => setShowChatSearch(!showChatSearch)} className="shrink-0 text-primary-foreground hover:bg-primary-foreground/10">
                   <Search className="h-5 w-5" />
                 </Button>
+                {selectedConversation && (
+                  <ChatThemeMenu conversationId={selectedConversation} onChange={setChatTheme} />
+                )}
               </div>
               {showChatSearch && (
                 <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} className="mt-2 flex items-center gap-2">
@@ -484,7 +493,7 @@ const Mensagens = () => {
             <div
               className="flex-1 overflow-y-auto px-3 py-4 bg-muted/30"
               style={{
-                backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%2322c55e' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+                backgroundImage: chatTheme && chatTheme.background !== "none" ? chatTheme.background : undefined,
               }}
             >
               {messageGroups.map((group) => (
