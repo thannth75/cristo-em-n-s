@@ -80,6 +80,7 @@ const Mensagens = () => {
   const [showChatSearch, setShowChatSearch] = useState(false);
   const [forwardMsg, setForwardMsg] = useState<Message | null>(null);
   const [replyToMsg, setReplyToMsg] = useState<Message | null>(null);
+  const [chatTheme, setChatTheme] = useState<ChatTheme | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
