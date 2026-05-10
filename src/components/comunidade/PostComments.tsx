@@ -159,10 +159,8 @@ const PostComments = ({ postId, commentsCount, onCommentsChange }: PostCommentsP
 
     setNewComment("");
     await fetchComments();
-
-    const newCount = commentsCount + 1;
-    await supabase.from("community_posts").update({ comments_count: newCount }).eq("id", postId);
-    onCommentsChange(newCount);
+    // Counter is maintained atomically by DB trigger; just notify parent for UI
+    onCommentsChange(commentsCount + 1);
 
     setIsSending(false);
   };
@@ -236,10 +234,8 @@ const PostComments = ({ postId, commentsCount, onCommentsChange }: PostCommentsP
     }
 
     setComments((prev) => prev.filter((comment) => comment.id !== commentId));
-
-    const newCount = Math.max(0, commentsCount - 1);
-    await supabase.from("community_posts").update({ comments_count: newCount }).eq("id", postId);
-    onCommentsChange(newCount);
+    // Counter handled by DB trigger
+    onCommentsChange(Math.max(0, commentsCount - 1));
   };
 
   const formatTime = (dateStr: string) => {
