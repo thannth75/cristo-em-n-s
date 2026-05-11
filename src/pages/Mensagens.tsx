@@ -149,7 +149,7 @@ const Mensagens = () => {
         })
         .subscribe();
 
-      // Typing indicator channel
+      // Typing indicator channel (kept in ref so sendTypingIndicator reuses it)
       const typingChannel = supabase
         .channel(`typing_${[user.id, selectedConversation].sort().join("_")}`)
         .on('broadcast', { event: 'typing' }, (payload) => {
@@ -159,10 +159,12 @@ const Mensagens = () => {
           }
         })
         .subscribe();
+      typingChannelRef.current = typingChannel;
 
       return () => {
         supabase.removeChannel(channel);
         supabase.removeChannel(typingChannel);
+        typingChannelRef.current = null;
       };
     }
   }, [selectedConversation, user]);
@@ -196,11 +198,10 @@ const Mensagens = () => {
   }, [messages]);
 
   const sendTypingIndicator = useCallback(() => {
-    if (!selectedConversation || !user) return;
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    
-    const channelName = `typing_${[user.id, selectedConversation].sort().join("_")}`;
-    supabase.channel(channelName).send({
+    if (!selectedConversation || !user || !typingChannelRef.current) return;
+    if (typingTimeoutRef.current) return; // throttle: don't spam
+
+    typingChannelRef.current.send({
       type: 'broadcast',
       event: 'typing',
       payload: { user_id: user.id },
