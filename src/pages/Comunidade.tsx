@@ -211,7 +211,7 @@ const Comunidade = () => {
       .update({ content: editContent.trim(), updated_at: new Date().toISOString() })
       .eq("id", editingPost.id).eq("user_id", user?.id);
     if (error) toast({ title: "Erro ao editar post", variant: "destructive" });
-    else { toast({ title: "Post atualizado!" }); fetchPosts(); }
+    else { toast({ title: "Post atualizado!" }); fetchPosts(true); }
     setEditingPost(null); setEditContent("");
   };
 
@@ -219,7 +219,7 @@ const Comunidade = () => {
     if (!deletingPost) return;
     const { error } = await supabase.from("community_posts").delete().eq("id", deletingPost.id).eq("user_id", user?.id);
     if (error) toast({ title: "Erro ao excluir post", variant: "destructive" });
-    else { toast({ title: "Post excluído!" }); fetchPosts(); }
+    else { toast({ title: "Post excluído!" }); fetchPosts(true); }
     setDeletingPost(null);
   };
 
@@ -328,7 +328,7 @@ const Comunidade = () => {
 
           <EnhancedCreateStoryDialog open={createStoryOpen} onOpenChange={setCreateStoryOpen} userId={user?.id || ""} onSuccess={fetchStories} />
           <EnhancedCreatePostDialog open={isPostDialogOpen} onOpenChange={setIsPostDialogOpen} userId={user?.id || ""}
-            onSuccess={() => fetchPosts()} onXpAward={(type, id, description) => awardXp(type, id, description)} />
+            onSuccess={() => fetchPosts(true)} onXpAward={(type, id, description) => awardXp(type, id, description)} />
 
           {viewingStories && (
             <EnhancedStoryViewer stories={viewingStories} initialIndex={storyInitialIndex} userId={user?.id || ""}
