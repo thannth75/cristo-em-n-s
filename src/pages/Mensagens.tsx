@@ -84,6 +84,7 @@ const Mensagens = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const typingChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   useEffect(() => {
     if (!authLoading) {
@@ -96,6 +97,26 @@ const Mensagens = () => {
     if (isApproved && user) {
       fetchConversations();
       fetchAllProfiles();
+
+      // Global listener: refresh conversation list whenever ANY new message
+      // involving this user arrives, even when no chat is open.
+      const globalCh = supabase
+        .channel(`pm_global_${user.id}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'private_messages',
+          filter: `receiver_id=eq.${user.id}`,
+        }, () => fetchConversations())
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'private_messages',
+          filter: `sender_id=eq.${user.id}`,
+        }, () => fetchConversations())
+        .subscribe();
+
+      return () => { supabase.removeChannel(globalCh); };
     }
   }, [isApproved, user]);
 
@@ -128,7 +149,7 @@ const Mensagens = () => {
         })
         .subscribe();
 
-      // Typing indicator channel
+      // Typing indicator channel (kept in ref so sendTypingIndicator reuses it)
       const typingChannel = supabase
         .channel(`typing_${[user.id, selectedConversation].sort().join("_")}`)
         .on('broadcast', { event: 'typing' }, (payload) => {
@@ -138,10 +159,12 @@ const Mensagens = () => {
           }
         })
         .subscribe();
+      typingChannelRef.current = typingChannel;
 
       return () => {
         supabase.removeChannel(channel);
         supabase.removeChannel(typingChannel);
+        typingChannelRef.current = null;
       };
     }
   }, [selectedConversation, user]);
@@ -175,11 +198,10 @@ const Mensagens = () => {
   }, [messages]);
 
   const sendTypingIndicator = useCallback(() => {
-    if (!selectedConversation || !user) return;
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    
-    const channelName = `typing_${[user.id, selectedConversation].sort().join("_")}`;
-    supabase.channel(channelName).send({
+    if (!selectedConversation || !user || !typingChannelRef.current) return;
+    if (typingTimeoutRef.current) return; // throttle: don't spam
+
+    typingChannelRef.current.send({
       type: 'broadcast',
       event: 'typing',
       payload: { user_id: user.id },
@@ -196,7 +218,8 @@ const Mensagens = () => {
       .from("private_messages")
       .select("*")
       .or(`sender_id.eq.${user?.id},receiver_id.eq.${user?.id}`)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(500);
 
     if (error || !messagesData) { setIsLoading(false); return; }
 
@@ -248,8 +271,9 @@ const Mensagens = () => {
       .from("private_messages")
       .select("*")
       .or(`and(sender_id.eq.${user?.id},receiver_id.eq.${partnerId}),and(sender_id.eq.${partnerId},receiver_id.eq.${user?.id})`)
-      .order("created_at", { ascending: true });
-    if (data) setMessages(data);
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (data) setMessages(data.reverse());
   };
 
   const markAsRead = async (partnerId: string) => {
