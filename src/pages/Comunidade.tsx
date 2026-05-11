@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Users, MessageSquare, Loader2, TrendingUp, Clock, Pin } from "lucide-react";
@@ -91,6 +91,10 @@ const Comunidade = () => {
   const [deletingPost, setDeletingPost] = useState<Post | null>(null);
   const [viewLikersPostId, setViewLikersPostId] = useState<string | null>(null);
   const [viewLikersCount, setViewLikersCount] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const PAGE_SIZE = 20;
+  const refetchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!authLoading) {
@@ -99,27 +103,46 @@ const Comunidade = () => {
     }
   }, [user, isApproved, authLoading, navigate]);
 
+  // Throttled refetch to avoid storms when many realtime events arrive
+  const scheduleRefetchPosts = () => {
+    if (refetchTimer.current) return;
+    refetchTimer.current = setTimeout(() => {
+      refetchTimer.current = null;
+      fetchPosts(true);
+    }, 1500);
+  };
+
   useEffect(() => {
     if (isApproved && user) {
       fetchData();
       const ch1 = supabase.channel('community_posts_changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'community_posts' }, () => fetchPosts())
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_posts' }, scheduleRefetchPosts)
+        .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'community_posts' }, scheduleRefetchPosts)
         .subscribe();
       const ch2 = supabase.channel('stories_changes')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'user_stories' }, () => fetchStories())
         .subscribe();
-      return () => { supabase.removeChannel(ch1); supabase.removeChannel(ch2); };
+      return () => {
+        if (refetchTimer.current) clearTimeout(refetchTimer.current);
+        supabase.removeChannel(ch1);
+        supabase.removeChannel(ch2);
+      };
     }
   }, [isApproved, user]);
 
   const fetchData = async () => {
     setIsLoading(true);
-    await Promise.all([fetchPosts(), fetchStories()]);
+    await Promise.all([fetchPosts(true), fetchStories()]);
     setIsLoading(false);
   };
 
   const fetchStories = async () => {
-    const { data: storiesData } = await supabase.from("user_stories").select("*").order("created_at", { ascending: false });
+    const { data: storiesData } = await supabase
+      .from("user_stories")
+      .select("*")
+      .gt("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: false })
+      .limit(100);
     if (storiesData) {
       const userIds = [...new Set(storiesData.map(s => s.user_id))];
       const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", userIds);
@@ -129,29 +152,57 @@ const Comunidade = () => {
     }
   };
 
-  const fetchPosts = async () => {
-    const { data: postsData } = await supabase.from("community_posts").select("*").order("created_at", { ascending: false });
-    if (postsData) {
-      const userIds = [...new Set(postsData.map(p => p.user_id))];
-      const [{ data: profiles }, { data: userLikes }, { data: userReposts }] = await Promise.all([
-        supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", userIds),
-        supabase.from("post_likes").select("post_id").eq("user_id", user?.id),
-        supabase.from("post_reposts").select("original_post_id").eq("user_id", user?.id),
-      ]);
-      const likedPostIds = new Set(userLikes?.map(l => l.post_id) || []);
-      const repostedPostIds = new Set(userReposts?.map(r => r.original_post_id) || []);
-      setPosts(postsData.map(post => ({
-        ...post, reposts_count: post.reposts_count || 0,
-        profiles: profiles?.find(p => p.user_id === post.user_id),
-        user_liked: likedPostIds.has(post.id), user_reposted: repostedPostIds.has(post.id),
-      })));
-    }
+  const fetchPosts = async (reset = false) => {
+    const from = reset ? 0 : posts.length;
+    const to = from + PAGE_SIZE - 1;
+    const { data: postsData } = await supabase
+      .from("community_posts")
+      .select("*")
+      .order("is_pinned", { ascending: false })
+      .order("created_at", { ascending: false })
+      .range(from, to);
+    if (!postsData) return;
+    const userIds = [...new Set(postsData.map(p => p.user_id))];
+    const postIds = postsData.map(p => p.id);
+    const [{ data: profiles }, { data: userLikes }, { data: userReposts }] = await Promise.all([
+      supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", userIds),
+      supabase.from("post_likes").select("post_id").eq("user_id", user?.id).in("post_id", postIds),
+      supabase.from("post_reposts").select("original_post_id").eq("user_id", user?.id).in("original_post_id", postIds),
+    ]);
+    const likedPostIds = new Set(userLikes?.map(l => l.post_id) || []);
+    const repostedPostIds = new Set(userReposts?.map(r => r.original_post_id) || []);
+    const mapped = postsData.map(post => ({
+      ...post, reposts_count: post.reposts_count || 0,
+      profiles: profiles?.find(p => p.user_id === post.user_id),
+      user_liked: likedPostIds.has(post.id), user_reposted: repostedPostIds.has(post.id),
+    }));
+    setPosts(prev => reset ? mapped : [...prev, ...mapped.filter(m => !prev.some(p => p.id === m.id))]);
+    setHasMore(postsData.length === PAGE_SIZE);
+  };
+
+  const loadMorePosts = async () => {
+    if (isLoadingMore || !hasMore) return;
+    setIsLoadingMore(true);
+    await fetchPosts(false);
+    setIsLoadingMore(false);
   };
 
   const handleLikePost = async (postId: string, currentlyLiked: boolean) => {
-    if (currentlyLiked) await supabase.from("post_likes").delete().eq("post_id", postId).eq("user_id", user?.id);
-    else await supabase.from("post_likes").insert({ post_id: postId, user_id: user?.id });
-    fetchPosts();
+    // Optimistic UI: no full refetch
+    setPosts(prev => prev.map(p => p.id === postId
+      ? { ...p, user_liked: !currentlyLiked, likes_count: Math.max(0, p.likes_count + (currentlyLiked ? -1 : 1)) }
+      : p));
+    if (currentlyLiked) {
+      await supabase.from("post_likes").delete().eq("post_id", postId).eq("user_id", user?.id);
+    } else {
+      const { error } = await supabase.from("post_likes").insert({ post_id: postId, user_id: user?.id });
+      if (error) {
+        // Rollback on error
+        setPosts(prev => prev.map(p => p.id === postId
+          ? { ...p, user_liked: currentlyLiked, likes_count: Math.max(0, p.likes_count + (currentlyLiked ? 1 : -1)) }
+          : p));
+      }
+    }
   };
 
   const handleEditPost = async () => {
@@ -160,7 +211,7 @@ const Comunidade = () => {
       .update({ content: editContent.trim(), updated_at: new Date().toISOString() })
       .eq("id", editingPost.id).eq("user_id", user?.id);
     if (error) toast({ title: "Erro ao editar post", variant: "destructive" });
-    else { toast({ title: "Post atualizado!" }); fetchPosts(); }
+    else { toast({ title: "Post atualizado!" }); fetchPosts(true); }
     setEditingPost(null); setEditContent("");
   };
 
@@ -168,7 +219,7 @@ const Comunidade = () => {
     if (!deletingPost) return;
     const { error } = await supabase.from("community_posts").delete().eq("id", deletingPost.id).eq("user_id", user?.id);
     if (error) toast({ title: "Erro ao excluir post", variant: "destructive" });
-    else { toast({ title: "Post excluído!" }); fetchPosts(); }
+    else { toast({ title: "Post excluído!" }); fetchPosts(true); }
     setDeletingPost(null);
   };
 
@@ -268,16 +319,24 @@ const Comunidade = () => {
                     onDelete={(p) => setDeletingPost(p)}
                     onViewLikers={(id, count) => { setViewLikersPostId(id); setViewLikersCount(count); }}
                     onCommentsChange={(postId, count) => { setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments_count: count } : p)); }}
-                    onRepostSuccess={fetchPosts} />
+                    onRepostSuccess={() => fetchPosts(true)} />
                   {shouldShowAdAtIndex(index, 6) && <AdFeed />}
                 </div>
               ))
+            )}
+
+            {!isLoading && hasMore && sortedPosts.length > 0 && (
+              <div className="flex justify-center py-4">
+                <Button variant="outline" size="sm" onClick={loadMorePosts} disabled={isLoadingMore}>
+                  {isLoadingMore ? <Loader2 className="h-4 w-4 animate-spin" /> : "Carregar mais"}
+                </Button>
+              </div>
             )}
           </div>
 
           <EnhancedCreateStoryDialog open={createStoryOpen} onOpenChange={setCreateStoryOpen} userId={user?.id || ""} onSuccess={fetchStories} />
           <EnhancedCreatePostDialog open={isPostDialogOpen} onOpenChange={setIsPostDialogOpen} userId={user?.id || ""}
-            onSuccess={() => fetchPosts()} onXpAward={(type, id, description) => awardXp(type, id, description)} />
+            onSuccess={() => fetchPosts(true)} onXpAward={(type, id, description) => awardXp(type, id, description)} />
 
           {viewingStories && (
             <EnhancedStoryViewer stories={viewingStories} initialIndex={storyInitialIndex} userId={user?.id || ""}
