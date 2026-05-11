@@ -319,10 +319,18 @@ const Comunidade = () => {
                     onDelete={(p) => setDeletingPost(p)}
                     onViewLikers={(id, count) => { setViewLikersPostId(id); setViewLikersCount(count); }}
                     onCommentsChange={(postId, count) => { setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments_count: count } : p)); }}
-                    onRepostSuccess={fetchPosts} />
+                    onRepostSuccess={() => fetchPosts(true)} />
                   {shouldShowAdAtIndex(index, 6) && <AdFeed />}
                 </div>
               ))
+            )}
+
+            {!isLoading && hasMore && sortedPosts.length > 0 && (
+              <div className="flex justify-center py-4">
+                <Button variant="outline" size="sm" onClick={loadMorePosts} disabled={isLoadingMore}>
+                  {isLoadingMore ? <Loader2 className="h-4 w-4 animate-spin" /> : "Carregar mais"}
+                </Button>
+              </div>
             )}
           </div>
 
