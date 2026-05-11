@@ -96,6 +96,26 @@ const Mensagens = () => {
     if (isApproved && user) {
       fetchConversations();
       fetchAllProfiles();
+
+      // Global listener: refresh conversation list whenever ANY new message
+      // involving this user arrives, even when no chat is open.
+      const globalCh = supabase
+        .channel(`pm_global_${user.id}`)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'private_messages',
+          filter: `receiver_id=eq.${user.id}`,
+        }, () => fetchConversations())
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'private_messages',
+          filter: `sender_id=eq.${user.id}`,
+        }, () => fetchConversations())
+        .subscribe();
+
+      return () => { supabase.removeChannel(globalCh); };
     }
   }, [isApproved, user]);
 
@@ -196,7 +216,8 @@ const Mensagens = () => {
       .from("private_messages")
       .select("*")
       .or(`sender_id.eq.${user?.id},receiver_id.eq.${user?.id}`)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(500);
 
     if (error || !messagesData) { setIsLoading(false); return; }
 
@@ -248,8 +269,9 @@ const Mensagens = () => {
       .from("private_messages")
       .select("*")
       .or(`and(sender_id.eq.${user?.id},receiver_id.eq.${partnerId}),and(sender_id.eq.${partnerId},receiver_id.eq.${user?.id})`)
-      .order("created_at", { ascending: true });
-    if (data) setMessages(data);
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (data) setMessages(data.reverse());
   };
 
   const markAsRead = async (partnerId: string) => {
