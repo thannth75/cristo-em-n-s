@@ -626,7 +626,7 @@ const Biblia = () => {
               <Input
                 placeholder="Ex: graça, amor, fé, Deus..."
                 value={strongWord}
-                onChange={(e) => setStrongWord(e.target.value)}
+                onChange={(e) => { setStrongWord(e.target.value); setStrongSearched(false); }}
                 onKeyDown={(e) => e.key === "Enter" && lookupStrong(strongWord)}
                 className="rounded-xl text-sm"
               />
