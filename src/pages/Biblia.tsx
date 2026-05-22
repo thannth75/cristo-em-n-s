@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -67,7 +67,11 @@ const Biblia = () => {
   const [strongWord, setStrongWord] = useState("");
   const [strongResults, setStrongResults] = useState<StrongResult[]>([]);
   const [strongLoading, setStrongLoading] = useState(false);
+  const [strongSearched, setStrongSearched] = useState(false);
   const [showStrong, setShowStrong] = useState(false);
+
+  // Cache de capítulos já carregados (chave: "abbrev:chapter")
+  const chapterCache = useRef<Map<string, BibleVerse[]>>(new Map());
 
   // Auth guard
   useEffect(() => {
@@ -99,9 +103,18 @@ const Biblia = () => {
     }));
   }, [expandedTestament]);
 
-  // ─── Carregar versículos ───
+  // ─── Carregar versículos (com cache em memória) ───
   const loadChapter = useCallback(
     async (book: BibleBook, chapter: number) => {
+      const cacheKey = `${book.abbrev}:${chapter}`;
+      const cached = chapterCache.current.get(cacheKey);
+      if (cached) {
+        setVerses(cached);
+        setVerseError(null);
+        setLoadingVerses(false);
+        return;
+      }
+
       setLoadingVerses(true);
       setVerseError(null);
       setVerses([]);
@@ -119,6 +132,7 @@ const Biblia = () => {
           throw new Error("Nenhum versículo encontrado");
         }
 
+        chapterCache.current.set(cacheKey, versesData);
         setVerses(versesData);
       } catch (err: any) {
         console.error("Erro ao carregar capítulo:", err);
@@ -130,11 +144,35 @@ const Biblia = () => {
     []
   );
 
+  // Prefetch silencioso do próximo capítulo
+  const prefetchChapter = useCallback(async (book: BibleBook, chapter: number) => {
+    if (chapter < 1 || chapter > book.chapters) return;
+    const cacheKey = `${book.abbrev}:${chapter}`;
+    if (chapterCache.current.has(cacheKey)) return;
+    try {
+      const { data } = await supabase.functions.invoke("bible-reader", {
+        body: { abbrev: book.abbrev, chapter },
+      });
+      const versesData = data?.data?.verses || [];
+      if (versesData.length > 0) chapterCache.current.set(cacheKey, versesData);
+    } catch {
+      // silencioso
+    }
+  }, []);
+
+  // Quando um capítulo é carregado, faz prefetch do próximo
+  useEffect(() => {
+    if (view === "reading" && selectedBook && !loadingVerses && verses.length > 0) {
+      prefetchChapter(selectedBook, selectedChapter + 1);
+    }
+  }, [view, selectedBook, selectedChapter, loadingVerses, verses.length, prefetchChapter]);
+
   // ─── Strong's Concordance lookup ───
   const lookupStrong = useCallback(async (word: string) => {
     if (!word.trim()) return;
     setStrongLoading(true);
     setStrongResults([]);
+    setStrongSearched(false);
     try {
       const { data, error } = await supabase.functions.invoke("bible-reader", {
         body: { strongLookup: word.trim() },
@@ -145,11 +183,16 @@ const Biblia = () => {
       console.error("Strong lookup error:", err);
     } finally {
       setStrongLoading(false);
+      setStrongSearched(true);
     }
   }, []);
 
   const handleWordTap = (word: string) => {
-    const cleaned = word.replace(/[.,;:!?"""''()[\]{}]/g, "").toLowerCase().trim();
+    // Remove pontuação e aspas (qualquer tipo unicode)
+    const cleaned = word
+      .replace(/[\p{P}\p{S}]/gu, "")
+      .toLowerCase()
+      .trim();
     if (cleaned.length < 2) return;
     setStrongWord(cleaned);
     setShowStrong(true);
@@ -583,7 +626,7 @@ const Biblia = () => {
               <Input
                 placeholder="Ex: graça, amor, fé, Deus..."
                 value={strongWord}
-                onChange={(e) => setStrongWord(e.target.value)}
+                onChange={(e) => { setStrongWord(e.target.value); setStrongSearched(false); }}
                 onKeyDown={(e) => e.key === "Enter" && lookupStrong(strongWord)}
                 className="rounded-xl text-sm"
               />
@@ -629,7 +672,7 @@ const Biblia = () => {
               </div>
             )}
 
-            {strongWord && !strongLoading && strongResults.length === 0 && (
+            {strongWord && !strongLoading && strongSearched && strongResults.length === 0 && (
               <div className="text-center py-6">
                 <BookOpen className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">
