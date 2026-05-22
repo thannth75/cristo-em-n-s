@@ -15,7 +15,7 @@ export const VideoPost = ({ videoUrl, className }: VideoPostProps) => {
   const [progress, setProgress] = useState(0);
   const [showControls, setShowControls] = useState(true);
 
-  // Intersection observer for auto-play when visible
+  // Intersection observer for auto-play — pauses other videos so only one plays at a time
   useEffect(() => {
     const video = videoRef.current;
     const container = containerRef.current;
@@ -24,16 +24,18 @@ export const VideoPost = ({ videoUrl, className }: VideoPostProps) => {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            video.play().catch(() => {});
-            setIsPlaying(true);
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.6) {
+            document.querySelectorAll('video').forEach((v) => {
+              if (v !== video && !v.paused) v.pause();
+            });
+            video.play().then(() => setIsPlaying(true)).catch(() => {});
           } else {
             video.pause();
             setIsPlaying(false);
           }
         });
       },
-      { threshold: 0.5 }
+      { threshold: [0, 0.6, 1] }
     );
 
     observer.observe(container);

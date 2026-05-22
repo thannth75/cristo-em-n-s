@@ -163,6 +163,12 @@ const PerfilPublico = () => {
 
   const recordProfileView = async () => {
     if (!userId || !currentUser || userId === currentUser.id) return;
+    // Dedupe: skip if this profile was already viewed in the current session
+    try {
+      const key = `pv:${userId}`;
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, '1');
+    } catch {}
     await supabase.from("profile_views").insert({
       profile_user_id: userId,
       viewer_id: currentUser.id,

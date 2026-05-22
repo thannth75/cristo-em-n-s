@@ -117,6 +117,7 @@ const Comunidade = () => {
       fetchData();
       const ch1 = supabase.channel('community_posts_changes')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'community_posts' }, scheduleRefetchPosts)
+        .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'community_posts' }, scheduleRefetchPosts)
         .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'community_posts' }, scheduleRefetchPosts)
         .subscribe();
       const ch2 = supabase.channel('stories_changes')
