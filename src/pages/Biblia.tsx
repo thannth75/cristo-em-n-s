@@ -172,6 +172,7 @@ const Biblia = () => {
     if (!word.trim()) return;
     setStrongLoading(true);
     setStrongResults([]);
+    setStrongSearched(false);
     try {
       const { data, error } = await supabase.functions.invoke("bible-reader", {
         body: { strongLookup: word.trim() },
@@ -182,11 +183,16 @@ const Biblia = () => {
       console.error("Strong lookup error:", err);
     } finally {
       setStrongLoading(false);
+      setStrongSearched(true);
     }
   }, []);
 
   const handleWordTap = (word: string) => {
-    const cleaned = word.replace(/[.,;:!?"""''()[\]{}]/g, "").toLowerCase().trim();
+    // Remove pontuação e aspas (qualquer tipo unicode)
+    const cleaned = word
+      .replace(/[\p{P}\p{S}]/gu, "")
+      .toLowerCase()
+      .trim();
     if (cleaned.length < 2) return;
     setStrongWord(cleaned);
     setShowStrong(true);
