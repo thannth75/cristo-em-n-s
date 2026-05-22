@@ -103,9 +103,18 @@ const Biblia = () => {
     }));
   }, [expandedTestament]);
 
-  // ─── Carregar versículos ───
+  // ─── Carregar versículos (com cache em memória) ───
   const loadChapter = useCallback(
     async (book: BibleBook, chapter: number) => {
+      const cacheKey = `${book.abbrev}:${chapter}`;
+      const cached = chapterCache.current.get(cacheKey);
+      if (cached) {
+        setVerses(cached);
+        setVerseError(null);
+        setLoadingVerses(false);
+        return;
+      }
+
       setLoadingVerses(true);
       setVerseError(null);
       setVerses([]);
@@ -123,6 +132,7 @@ const Biblia = () => {
           throw new Error("Nenhum versículo encontrado");
         }
 
+        chapterCache.current.set(cacheKey, versesData);
         setVerses(versesData);
       } catch (err: any) {
         console.error("Erro ao carregar capítulo:", err);
@@ -133,6 +143,29 @@ const Biblia = () => {
     },
     []
   );
+
+  // Prefetch silencioso do próximo capítulo
+  const prefetchChapter = useCallback(async (book: BibleBook, chapter: number) => {
+    if (chapter < 1 || chapter > book.chapters) return;
+    const cacheKey = `${book.abbrev}:${chapter}`;
+    if (chapterCache.current.has(cacheKey)) return;
+    try {
+      const { data } = await supabase.functions.invoke("bible-reader", {
+        body: { abbrev: book.abbrev, chapter },
+      });
+      const versesData = data?.data?.verses || [];
+      if (versesData.length > 0) chapterCache.current.set(cacheKey, versesData);
+    } catch {
+      // silencioso
+    }
+  }, []);
+
+  // Quando um capítulo é carregado, faz prefetch do próximo
+  useEffect(() => {
+    if (view === "reading" && selectedBook && !loadingVerses && verses.length > 0) {
+      prefetchChapter(selectedBook, selectedChapter + 1);
+    }
+  }, [view, selectedBook, selectedChapter, loadingVerses, verses.length, prefetchChapter]);
 
   // ─── Strong's Concordance lookup ───
   const lookupStrong = useCallback(async (word: string) => {
