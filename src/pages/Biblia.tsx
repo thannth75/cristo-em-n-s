@@ -67,7 +67,11 @@ const Biblia = () => {
   const [strongWord, setStrongWord] = useState("");
   const [strongResults, setStrongResults] = useState<StrongResult[]>([]);
   const [strongLoading, setStrongLoading] = useState(false);
+  const [strongSearched, setStrongSearched] = useState(false);
   const [showStrong, setShowStrong] = useState(false);
+
+  // Cache de capítulos já carregados (chave: "abbrev:chapter")
+  const chapterCache = useRef<Map<string, BibleVerse[]>>(new Map());
 
   // Auth guard
   useEffect(() => {
