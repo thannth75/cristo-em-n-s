@@ -261,6 +261,33 @@ export type Database = {
         }
         Relationships: []
       }
+      birthday_messages: {
+        Row: {
+          birthday_year: number
+          created_at: string
+          id: string
+          message: string
+          recipient_id: string
+          sender_id: string
+        }
+        Insert: {
+          birthday_year?: number
+          created_at?: string
+          id?: string
+          message: string
+          recipient_id: string
+          sender_id: string
+        }
+        Update: {
+          birthday_year?: number
+          created_at?: string
+          id?: string
+          message?: string
+          recipient_id?: string
+          sender_id?: string
+        }
+        Relationships: []
+      }
       cell_meeting_attendance: {
         Row: {
           attended_at: string | null
