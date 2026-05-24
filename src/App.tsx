@@ -100,6 +100,8 @@ function AnimatedRoutes() {
             <Route path="/perfil" element={<Perfil />} />
             <Route path="/perfil/:userId" element={<PerfilPublico />} />
             <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/aniversarios" element={<AdminAniversarios />} />
+            <Route path="/aniversariantes" element={<Aniversariantes />} />
             <Route path="/presenca" element={<Presenca />} />
             <Route path="/diario" element={<Diario />} />
             <Route path="/conquistas" element={<Conquistas />} />
