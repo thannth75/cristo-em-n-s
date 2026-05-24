@@ -57,6 +57,8 @@ const ModoDevocional = lazy(() => import("./pages/ModoDevocional"));
 const Cursos = lazy(() => import("./pages/Cursos"));
 const BibliotecaCrista = lazy(() => import("./pages/BibliotecaCrista"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Aniversariantes = lazy(() => import("./pages/Aniversariantes"));
+const AdminAniversarios = lazy(() => import("./pages/AdminAniversarios"));
 
 const PageLoader = () => (
   <div className="flex min-h-screen items-center justify-center bg-background">
