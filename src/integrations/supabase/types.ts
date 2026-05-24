@@ -261,6 +261,36 @@ export type Database = {
         }
         Relationships: []
       }
+      birth_date_audit_log: {
+        Row: {
+          changed_by: string
+          created_at: string
+          id: string
+          new_birth_date: string | null
+          old_birth_date: string | null
+          reason: string | null
+          target_user_id: string
+        }
+        Insert: {
+          changed_by: string
+          created_at?: string
+          id?: string
+          new_birth_date?: string | null
+          old_birth_date?: string | null
+          reason?: string | null
+          target_user_id: string
+        }
+        Update: {
+          changed_by?: string
+          created_at?: string
+          id?: string
+          new_birth_date?: string | null
+          old_birth_date?: string | null
+          reason?: string | null
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       birthday_messages: {
         Row: {
           birthday_year: number
@@ -3009,6 +3039,14 @@ export type Database = {
           new_level: number
           new_total_xp: number
         }[]
+      }
+      admin_update_birth_date: {
+        Args: {
+          p_new_birth_date: string
+          p_reason?: string
+          p_target_user_id: string
+        }
+        Returns: undefined
       }
       calculate_level_from_xp: { Args: { xp_total: number }; Returns: number }
       can_access_youth_content: { Args: { _user_id: string }; Returns: boolean }
