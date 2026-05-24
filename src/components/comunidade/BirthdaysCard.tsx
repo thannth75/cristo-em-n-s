@@ -276,12 +276,12 @@ const BirthdaysCard = () => {
             </h3>
           </div>
           {birthdays.length > 0 && (
-            <button
-              onClick={() => setListOpen(true)}
+            <Link
+              to="/aniversariantes"
               className="text-xs font-medium text-primary hover:underline"
             >
               Ver todos ({birthdays.length})
-            </button>
+            </Link>
           )}
         </div>
 
