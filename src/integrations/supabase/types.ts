@@ -3090,6 +3090,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      send_daily_birthday_notifications: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role:
