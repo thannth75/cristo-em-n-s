@@ -241,7 +241,6 @@ const BirthdayDetailDialog = ({ person, onClose }: BirthdayDetailDialogProps) =>
 const BirthdaysCard = () => {
   const { birthdays, isLoading, getTodaysBirthdays, getUpcomingBirthdays } = useBirthdays();
   const [selected, setSelected] = useState<BirthdayProfile | null>(null);
-  const [listOpen, setListOpen] = useState(false);
 
   const todays = getTodaysBirthdays();
   const upcoming = getUpcomingBirthdays();
