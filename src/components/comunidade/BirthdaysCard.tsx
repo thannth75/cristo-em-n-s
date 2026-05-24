@@ -241,7 +241,6 @@ const BirthdayDetailDialog = ({ person, onClose }: BirthdayDetailDialogProps) =>
 const BirthdaysCard = () => {
   const { birthdays, isLoading, getTodaysBirthdays, getUpcomingBirthdays } = useBirthdays();
   const [selected, setSelected] = useState<BirthdayProfile | null>(null);
-  const [listOpen, setListOpen] = useState(false);
 
   const todays = getTodaysBirthdays();
   const upcoming = getUpcomingBirthdays();
@@ -276,12 +275,12 @@ const BirthdaysCard = () => {
             </h3>
           </div>
           {birthdays.length > 0 && (
-            <button
-              onClick={() => setListOpen(true)}
+            <Link
+              to="/aniversariantes"
               className="text-xs font-medium text-primary hover:underline"
             >
               Ver todos ({birthdays.length})
-            </button>
+            </Link>
           )}
         </div>
 
@@ -350,56 +349,6 @@ const BirthdaysCard = () => {
         )}
       </motion.div>
 
-      {/* Full month list dialog */}
-      <Dialog open={listOpen} onOpenChange={setListOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="capitalize flex items-center gap-2">
-              <Cake className="h-5 w-5 text-primary" />
-              Aniversariantes de {currentMonth}
-            </DialogTitle>
-            <DialogDescription>
-              Toque em alguém para enviar uma mensagem ou ver o perfil.
-            </DialogDescription>
-          </DialogHeader>
-          <ScrollArea className="max-h-[60vh]">
-            <div className="space-y-1 pr-2">
-              <AnimatePresence>
-                {birthdays.map((person) => {
-                  const today = new Date().getDate();
-                  const isToday = person.day === today;
-                  return (
-                    <motion.button
-                      key={person.user_id}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      onClick={() => {
-                        setListOpen(false);
-                        setSelected(person);
-                      }}
-                      className={`flex items-center gap-3 w-full p-2 rounded-lg transition ${
-                        isToday ? "bg-primary/10 ring-1 ring-primary/30" : "hover:bg-muted/60"
-                      }`}
-                    >
-                      <Avatar className={`h-10 w-10 ${isToday ? "ring-2 ring-primary" : ""}`}>
-                        <AvatarImage src={person.avatar_url || ""} />
-                        <AvatarFallback>{person.full_name.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1 min-w-0 text-left">
-                        <p className="text-sm font-semibold truncate">{person.full_name}</p>
-                        {isToday && <p className="text-xs text-primary">🎂 Hoje!</p>}
-                      </div>
-                      <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
-                        Dia {person.day}
-                      </span>
-                    </motion.button>
-                  );
-                })}
-              </AnimatePresence>
-            </div>
-          </ScrollArea>
-        </DialogContent>
-      </Dialog>
 
       <BirthdayDetailDialog person={selected} onClose={() => setSelected(null)} />
     </>
