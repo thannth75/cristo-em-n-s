@@ -235,6 +235,26 @@ const Admin = () => {
           </div>
         </motion.div>
 
+        {isAdmin && (
+          <div className="mb-4">
+            <a
+              href="/admin/aniversarios"
+              className="flex items-center justify-between rounded-xl bg-card border p-3 hover:bg-muted/40 transition"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10">
+                  🎂
+                </div>
+                <div>
+                  <p className="font-medium text-sm">Correção de aniversários</p>
+                  <p className="text-xs text-muted-foreground">Editar datas e ver histórico</p>
+                </div>
+              </div>
+              <span className="text-muted-foreground">›</span>
+            </a>
+          </div>
+        )}
+
         <Tabs defaultValue="users" className="w-full" onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-3 mb-4">
             <TabsTrigger value="users" className="relative">
