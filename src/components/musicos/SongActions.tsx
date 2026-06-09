@@ -114,7 +114,17 @@ const SongActions = ({ song, onUpdated }: SongActionsProps) => {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => { setEditData({ title: song.title, artist: song.artist || "", key: song.key || "C" }); setIsEditOpen(true); }}>
+          <DropdownMenuItem onClick={() => {
+            setEditData({
+              title: song.title,
+              artist: song.artist || "",
+              key: song.key || "C",
+              youtube_url: song.youtube_url || "",
+              lyrics_url: song.lyrics_url || "",
+              chords_url: song.chords_url || "",
+            });
+            setIsEditOpen(true);
+          }}>
             <Edit className="mr-2 h-4 w-4" /> Editar
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setIsDeleteOpen(true)} className="text-destructive">
@@ -124,7 +134,7 @@ const SongActions = ({ song, onUpdated }: SongActionsProps) => {
       </DropdownMenu>
 
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="rounded-2xl">
+        <DialogContent className="rounded-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-serif">Editar Música</DialogTitle>
           </DialogHeader>
@@ -146,12 +156,46 @@ const SongActions = ({ song, onUpdated }: SongActionsProps) => {
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <Label>Link YouTube</Label>
+              <Input
+                value={editData.youtube_url}
+                onChange={(e) => setEditData({ ...editData, youtube_url: e.target.value })}
+                placeholder="https://youtube.com/..."
+                className="rounded-xl"
+                type="url"
+                inputMode="url"
+              />
+            </div>
+            <div>
+              <Label>Link da Letra</Label>
+              <Input
+                value={editData.lyrics_url}
+                onChange={(e) => setEditData({ ...editData, lyrics_url: e.target.value })}
+                placeholder="https://..."
+                className="rounded-xl"
+                type="url"
+                inputMode="url"
+              />
+            </div>
+            <div>
+              <Label>Link da Cifra</Label>
+              <Input
+                value={editData.chords_url}
+                onChange={(e) => setEditData({ ...editData, chords_url: e.target.value })}
+                placeholder="https://cifraclub.com.br/..."
+                className="rounded-xl"
+                type="url"
+                inputMode="url"
+              />
+            </div>
             <Button onClick={handleEdit} disabled={isLoading} className="w-full rounded-xl">
               {isLoading ? "Salvando..." : "Salvar"}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
+
 
       <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <AlertDialogContent className="rounded-2xl">
