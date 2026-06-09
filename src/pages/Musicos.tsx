@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Music, Calendar, CheckCircle, Plus } from "lucide-react";
+import { Music, Calendar, CheckCircle, Plus, Youtube, FileText, ExternalLink } from "lucide-react";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
