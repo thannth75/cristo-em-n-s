@@ -48,7 +48,11 @@ interface Song {
   title: string;
   artist: string | null;
   key: string | null;
+  youtube_url: string | null;
+  lyrics_url: string | null;
+  chords_url: string | null;
 }
+
 
 const Musicos = () => {
   const navigate = useNavigate();
