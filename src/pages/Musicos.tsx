@@ -270,8 +270,12 @@ const Musicos = () => {
                     onChange={(e) => setNewSong({ ...newSong, youtube_url: e.target.value })}
                     placeholder="https://youtube.com/..."
                     className="rounded-xl"
+                    inputMode="url"
+                    type="url"
                   />
+                  <p className="mt-1 text-xs text-muted-foreground">Cole o link do YouTube para ouvir o louvor.</p>
                 </div>
+
                 <Button onClick={handleAddSong} className="w-full rounded-xl">
                   Adicionar Música
                 </Button>
