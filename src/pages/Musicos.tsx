@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Music, Calendar, CheckCircle, Plus } from "lucide-react";
+import { Music, Calendar, CheckCircle, Plus, Youtube, FileText, ExternalLink } from "lucide-react";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -47,7 +48,11 @@ interface Song {
   title: string;
   artist: string | null;
   key: string | null;
+  youtube_url: string | null;
+  lyrics_url: string | null;
+  chords_url: string | null;
 }
+
 
 const Musicos = () => {
   const navigate = useNavigate();
@@ -105,8 +110,9 @@ const Musicos = () => {
         .limit(10),
       supabase
         .from("songs")
-        .select("id, title, artist, key")
+        .select("id, title, artist, key, youtube_url, lyrics_url, chords_url")
         .order("title"),
+
     ]);
 
     setScales((scalesRes.data as any) || []);
@@ -264,8 +270,12 @@ const Musicos = () => {
                     onChange={(e) => setNewSong({ ...newSong, youtube_url: e.target.value })}
                     placeholder="https://youtube.com/..."
                     className="rounded-xl"
+                    inputMode="url"
+                    type="url"
                   />
+                  <p className="mt-1 text-xs text-muted-foreground">Cole o link do YouTube para ouvir o louvor.</p>
                 </div>
+
                 <Button onClick={handleAddSong} className="w-full rounded-xl">
                   Adicionar Música
                 </Button>
@@ -372,40 +382,103 @@ const Musicos = () => {
             </div>
           ) : (
             <div className="space-y-2">
-              {songs.slice(0, 8).map((song, index) => (
-                <motion.div
-                  key={song.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 + index * 0.05 }}
-                  className="flex items-center gap-3 rounded-xl bg-card p-3 shadow-sm"
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                    <Music className="h-5 w-5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-foreground truncate">{song.title}</h4>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {song.artist || "Artista desconhecido"}
-                    </p>
-                  </div>
-                   {song.key && (
-                    <Badge variant="secondary" className="text-xs">
-                      {song.key}
-                    </Badge>
-                  )}
-                  {canManage && (
-                    <SongActions song={song} onUpdated={fetchData} />
-                  )}
-                </motion.div>
-              ))}
-              {songs.length > 8 && (
-                <p className="text-center text-sm text-muted-foreground pt-2">
-                  +{songs.length - 8} música(s)
-                </p>
-              )}
+              {songs.map((song, index) => {
+                const hasYoutube = !!song.youtube_url?.trim();
+                const hasLyrics = !!song.lyrics_url?.trim();
+                const hasChords = !!song.chords_url?.trim();
+                const primaryLink = song.youtube_url || song.lyrics_url || song.chords_url;
+                return (
+                  <motion.div
+                    key={song.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 + Math.min(index, 10) * 0.03 }}
+                    className="flex items-center gap-3 rounded-xl bg-card p-3 shadow-sm"
+                  >
+                    {primaryLink ? (
+                      <a
+                        href={primaryLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 hover:bg-primary/20 transition"
+                        aria-label={`Abrir ${song.title}`}
+                      >
+                        {hasYoutube ? <Youtube className="h-5 w-5 text-primary" /> : <Music className="h-5 w-5 text-primary" />}
+                      </a>
+                    ) : (
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                        <Music className="h-5 w-5 text-primary" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      {primaryLink ? (
+                        <a
+                          href={primaryLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="font-medium text-foreground truncate hover:text-primary transition block"
+                        >
+                          {song.title}
+                        </a>
+                      ) : (
+                        <h4 className="font-medium text-foreground truncate">{song.title}</h4>
+                      )}
+                      <p className="text-xs text-muted-foreground truncate">
+                        {song.artist || "Artista desconhecido"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      {hasYoutube && (
+                        <a
+                          href={song.youtube_url!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-muted transition"
+                          aria-label="Abrir no YouTube"
+                          title="YouTube"
+                        >
+                          <Youtube className="h-4 w-4 text-red-500" />
+                        </a>
+                      )}
+                      {hasLyrics && (
+                        <a
+                          href={song.lyrics_url!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-muted transition"
+                          aria-label="Abrir letra"
+                          title="Letra"
+                        >
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                        </a>
+                      )}
+                      {hasChords && (
+                        <a
+                          href={song.chords_url!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-muted transition"
+                          aria-label="Abrir cifra"
+                          title="Cifra"
+                        >
+                          <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                        </a>
+                      )}
+                      {song.key && (
+                        <Badge variant="secondary" className="text-xs">
+                          {song.key}
+                        </Badge>
+                      )}
+                      {canManage && (
+                        <SongActions song={song} onUpdated={fetchData} />
+                      )}
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
           )}
+
         </div>
 
         {/* Versículo */}
