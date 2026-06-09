@@ -110,8 +110,9 @@ const Musicos = () => {
         .limit(10),
       supabase
         .from("songs")
-        .select("id, title, artist, key")
+        .select("id, title, artist, key, youtube_url, lyrics_url, chords_url")
         .order("title"),
+
     ]);
 
     setScales((scalesRes.data as any) || []);
