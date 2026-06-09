@@ -40,6 +40,9 @@ interface Song {
   title: string;
   artist: string | null;
   key: string | null;
+  youtube_url?: string | null;
+  lyrics_url?: string | null;
+  chords_url?: string | null;
 }
 
 interface SongActionsProps {
@@ -53,7 +56,14 @@ const SongActions = ({ song, onUpdated }: SongActionsProps) => {
   const { toast } = useToast();
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [editData, setEditData] = useState({ title: song.title, artist: song.artist || "", key: song.key || "C" });
+  const [editData, setEditData] = useState({
+    title: song.title,
+    artist: song.artist || "",
+    key: song.key || "C",
+    youtube_url: song.youtube_url || "",
+    lyrics_url: song.lyrics_url || "",
+    chords_url: song.chords_url || "",
+  });
   const [isLoading, setIsLoading] = useState(false);
 
   const handleEdit = async () => {
@@ -61,7 +71,14 @@ const SongActions = ({ song, onUpdated }: SongActionsProps) => {
     setIsLoading(true);
     const { error } = await supabase
       .from("songs")
-      .update({ title: editData.title, artist: editData.artist || null, key: editData.key })
+      .update({
+        title: editData.title,
+        artist: editData.artist || null,
+        key: editData.key,
+        youtube_url: editData.youtube_url.trim() || null,
+        lyrics_url: editData.lyrics_url.trim() || null,
+        chords_url: editData.chords_url.trim() || null,
+      })
       .eq("id", song.id);
 
     if (error) {
@@ -73,6 +90,7 @@ const SongActions = ({ song, onUpdated }: SongActionsProps) => {
     }
     setIsLoading(false);
   };
+
 
   const handleDelete = async () => {
     setIsLoading(true);
