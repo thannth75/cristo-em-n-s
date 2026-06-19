@@ -93,8 +93,9 @@ const EspacoKids = () => {
   const [memoryCompleted, setMemoryCompleted] = useState(false);
   const [memoryChecking, setMemoryChecking] = useState(false);
 
-  // Access control: ONLY kids, kids_leader, leader, or admin can access
-  const canAccess = isKids || isKidsLeader || isLeader || isAdmin;
+  // Access control: open to all approved users — pais/jovens/membros podem acessar
+  // junto com as crianças. Gestão continua restrita a kids_leader/líder/admin.
+  const canAccess = isApproved;
   const isManager = isKidsLeader || isLeader || isAdmin;
 
   useEffect(() => {
