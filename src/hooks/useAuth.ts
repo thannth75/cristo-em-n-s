@@ -157,7 +157,9 @@ export function useAuth() {
   const canAccessMusicianContent = state.isMusician || state.isLeader || state.isAdmin;
 
   // Helper para verificar se pode acessar/gerenciar Espaço Kids
-  const canAccessKidsContent = state.isKidsLeader || state.isLeader || state.isAdmin;
+  // Espaço Kids é aberto a todos aprovados (pais/jovens/membros podem acessar com as crianças).
+  // Gestão (criar histórias/quizzes) continua restrita a kids_leader/lider/admin.
+  const canAccessKidsContent = state.isApproved;
 
   return { 
     ...state, 
