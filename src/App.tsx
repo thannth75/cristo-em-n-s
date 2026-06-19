@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import NotificationPermissionBanner from "@/components/NotificationPermissionBanner";
 import PresenceTracker from "@/components/PresenceTracker";
 import InAppNotificationToast from "@/components/InAppNotificationToast";
+import PrayerReminderInitializer from "@/components/PrayerReminderInitializer";
 import { useNativePushNotifications } from "@/hooks/useNativePushNotifications";
 import { useAutoWebPush } from "@/hooks/useAutoWebPush";
 import { lazy, Suspense } from "react";
@@ -149,6 +150,7 @@ const App = () => (
         <NotificationPermissionBanner />
         <PresenceTracker />
         <PushInitializer />
+        <PrayerReminderInitializer />
         <InAppNotificationToast />
         <BrowserRouter>
           <AnimatedRoutes />
