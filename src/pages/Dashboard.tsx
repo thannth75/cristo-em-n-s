@@ -217,6 +217,9 @@ const Dashboard = () => {
           {/* Daily Check-in (NEW) */}
           <DailyCheckIn />
 
+          {/* Quick actions bento */}
+          <QuickActionsRow />
+
           {/* Verse */}
           <VerseCard verse={todayVerse.verse} reference={todayVerse.reference} />
 
