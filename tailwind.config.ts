@@ -22,8 +22,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        serif: ['Cinzel', 'serif'],
+        sans: ['Outfit', 'Inter', 'system-ui', 'sans-serif'],
+        serif: ['Fraunces', 'Cinzel', 'serif'],
+        display: ['Fraunces', 'serif'],
       },
       colors: {
         border: "hsl(var(--border))",
