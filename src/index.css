@@ -189,9 +189,11 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Cinzel', serif;
+    font-family: 'Fraunces', 'Cinzel', serif;
     @apply font-semibold tracking-tight;
+    font-optical-sizing: auto;
   }
+
 }
 
 /* ====== COMPONENT LAYER ====== */
