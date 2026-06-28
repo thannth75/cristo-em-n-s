@@ -27,6 +27,7 @@ import JourneyCarousel, { type JourneyItem } from "@/components/dashboard/Journe
 import StreakCard from "@/components/dashboard/StreakCard";
 import WeeklySummaryCard from "@/components/dashboard/WeeklySummaryCard";
 import SpiritualSuggestion from "@/components/dashboard/SpiritualSuggestion";
+import DailyCheckIn from "@/components/dashboard/DailyCheckIn";
 
 const dailyVerses = [
   { verse: "Buscai primeiro o Reino de Deus e a sua justiça, e todas as coisas vos serão acrescentadas.", reference: "Mateus 6:33" },
@@ -212,11 +213,15 @@ const Dashboard = () => {
             </div>
           </motion.div>
 
+          {/* Daily Check-in (NEW) */}
+          <DailyCheckIn />
+
           {/* Verse */}
           <VerseCard verse={todayVerse.verse} reference={todayVerse.reference} />
 
           {/* Suggestion */}
           <SpiritualSuggestion streaks={streaks} summary={weeklySummary} />
+
 
           {/* XP Progress - compact */}
           {gamification.currentLevelDef && (
