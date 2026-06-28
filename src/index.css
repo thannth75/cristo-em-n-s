@@ -4,90 +4,93 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ====== VIDA EM CRISTO — Design System v2 ====== */
+/* ====== VIDA EM CRISTO — Design System v3 (Sereno Pastel) ====== */
 
 :root {
-  /* Core brand — Hope Green palette */
-  --background: 120 10% 98%;
-  --foreground: 120 25% 15%;
+  /* Sereno Pastel — cream + sage palette */
+  --background: 40 30% 97%;
+  --foreground: 110 18% 14%;
 
-  --card: 0 0% 100%;
-  --card-foreground: 120 25% 15%;
+  --card: 40 35% 99%;
+  --card-foreground: 110 18% 14%;
 
-  --popover: 0 0% 100%;
-  --popover-foreground: 120 25% 15%;
+  --popover: 40 35% 99%;
+  --popover-foreground: 110 18% 14%;
 
-  /* Primary — Hope Green */
-  --primary: 120 35% 30%;
-  --primary-foreground: 0 0% 98%;
+  /* Primary — deep sage */
+  --primary: 110 22% 38%;
+  --primary-foreground: 40 30% 98%;
 
-  /* Secondary */
-  --secondary: 120 15% 92%;
-  --secondary-foreground: 120 25% 25%;
+  /* Secondary — soft sage tint */
+  --secondary: 100 22% 90%;
+  --secondary-foreground: 110 22% 25%;
 
-  --muted: 120 10% 94%;
-  --muted-foreground: 120 10% 45%;
+  --muted: 40 18% 93%;
+  --muted-foreground: 110 8% 42%;
 
-  --accent: 120 25% 88%;
-  --accent-foreground: 120 35% 20%;
+  --accent: 100 22% 86%;
+  --accent-foreground: 110 22% 22%;
 
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 98%;
+  --destructive: 8 70% 55%;
+  --destructive-foreground: 40 30% 98%;
 
-  --border: 120 15% 88%;
-  --input: 120 15% 88%;
-  --ring: 120 35% 30%;
+  --border: 100 15% 86%;
+  --input: 100 15% 86%;
+  --ring: 110 22% 45%;
 
-  --radius: 0.75rem;
+  --radius: 1rem;
 
-  /* Extended palette — spiritual golden accents */
-  --gold: 43 74% 49%;
-  --gold-foreground: 43 10% 10%;
-  --hope-green: 120 35% 40%;
-  --forest-green: 150 30% 20%;
-  --olive-green: 90 25% 45%;
-  --cream: 40 40% 96%;
+  /* Extended palette */
+  --gold: 38 60% 58%;
+  --gold-foreground: 38 30% 12%;
+  --hope-green: 109 21% 55%;
+  --forest-green: 130 20% 32%;
+  --olive-green: 90 22% 50%;
+  --cream: 40 35% 96%;
+  --lavender: 260 25% 82%;
+  --peach: 25 60% 85%;
 
-  /* Semantic tokens */
-  --success: 142 71% 45%;
+  /* Semantic */
+  --success: 142 50% 45%;
   --success-foreground: 0 0% 100%;
-  --warning: 38 92% 50%;
-  --warning-foreground: 38 10% 10%;
-  --info: 210 75% 50%;
+  --warning: 35 85% 55%;
+  --warning-foreground: 35 30% 12%;
+  --info: 200 55% 55%;
   --info-foreground: 0 0% 100%;
 
-  /* Streak colors */
-  --streak-fire: 15 85% 55%;
-  --streak-glow: 43 90% 55%;
+  --streak-fire: 18 80% 60%;
+  --streak-glow: 38 90% 60%;
 
-  /* Sidebar theme */
-  --sidebar-background: 120 25% 20%;
-  --sidebar-foreground: 0 0% 98%;
-  --sidebar-primary: 120 40% 50%;
-  --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 120 30% 30%;
-  --sidebar-accent-foreground: 0 0% 98%;
-  --sidebar-border: 120 20% 25%;
-  --sidebar-ring: 120 40% 50%;
+  /* Sidebar */
+  --sidebar-background: 110 22% 22%;
+  --sidebar-foreground: 40 30% 96%;
+  --sidebar-primary: 109 30% 60%;
+  --sidebar-primary-foreground: 110 22% 14%;
+  --sidebar-accent: 110 18% 28%;
+  --sidebar-accent-foreground: 40 30% 96%;
+  --sidebar-border: 110 18% 26%;
+  --sidebar-ring: 109 30% 55%;
 
-  /* Chart colors */
-  --chart-1: 120 35% 40%;
-  --chart-2: 160 45% 45%;
-  --chart-3: 90 40% 50%;
-  --chart-4: 180 35% 40%;
-  --chart-5: 200 40% 45%;
+  --chart-1: 110 22% 45%;
+  --chart-2: 150 25% 50%;
+  --chart-3: 90 28% 55%;
+  --chart-4: 38 60% 60%;
+  --chart-5: 200 35% 55%;
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px 0 hsl(120 15% 15% / 0.05);
-  --shadow-md: 0 4px 6px -1px hsl(120 15% 15% / 0.08), 0 2px 4px -2px hsl(120 15% 15% / 0.05);
-  --shadow-lg: 0 10px 15px -3px hsl(120 15% 15% / 0.08), 0 4px 6px -4px hsl(120 15% 15% / 0.05);
-  --shadow-glow: 0 0 30px -5px hsl(120 35% 35% / 0.25);
+  /* Shadows — soft, layered */
+  --shadow-sm: 0 1px 2px 0 hsl(110 20% 20% / 0.04);
+  --shadow-md: 0 4px 12px -2px hsl(110 20% 20% / 0.06), 0 2px 4px -2px hsl(110 20% 20% / 0.04);
+  --shadow-lg: 0 14px 30px -8px hsl(110 25% 18% / 0.10), 0 6px 12px -6px hsl(110 25% 18% / 0.06);
+  --shadow-glow: 0 0 32px -6px hsl(110 30% 50% / 0.28);
+  --shadow-soft: 0 8px 24px -10px hsl(110 25% 20% / 0.10);
 
   /* Gradients */
-  --gradient-hope: linear-gradient(135deg, hsl(var(--primary) / 0.95) 0%, hsl(var(--chart-2) / 0.85) 55%, hsl(var(--primary) / 0.75) 100%);
-  --gradient-card: linear-gradient(135deg, hsl(var(--card) / 0.98) 0%, hsl(var(--background) / 0.98) 100%);
-  --gradient-gold: linear-gradient(135deg, hsl(var(--gold) / 0.9) 0%, hsl(38 85% 58%) 100%);
-  --gradient-spiritual: linear-gradient(135deg, hsl(var(--primary) / 0.15) 0%, hsl(var(--gold) / 0.08) 50%, hsl(var(--primary) / 0.05) 100%);
+  --gradient-hope: linear-gradient(135deg, hsl(110 22% 42%) 0%, hsl(150 28% 50%) 60%, hsl(90 25% 55%) 100%);
+  --gradient-card: linear-gradient(145deg, hsl(40 35% 99%) 0%, hsl(100 20% 96%) 100%);
+  --gradient-gold: linear-gradient(135deg, hsl(38 70% 62%) 0%, hsl(28 75% 65%) 100%);
+  --gradient-spiritual: linear-gradient(160deg, hsl(110 22% 92%) 0%, hsl(40 35% 96%) 50%, hsl(25 50% 92%) 100%);
+  --gradient-aurora: linear-gradient(135deg, hsl(110 25% 88%) 0%, hsl(260 30% 90%) 50%, hsl(25 50% 92%) 100%);
+  --gradient-mesh: radial-gradient(at 20% 10%, hsl(109 25% 80% / 0.6) 0px, transparent 50%), radial-gradient(at 80% 0%, hsl(38 60% 85% / 0.5) 0px, transparent 50%), radial-gradient(at 90% 80%, hsl(260 30% 88% / 0.4) 0px, transparent 50%);
 }
 
 .dark {
