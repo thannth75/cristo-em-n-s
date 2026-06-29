@@ -29,6 +29,7 @@ import WeeklySummaryCard from "@/components/dashboard/WeeklySummaryCard";
 import SpiritualSuggestion from "@/components/dashboard/SpiritualSuggestion";
 import DailyCheckIn from "@/components/dashboard/DailyCheckIn";
 import QuickActionsRow from "@/components/dashboard/QuickActionsRow";
+import WeeklyJourneyCard from "@/components/dashboard/WeeklyJourneyCard";
 
 const dailyVerses = [
   { verse: "Buscai primeiro o Reino de Deus e a sua justiça, e todas as coisas vos serão acrescentadas.", reference: "Mateus 6:33" },
@@ -258,6 +259,9 @@ const Dashboard = () => {
               </div>
             </motion.button>
           )}
+
+          {/* Weekly Journey */}
+          <WeeklyJourneyCard summary={weeklySummary} />
 
           {/* Streaks */}
           <StreakCard streaks={streaks} />
