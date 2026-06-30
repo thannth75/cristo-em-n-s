@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Bell, 
@@ -13,7 +12,7 @@ import {
   BellRing,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useToast } from "@/hooks/use-toast";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { usePrayerReminderScheduler } from "@/hooks/usePrayerReminderScheduler";
@@ -35,6 +34,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import AppHeader from "@/components/AppHeader";
+import { getUserFirstName } from "@/lib/utils";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import BottomNavigation from "@/components/BottomNavigation";
 import TimePickerCustom from "@/components/lembretes/TimePickerCustom";
 import EditReminderDialog from "@/components/lembretes/EditReminderDialog";
@@ -55,8 +56,7 @@ const reminderTypes = [
 ];
 
 const LembretesOracao = () => {
-  const navigate = useNavigate();
-  const { user, profile, isApproved, isLoading: authLoading } = useAuth();
+  const { user, profile, isApproved, isLoading: authLoading } = useAuthRedirect();
   const { toast } = useToast();
   const { isEnabled: notificationsEnabled, permission, requestPermission } = usePushNotifications();
   
@@ -73,16 +73,6 @@ const LembretesOracao = () => {
     reminder_type: "manha",
     reminder_time: "06:00",
   });
-
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate("/auth");
-      } else if (!isApproved) {
-        navigate("/pending");
-      }
-    }
-  }, [user, isApproved, authLoading, navigate]);
 
   useEffect(() => {
     if (isApproved && user) {
@@ -249,15 +239,9 @@ const LembretesOracao = () => {
     return null;
   };
 
-  const userName = profile?.full_name?.split(" ")[0] || "Jovem";
+  const userName = getUserFirstName(profile);
 
-  if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (authLoading) return <LoadingSpinner fullPage />;
 
   const activeReminders = reminders.filter(r => r.is_active).length;
   const nextReminder = getNextReminder();

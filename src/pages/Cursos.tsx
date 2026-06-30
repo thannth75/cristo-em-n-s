@@ -17,7 +17,7 @@ import {
   Music,
   Globe,
 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import BottomNavigation from "@/components/BottomNavigation";
@@ -132,22 +132,9 @@ const TOOLS: Tool[] = [
 
 const Cursos = () => {
   const navigate = useNavigate();
-  const { user, isApproved, isLoading } = useAuth();
+  const { isLoading } = useAuthRedirect();
 
-  useEffect(() => {
-    if (!isLoading) {
-      if (!user) navigate("/auth");
-      else if (!isApproved) navigate("/pending");
-    }
-  }, [user, isApproved, isLoading, navigate]);
-
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (isLoading) return <LoadingSpinner fullPage />;
 
   return (
     <div

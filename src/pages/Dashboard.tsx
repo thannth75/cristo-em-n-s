@@ -8,12 +8,13 @@ import {
   Flame, Star, Radio, Globe, ExternalLink, Compass, Gamepad2,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useAchievements } from "@/hooks/useAchievements";
 import { useGamification } from "@/hooks/useGamification";
 import { useStreaks } from "@/hooks/useStreaks";
 import { useWeeklySummary } from "@/hooks/useWeeklySummary";
 import AppHeader from "@/components/AppHeader";
+import { getUserFirstName } from "@/lib/utils";
 import BottomNavigation from "@/components/BottomNavigation";
 import VerseCard from "@/components/VerseCard";
 import FeatureCard from "@/components/FeatureCard";
@@ -72,7 +73,7 @@ const Dashboard = () => {
   const {
     user, profile, isApproved, isAdmin, isLeader, isLoading,
     canAccessYouthContent, canAccessMusicianContent,
-  } = useAuth();
+  } = useAuthRedirect();
   useAchievements();
   const gamification = useGamification(user?.id);
   const streaks = useStreaks(user?.id);
@@ -90,13 +91,6 @@ const Dashboard = () => {
     const msgs = spiritualGreetings[period];
     return msgs[new Date().getDate() % msgs.length];
   }, []);
-
-  useEffect(() => {
-    if (!isLoading) {
-      if (!user) navigate("/auth");
-      else if (!isApproved) navigate("/pending");
-    }
-  }, [user, isApproved, isLoading, navigate]);
 
   useEffect(() => {
     const fetchNextEvent = async () => {
@@ -157,15 +151,9 @@ const Dashboard = () => {
     features.push({ title: "Administração", description: "Gerenciar usuários", icon: Shield, href: "/admin" });
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (isLoading) return <LoadingSpinner fullPage />;
 
-  const userName = profile?.full_name?.split(" ")[0] || "Jovem";
+  const userName = getUserFirstName(profile);
 
   const formatEventDate = (dateStr: string) => {
     const date = new Date(dateStr + "T00:00:00");

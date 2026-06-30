@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Heart, RefreshCw, BookOpen, Share2, Copy, Check, Hand } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { getUserFirstName } from "@/lib/utils";
 import { MOOD_VERSES } from "@/data/bibleReadingPlans";
-import { useEffect } from "react";
 
 const moods = [
   { value: "grato", emoji: "🙏", label: "Grato", color: "bg-amber-100 border-amber-300 text-amber-700" },
@@ -31,22 +31,11 @@ interface MoodVerse {
 }
 
 const Versiculos = () => {
-  const navigate = useNavigate();
-  const { user, profile, isApproved, isLoading: authLoading } = useAuth();
+  const { profile, isLoading: authLoading } = useAuthRedirect();
   const { toast } = useToast();
   const [selectedMood, setSelectedMood] = useState<string | null>(null);
   const [currentVerse, setCurrentVerse] = useState<MoodVerse | null>(null);
   const [copied, setCopied] = useState(false);
-
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate("/auth");
-      } else if (!isApproved) {
-        navigate("/pending");
-      }
-    }
-  }, [user, isApproved, authLoading, navigate]);
 
   const handleSelectMood = (mood: string) => {
     setSelectedMood(mood);
@@ -100,15 +89,9 @@ const Versiculos = () => {
     setCurrentVerse(null);
   };
 
-  const userName = profile?.full_name?.split(" ")[0] || "Jovem";
+  if (authLoading) return <LoadingSpinner fullPage />;
 
-  if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  const userName = getUserFirstName(profile);
 
   return (
     <div className="min-h-screen bg-background" style={{ paddingBottom: 'calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))' }}>

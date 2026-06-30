@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight, User, MapPin, Bell, Sparkles, CheckCircle, BookOpen, Heart, Users, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,7 +57,7 @@ const features = [
 
 const Onboarding = () => {
   const navigate = useNavigate();
-  const { user, profile, isApproved, isLoading: authLoading } = useAuth();
+  const { user, profile, isApproved, isLoading: authLoading } = useAuthRedirect();
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -75,20 +75,10 @@ const Onboarding = () => {
   });
 
   useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate("/auth");
-        return;
-      }
-      if (!isApproved) {
-        navigate("/pending");
-        return;
-      }
-      
-      // Check if onboarding is already completed
+    if (!authLoading && isApproved && user) {
       checkOnboardingStatus();
     }
-  }, [user, isApproved, authLoading, navigate]);
+  }, [authLoading, isApproved, user]);
 
   useEffect(() => {
     if (profile) {
@@ -202,13 +192,7 @@ const Onboarding = () => {
     }
   };
 
-  if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (authLoading) return <LoadingSpinner fullPage />;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">

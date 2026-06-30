@@ -5,7 +5,7 @@ import {
   X, Play, Pause, RotateCcw, Volume2, VolumeX,
   BookOpen, PenLine, Clock, Heart, Sparkles, Timer,
 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -80,7 +80,7 @@ type Phase = "setup" | "prayer" | "journal" | "complete";
 
 const MomentoComDeus = () => {
   const navigate = useNavigate();
-  const { user, isApproved, isLoading: authLoading } = useAuth();
+  const { user, isApproved, isLoading: authLoading } = useAuthRedirect();
   const { toast } = useToast();
   const { awardXp, showLevelUp, levelUpData, closeLevelUp } = useXpAward(user?.id);
 
@@ -97,11 +97,6 @@ const MomentoComDeus = () => {
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef<number>(0);
-
-  useEffect(() => {
-    if (!authLoading && !user) navigate("/auth");
-    else if (!authLoading && !isApproved) navigate("/pending");
-  }, [user, isApproved, authLoading, navigate]);
 
   // Timer logic
   useEffect(() => {
@@ -180,13 +175,7 @@ const MomentoComDeus = () => {
 
   const progressPercent = ((selectedTime - timeRemaining) / selectedTime) * 100;
 
-  if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (authLoading) return <LoadingSpinner fullPage />;
 
   return (
     <div className="fixed inset-0 z-50 bg-background overflow-y-auto">

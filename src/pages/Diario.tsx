@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, Plus, Trash2, Sparkles, BookOpen, Hand, MessageCircle, RefreshCw, ChevronDown, Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useToast } from "@/hooks/use-toast";
 import { useXpAward } from "@/hooks/useXpAward";
 import { Button } from "@/components/ui/button";
@@ -24,9 +23,11 @@ import {
 } from "@/components/ui/collapsible";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
 import { MOOD_VERSES } from "@/data/bibleReadingPlans";
 import { journalEntrySchema, validateInput } from "@/lib/validation";
+import { getUserFirstName, formatDateBR } from "@/lib/utils";
 import AIAssistantChat from "@/components/ai/AIAssistantChat";
 
 interface JournalEntry {
@@ -78,8 +79,7 @@ const interactivePrompts = [
 ];
 
 const Diario = () => {
-  const navigate = useNavigate();
-  const { user, profile, isApproved, isLoading: authLoading } = useAuth();
+  const { user, profile, isApproved, isLoading: authLoading } = useAuthRedirect();
   const { toast } = useToast();
   const { awardXp, showLevelUp, levelUpData, closeLevelUp } = useXpAward(user?.id);
   const [entries, setEntries] = useState<JournalEntry[]>([]);
@@ -96,16 +96,6 @@ const Diario = () => {
     mood: "",
     bible_verse: "",
   });
-
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate("/auth");
-      } else if (!isApproved) {
-        navigate("/pending");
-      }
-    }
-  }, [user, isApproved, authLoading, navigate]);
 
   useEffect(() => {
     if (isApproved && user) {
@@ -209,14 +199,7 @@ const Diario = () => {
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  };
+  const formatDate = (dateStr: string) => formatDateBR(dateStr, "medium");
 
   const formatRelativeDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -230,15 +213,9 @@ const Diario = () => {
     return formatDate(dateStr);
   };
 
-  const userName = profile?.full_name?.split(" ")[0] || "Jovem";
+  const userName = getUserFirstName(profile);
 
-  if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (authLoading) return <LoadingSpinner fullPage />;
 
   return (
     <div className="min-h-screen bg-background" style={{ paddingBottom: 'calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))' }}>

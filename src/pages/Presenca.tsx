@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Users, Calendar, Check, UserCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useToast } from "@/hooks/use-toast";
 import { useXpAward } from "@/hooks/useXpAward";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,9 @@ import {
 } from "@/components/ui/select";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
+import { getUserFirstName, formatDateBR } from "@/lib/utils";
 
 interface Event {
   id: string;
@@ -39,8 +40,9 @@ interface Profile {
 }
 
 const Presenca = () => {
-  const navigate = useNavigate();
-  const { user, profile, isApproved, isAdmin, isLeader, isLoading: authLoading, canAccessYouthContent, userCity } = useAuth();
+  const { user, profile, isApproved, isAdmin, isLeader, isLoading: authLoading, userCity } = useAuthRedirect({
+    extraCheck: (a) => a.canAccessYouthContent,
+  });
   const { toast } = useToast();
   const { awardXp, showLevelUp, levelUpData, closeLevelUp } = useXpAward(user?.id);
   const [events, setEvents] = useState<Event[]>([]);
@@ -48,19 +50,6 @@ const Presenca = () => {
   const [members, setMembers] = useState<Profile[]>([]);
   const [attendance, setAttendance] = useState<AttendanceRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate("/auth");
-      } else if (!isApproved) {
-        navigate("/pending");
-      } else if (!canAccessYouthContent) {
-        // Redirecionar se não tem acesso a conteúdo de jovens
-        navigate("/dashboard");
-      }
-    }
-  }, [user, isApproved, authLoading, canAccessYouthContent, navigate]);
 
   useEffect(() => {
     if (isApproved) {
@@ -151,21 +140,12 @@ const Presenca = () => {
     fetchAttendance(selectedEvent);
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr + "T00:00:00");
-    return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
-  };
+  const formatDate = (dateStr: string) => formatDateBR(dateStr + "T00:00:00");
 
-  const userName = profile?.full_name?.split(" ")[0] || "Jovem";
+  const userName = getUserFirstName(profile);
   const canManage = isAdmin || isLeader;
 
-  if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (authLoading) return <LoadingSpinner fullPage />;
 
   const selectedEventData = events.find((e) => e.id === selectedEvent);
 

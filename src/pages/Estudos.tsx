@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { BookOpen, ChevronRight, Clock, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,8 +18,10 @@ import {
 } from "@/components/ui/dialog";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import StudyDetailDialog from "@/components/estudos/StudyDetailDialog";
 import { bibleStudySchema, validateInput } from "@/lib/validation";
+import { getUserFirstName, formatDateBR } from "@/lib/utils";
 import { AdFeed } from "@/components/ads/AdBanner";
 
 interface BibleStudy {
@@ -40,8 +41,9 @@ interface StudyProgress {
 }
 
 const Estudos = () => {
-  const navigate = useNavigate();
-  const { user, profile, isApproved, isAdmin, isLeader, isLoading: authLoading, canAccessYouthContent, userCity } = useAuth();
+  const { user, profile, isApproved, isAdmin, isLeader, isLoading: authLoading, canAccessYouthContent, userCity } = useAuthRedirect({
+    extraCheck: (a) => a.canAccessYouthContent,
+  });
   const { toast } = useToast();
   const [studies, setStudies] = useState<BibleStudy[]>([]);
   const [progress, setProgress] = useState<StudyProgress[]>([]);
@@ -58,19 +60,6 @@ const Estudos = () => {
   });
 
   const canManage = isAdmin || isLeader;
-
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate("/auth");
-      } else if (!isApproved) {
-        navigate("/pending");
-      } else if (!canAccessYouthContent) {
-        // Redirecionar se não tem acesso a conteúdo de jovens
-        navigate("/dashboard");
-      }
-    }
-  }, [user, isApproved, authLoading, canAccessYouthContent, navigate]);
 
   useEffect(() => {
     if (isApproved && user) {
@@ -167,19 +156,12 @@ const Estudos = () => {
 
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "Sem prazo";
-    const date = new Date(dateStr + "T00:00:00");
-    return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+    return formatDateBR(dateStr + "T00:00:00");
   };
 
-  const userName = profile?.full_name?.split(" ")[0] || "Jovem";
+  const userName = getUserFirstName(profile);
 
-  if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (authLoading) return <LoadingSpinner fullPage />;
 
   const activeStudy = studies[0];
   const activeProgress = activeStudy ? getStudyProgress(activeStudy.id, activeStudy.chapters) : null;

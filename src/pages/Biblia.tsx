@@ -15,11 +15,12 @@ import {
   X,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import BottomNavigation from "@/components/BottomNavigation";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import {
   BIBLE_BOOKS,
   AT_CATEGORIES,
@@ -46,7 +47,7 @@ type ViewMode = "books" | "chapters" | "reading";
 // ─── Componente principal ───
 const Biblia = () => {
   const navigate = useNavigate();
-  const { user, isApproved, isLoading: authLoading } = useAuth();
+  const { user, isApproved, isLoading: authLoading } = useAuthRedirect();
 
   // Navegação
   const [view, setView] = useState<ViewMode>("books");
@@ -74,12 +75,6 @@ const Biblia = () => {
   const chapterCache = useRef<Map<string, BibleVerse[]>>(new Map());
 
   // Auth guard
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) navigate("/auth");
-      else if (!isApproved) navigate("/pending");
-    }
-  }, [user, isApproved, authLoading, navigate]);
 
   // ─── Busca de livros ───
   const filteredBooks = useMemo(() => {
@@ -240,13 +235,7 @@ const Biblia = () => {
   };
 
   // ─── Loading ───
-  if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (authLoading) return <LoadingSpinner fullPage />;
 
   // ─── Header title ───
   const headerTitle =

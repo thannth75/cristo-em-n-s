@@ -1,16 +1,16 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Radio as RadioIcon, Play, Pause, Volume2, VolumeX,
   Waves, Moon,
 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import ResponsiveContainer from "@/components/layout/ResponsiveContainer";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, getUserFirstName } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
 const STATION = {
@@ -21,8 +21,7 @@ const STATION = {
 };
 
 const Radio = () => {
-  const navigate = useNavigate();
-  const { user, profile, isApproved, isLoading: authLoading } = useAuth();
+  const { profile, isLoading: authLoading } = useAuthRedirect();
   const { toast } = useToast();
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
@@ -31,13 +30,6 @@ const Radio = () => {
   const [isBuffering, setIsBuffering] = useState(false);
   const [sleepTimer, setSleepTimer] = useState<number | null>(null);
   const [sleepTimeLeft, setSleepTimeLeft] = useState(0);
-
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) navigate("/auth");
-      else if (!isApproved) navigate("/pending");
-    }
-  }, [user, isApproved, authLoading, navigate]);
 
   // Sleep timer
   useEffect(() => {
@@ -101,11 +93,11 @@ const Radio = () => {
     return () => { if (audioRef.current) { audioRef.current.pause(); audioRef.current.removeAttribute("src"); } };
   }, []);
 
-  if (authLoading) return <div className="flex min-h-screen items-center justify-center bg-background"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
+  if (authLoading) return <LoadingSpinner fullPage />;
 
   return (
     <div className="min-h-screen bg-background" style={{ paddingBottom: 'calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))' }}>
-      <AppHeader userName={profile?.full_name?.split(" ")[0] || "Jovem"} />
+      <AppHeader userName={getUserFirstName(profile)} />
 
       <main className="py-6">
         <ResponsiveContainer size="lg">

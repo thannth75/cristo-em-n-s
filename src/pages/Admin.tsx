@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Users, 
@@ -12,7 +11,7 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,8 +19,10 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import RoleManager from "@/components/admin/RoleManager";
 import { notificationSchema, validateInput } from "@/lib/validation";
+import { getUserFirstName } from "@/lib/utils";
 
 interface UserWithRole {
   id: string;
@@ -35,36 +36,22 @@ interface UserWithRole {
 }
 
 const Admin = () => {
-  const navigate = useNavigate();
-  const { user, isAdmin, isLeader, profile, isLoading: authLoading, isApproved } = useAuth();
+  const { user, isAdmin, isLeader, profile, isLoading: authLoading, isApproved } = useAuthRedirect({
+    extraCheck: (a) => a.isAdmin || a.isLeader,
+  });
   const { toast } = useToast();
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [showPendingOnly, setShowPendingOnly] = useState(true); // Default to pending
+  const [showPendingOnly, setShowPendingOnly] = useState(true);
   const [lowAttendanceUsers, setLowAttendanceUsers] = useState<UserWithRole[]>([]);
   const [activeTab, setActiveTab] = useState("users");
 
   useEffect(() => {
-    if (authLoading) return;
-    
-    if (!user) {
-      navigate("/auth");
-      return;
+    if (isApproved && (isAdmin || isLeader)) {
+      fetchUsers();
     }
-    
-    if (!isApproved) {
-      navigate("/pending");
-      return;
-    }
-    
-    if (!isAdmin && !isLeader) {
-      navigate("/dashboard");
-      return;
-    }
-    
-    fetchUsers();
-  }, [authLoading, user, isApproved, isAdmin, isLeader, navigate]);
+  }, [isApproved, isAdmin, isLeader]);
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -204,15 +191,9 @@ const Admin = () => {
          u.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (authLoading) return <LoadingSpinner fullPage />;
 
-  const userName = profile?.full_name?.split(" ")[0] || "Admin";
+  const userName = getUserFirstName(profile, "Admin");
 
   return (
     <div className="min-h-screen bg-background" style={{ paddingBottom: 'calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))' }}>

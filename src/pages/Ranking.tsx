@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Trophy, Medal, Award, Star, Crown, TrendingUp, Calendar } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { WeeklyRankingCard } from "@/components/gamification/WeeklyRankingCard";
+import { getUserFirstName } from "@/lib/utils";
 
 interface RankingUser {
   user_id: string;
@@ -33,8 +34,7 @@ interface XpRankingUser {
 }
 
 const Ranking = () => {
-  const navigate = useNavigate();
-  const { user, profile, isApproved, isLoading: authLoading } = useAuth();
+  const { user, profile, isApproved, isLoading: authLoading } = useAuthRedirect();
   const [achievementRanking, setAchievementRanking] = useState<RankingUser[]>([]);
   const [xpRanking, setXpRanking] = useState<XpRankingUser[]>([]);
   const [weeklyRanking, setWeeklyRanking] = useState<WeeklyRankingUser[]>([]);
@@ -42,16 +42,6 @@ const Ranking = () => {
   const [userAchievementRank, setUserAchievementRank] = useState<RankingUser | null>(null);
   const [userXpRank, setUserXpRank] = useState<XpRankingUser | null>(null);
   const [userWeeklyRank, setUserWeeklyRank] = useState<WeeklyRankingUser | null>(null);
-
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate("/auth");
-      } else if (!isApproved) {
-        navigate("/pending");
-      }
-    }
-  }, [user, isApproved, authLoading, navigate]);
 
   useEffect(() => {
     if (isApproved) {
@@ -192,15 +182,9 @@ const Ranking = () => {
     }
   };
 
-  const userName = profile?.full_name?.split(" ")[0] || "Jovem";
+  const userName = getUserFirstName(profile);
 
-  if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (authLoading) return <LoadingSpinner fullPage />;
 
   return (
     <div className="min-h-screen bg-background" style={{ paddingBottom: 'calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))' }}>
