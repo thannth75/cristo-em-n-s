@@ -73,7 +73,7 @@ const AddMusicianDialog = ({ onMusicianAdded }: AddMusicianDialogProps) => {
 
     const { data } = await supabase
       .from("public_profiles")
-      .select("id, user_id, full_name")
+      .select("user_id, full_name")
       .eq("is_approved", true)
       .order("full_name");
 
