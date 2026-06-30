@@ -24,7 +24,7 @@ export default function CommunityStatsBar() {
 
       const [postsRes, membersRes, todayRes] = await Promise.all([
         supabase.from("community_posts").select("id", { count: "exact", head: true }),
-        supabase.from("profiles").select("id", { count: "exact", head: true }).eq("is_approved", true),
+        supabase.from("public_profiles").select("id", { count: "exact", head: true }).eq("is_approved", true),
         supabase.from("community_posts").select("id", { count: "exact", head: true }).gte("created_at", today),
       ]);
 

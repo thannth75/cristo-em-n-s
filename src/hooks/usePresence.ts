@@ -16,7 +16,7 @@ export function usePresence(userId: string | undefined) {
     lastUpdateRef.current = now;
     
     await supabase
-      .from("profiles")
+      .from("public_profiles")
       .update({ last_seen: new Date().toISOString() })
       .eq("user_id", userId);
   }, [userId]);

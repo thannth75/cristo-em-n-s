@@ -244,7 +244,7 @@ const Mensagens = () => {
 
     if (profileIds.size > 0) {
       const { data: profilesData } = await supabase
-        .from("profiles")
+        .from("public_profiles")
         .select("user_id, full_name, avatar_url, last_seen")
         .in("user_id", Array.from(profileIds));
       if (profilesData) {
@@ -262,7 +262,7 @@ const Mensagens = () => {
   };
 
   const fetchAllProfiles = async () => {
-    const { data } = await supabase.from("profiles").select("user_id, full_name, avatar_url, last_seen").eq("is_approved", true).neq("user_id", user?.id);
+    const { data } = await supabase.from("public_profiles").select("user_id, full_name, avatar_url, last_seen").eq("is_approved", true).neq("user_id", user?.id);
     if (data) setAllProfiles(data);
   };
 

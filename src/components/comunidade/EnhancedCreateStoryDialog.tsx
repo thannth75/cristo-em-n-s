@@ -82,7 +82,7 @@ export const EnhancedCreateStoryDialog = ({
 
   const fetchUsers = async () => {
     const { data } = await supabase
-      .from('profiles')
+      .from('public_profiles')
       .select('user_id, full_name')
       .eq('is_approved', true)
       .neq('user_id', userId);

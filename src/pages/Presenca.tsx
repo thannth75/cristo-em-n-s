@@ -101,7 +101,7 @@ const Presenca = () => {
   const fetchMembers = async () => {
     // Filtrar membros por cidade se não for admin
     let membersQuery = supabase
-      .from("profiles")
+      .from("public_profiles")
       .select("id, user_id, full_name, is_approved, city")
       .eq("is_approved", true)
       .order("full_name");

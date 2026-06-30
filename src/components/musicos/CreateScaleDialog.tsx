@@ -87,7 +87,7 @@ const CreateScaleDialog = ({ onScaleCreated }: CreateScaleDialogProps) => {
     if (musiciansData && musiciansData.length > 0) {
       const userIds = musiciansData.map((m) => m.user_id);
       const { data: profilesData } = await supabase
-        .from("profiles")
+        .from("public_profiles")
         .select("user_id, full_name")
         .in("user_id", userIds);
 

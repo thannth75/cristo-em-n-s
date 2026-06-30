@@ -146,7 +146,7 @@ const Comunidade = () => {
       .limit(100);
     if (storiesData) {
       const userIds = [...new Set(storiesData.map(s => s.user_id))];
-      const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", userIds);
+      const { data: profiles } = await supabase.from("public_profiles").select("user_id, full_name, avatar_url").in("user_id", userIds);
       const storiesWithProfiles = storiesData.map(story => ({ ...story, profile: profiles?.find(p => p.user_id === story.user_id) }));
       setStories(storiesWithProfiles);
       setUserHasStory(storiesWithProfiles.some(s => s.user_id === user?.id));
@@ -166,7 +166,7 @@ const Comunidade = () => {
     const userIds = [...new Set(postsData.map(p => p.user_id))];
     const postIds = postsData.map(p => p.id);
     const [{ data: profiles }, { data: userLikes }, { data: userReposts }] = await Promise.all([
-      supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", userIds),
+      supabase.from("public_profiles").select("user_id, full_name, avatar_url").in("user_id", userIds),
       supabase.from("post_likes").select("post_id").eq("user_id", user?.id).in("post_id", postIds),
       supabase.from("post_reposts").select("original_post_id").eq("user_id", user?.id).in("original_post_id", postIds),
     ]);

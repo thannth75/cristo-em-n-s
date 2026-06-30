@@ -65,7 +65,7 @@ export default function ExamGradesDialog({ exam, open, onOpenChange, onSuccess }
     try {
       // Buscar todos os perfis aprovados
       const { data: profilesData } = await supabase
-        .from("profiles")
+        .from("public_profiles")
         .select("user_id, full_name, avatar_url")
         .eq("is_approved", true)
         .order("full_name");
