@@ -1,4 +1,4 @@
-/* Fonts loaded via @fontsource in src/main.tsx (Fraunces + Outfit) */
+/* Fonts loaded via @fontsource in src/main.tsx (Instrument Serif + Work Sans) */
 
 @tailwind base;
 @tailwind components;
@@ -7,90 +7,94 @@
 /* ====== VIDA EM CRISTO — Design System v3 (Sereno Pastel) ====== */
 
 :root {
-  /* Sereno Pastel — cream + sage palette */
-  --background: 40 30% 97%;
-  --foreground: 110 18% 14%;
+  /* Oliveira & Pergaminho — warm parchment + olive */
+  --background: 40 38% 94%;
+  --foreground: 100 25% 12%;
 
-  --card: 40 35% 99%;
-  --card-foreground: 110 18% 14%;
+  --card: 40 45% 97%;
+  --card-foreground: 100 25% 12%;
 
-  --popover: 40 35% 99%;
-  --popover-foreground: 110 18% 14%;
+  --popover: 40 45% 97%;
+  --popover-foreground: 100 25% 12%;
 
-  /* Primary — deep sage */
-  --primary: 110 22% 38%;
-  --primary-foreground: 40 30% 98%;
+  /* Primary — deep olive */
+  --primary: 100 24% 26%;
+  --primary-foreground: 40 38% 96%;
 
-  /* Secondary — soft sage tint */
-  --secondary: 100 22% 90%;
-  --secondary-foreground: 110 22% 25%;
+  /* Secondary — soft olive tint on parchment */
+  --secondary: 80 20% 85%;
+  --secondary-foreground: 100 25% 18%;
 
-  --muted: 40 18% 93%;
-  --muted-foreground: 110 8% 42%;
+  --muted: 40 25% 89%;
+  --muted-foreground: 100 10% 38%;
 
-  --accent: 100 22% 86%;
-  --accent-foreground: 110 22% 22%;
+  --accent: 80 22% 80%;
+  --accent-foreground: 100 25% 16%;
 
-  --destructive: 8 70% 55%;
-  --destructive-foreground: 40 30% 98%;
+  --destructive: 8 65% 50%;
+  --destructive-foreground: 40 38% 96%;
 
-  --border: 100 15% 86%;
-  --input: 100 15% 86%;
-  --ring: 110 22% 45%;
+  --border: 80 18% 80%;
+  --input: 80 18% 80%;
+  --ring: 100 24% 32%;
 
   --radius: 1rem;
 
-  /* Extended palette */
-  --gold: 38 60% 58%;
+  /* Extended palette — olive-grove */
+  --gold: 38 60% 52%;
   --gold-foreground: 38 30% 12%;
-  --hope-green: 109 21% 55%;
-  --forest-green: 130 20% 32%;
-  --olive-green: 90 22% 50%;
-  --cream: 40 35% 96%;
+  --hope-green: 90 22% 50%;
+  --forest-green: 100 25% 18%;
+  --olive-green: 80 24% 40%;
+  --cream: 40 45% 95%;
+  --parchment: 40 35% 90%;
+  --olive-deep: 100 28% 16%;
   --lavender: 260 25% 82%;
   --peach: 25 60% 85%;
 
   /* Semantic */
-  --success: 142 50% 45%;
-  --success-foreground: 0 0% 100%;
-  --warning: 35 85% 55%;
+  --success: 110 38% 38%;
+  --success-foreground: 40 38% 96%;
+  --warning: 35 78% 50%;
   --warning-foreground: 35 30% 12%;
-  --info: 200 55% 55%;
+  --info: 200 45% 45%;
   --info-foreground: 0 0% 100%;
 
-  --streak-fire: 18 80% 60%;
-  --streak-glow: 38 90% 60%;
+  --streak-fire: 18 75% 52%;
+  --streak-glow: 38 80% 55%;
 
   /* Sidebar */
-  --sidebar-background: 110 22% 22%;
-  --sidebar-foreground: 40 30% 96%;
-  --sidebar-primary: 109 30% 60%;
-  --sidebar-primary-foreground: 110 22% 14%;
-  --sidebar-accent: 110 18% 28%;
-  --sidebar-accent-foreground: 40 30% 96%;
-  --sidebar-border: 110 18% 26%;
-  --sidebar-ring: 109 30% 55%;
+  --sidebar-background: 100 28% 14%;
+  --sidebar-foreground: 40 38% 95%;
+  --sidebar-primary: 90 26% 55%;
+  --sidebar-primary-foreground: 100 28% 10%;
+  --sidebar-accent: 100 22% 20%;
+  --sidebar-accent-foreground: 40 38% 95%;
+  --sidebar-border: 100 22% 22%;
+  --sidebar-ring: 90 26% 50%;
 
-  --chart-1: 110 22% 45%;
-  --chart-2: 150 25% 50%;
-  --chart-3: 90 28% 55%;
-  --chart-4: 38 60% 60%;
-  --chart-5: 200 35% 55%;
+  --chart-1: 100 24% 32%;
+  --chart-2: 80 28% 42%;
+  --chart-3: 60 30% 50%;
+  --chart-4: 38 60% 55%;
+  --chart-5: 25 55% 55%;
 
-  /* Shadows — soft, layered */
-  --shadow-sm: 0 1px 2px 0 hsl(110 20% 20% / 0.04);
-  --shadow-md: 0 4px 12px -2px hsl(110 20% 20% / 0.06), 0 2px 4px -2px hsl(110 20% 20% / 0.04);
-  --shadow-lg: 0 14px 30px -8px hsl(110 25% 18% / 0.10), 0 6px 12px -6px hsl(110 25% 18% / 0.06);
-  --shadow-glow: 0 0 32px -6px hsl(110 30% 50% / 0.28);
-  --shadow-soft: 0 8px 24px -10px hsl(110 25% 20% / 0.10);
+  /* Shadows — soft ink on parchment */
+  --shadow-sm: 0 1px 2px 0 hsl(100 25% 15% / 0.05);
+  --shadow-md: 0 4px 14px -2px hsl(100 25% 15% / 0.08), 0 2px 4px -2px hsl(100 25% 15% / 0.04);
+  --shadow-lg: 0 18px 36px -10px hsl(100 28% 14% / 0.14), 0 8px 14px -6px hsl(100 28% 14% / 0.08);
+  --shadow-glow: 0 0 36px -6px hsl(90 30% 45% / 0.32);
+  --shadow-soft: 0 10px 28px -12px hsl(100 28% 16% / 0.14);
+  --shadow-altar: 0 24px 60px -24px hsl(100 30% 14% / 0.22), inset 0 1px 0 0 hsl(40 50% 98% / 0.6);
 
-  /* Gradients */
-  --gradient-hope: linear-gradient(135deg, hsl(110 22% 42%) 0%, hsl(150 28% 50%) 60%, hsl(90 25% 55%) 100%);
-  --gradient-card: linear-gradient(145deg, hsl(40 35% 99%) 0%, hsl(100 20% 96%) 100%);
-  --gradient-gold: linear-gradient(135deg, hsl(38 70% 62%) 0%, hsl(28 75% 65%) 100%);
-  --gradient-spiritual: linear-gradient(160deg, hsl(110 22% 92%) 0%, hsl(40 35% 96%) 50%, hsl(25 50% 92%) 100%);
-  --gradient-aurora: linear-gradient(135deg, hsl(110 25% 88%) 0%, hsl(260 30% 90%) 50%, hsl(25 50% 92%) 100%);
-  --gradient-mesh: radial-gradient(at 20% 10%, hsl(109 25% 80% / 0.6) 0px, transparent 50%), radial-gradient(at 80% 0%, hsl(38 60% 85% / 0.5) 0px, transparent 50%), radial-gradient(at 90% 80%, hsl(260 30% 88% / 0.4) 0px, transparent 50%);
+  /* Gradients — olive grove */
+  --gradient-hope: linear-gradient(135deg, hsl(100 26% 28%) 0%, hsl(80 28% 38%) 60%, hsl(60 30% 48%) 100%);
+  --gradient-card: linear-gradient(145deg, hsl(40 45% 97%) 0%, hsl(40 35% 93%) 100%);
+  --gradient-gold: linear-gradient(135deg, hsl(38 62% 55%) 0%, hsl(28 65% 52%) 100%);
+  --gradient-spiritual: linear-gradient(160deg, hsl(80 22% 88%) 0%, hsl(40 38% 94%) 50%, hsl(40 30% 90%) 100%);
+  --gradient-aurora: linear-gradient(135deg, hsl(80 25% 85%) 0%, hsl(40 38% 92%) 50%, hsl(25 35% 88%) 100%);
+  --gradient-altar: radial-gradient(ellipse at 50% 0%, hsl(40 50% 96%) 0%, hsl(40 38% 92%) 45%, hsl(80 18% 86%) 100%);
+  --gradient-mesh: radial-gradient(at 18% 12%, hsl(90 25% 78% / 0.55) 0px, transparent 55%), radial-gradient(at 82% 4%, hsl(38 55% 82% / 0.45) 0px, transparent 55%), radial-gradient(at 88% 84%, hsl(100 22% 80% / 0.4) 0px, transparent 55%);
 }
 
 .dark {
@@ -189,9 +193,10 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    font-family: 'Fraunces', 'Cinzel', serif;
-    @apply font-semibold tracking-tight;
+    font-family: '"Instrument Serif"', Georgia, serif;
+    @apply font-normal tracking-tight;
     font-optical-sizing: auto;
+    letter-spacing: -0.01em;
   }
 
 }
@@ -253,6 +258,8 @@
   .gradient-card { background: var(--gradient-card); }
   .gradient-gold { background: var(--gradient-gold); }
   .gradient-spiritual { background: var(--gradient-spiritual); }
+  .gradient-altar { background: var(--gradient-altar); }
+  .shadow-altar { box-shadow: var(--shadow-altar); }
 
   .text-gradient-hope {
     background: var(--gradient-hope);
