@@ -75,7 +75,7 @@ const Ranking = () => {
       .select(`user_id, achievements (points)`);
 
     const { data: profiles } = await supabase
-      .from("profiles")
+      .from("public_profiles")
       .select("user_id, full_name")
       .eq("is_approved", true);
 
@@ -108,7 +108,7 @@ const Ranking = () => {
 
   const fetchXpRanking = async () => {
     const { data: profiles } = await supabase
-      .from("profiles")
+      .from("public_profiles")
       .select("user_id, full_name, total_xp, current_level")
       .eq("is_approved", true)
       .order("total_xp", { ascending: false });
@@ -141,7 +141,7 @@ const Ranking = () => {
       .gte("created_at", startOfWeek.toISOString());
 
     const { data: profiles } = await supabase
-      .from("profiles")
+      .from("public_profiles")
       .select("user_id, full_name")
       .eq("is_approved", true);
 

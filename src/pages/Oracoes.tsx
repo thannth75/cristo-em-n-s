@@ -73,7 +73,7 @@ const Oracoes = () => {
       // Fetch profile info for each unique user
       const userIds = [...new Set(data.map(p => p.user_id))];
       const { data: profilesData } = await supabase
-        .from("profiles")
+        .from("public_profiles")
         .select("user_id, full_name, avatar_url")
         .in("user_id", userIds);
       

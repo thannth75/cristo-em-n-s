@@ -88,7 +88,7 @@ const InAppNotificationToast = () => {
           
           // Fetch sender profile
           const { data: senderProfile } = await supabase
-            .from("profiles")
+            .from("public_profiles")
             .select("full_name, avatar_url")
             .eq("user_id", msg.sender_id)
             .single();

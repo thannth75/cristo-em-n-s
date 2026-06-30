@@ -3058,6 +3058,16 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: boolean
       }
+      get_community_birthdays: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          birth_day: number
+          birth_month: number
+          full_name: string
+          user_id: string
+        }[]
+      }
       get_user_city: { Args: { _user_id: string }; Returns: string }
       get_user_email: { Args: { _user_id: string }; Returns: string }
       has_role: {

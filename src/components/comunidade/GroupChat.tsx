@@ -68,7 +68,7 @@ export const GroupChat = ({ group, onClose }: GroupChatProps) => {
       const userIds = [...new Set(messagesData.map(m => m.user_id))];
       const msgIds = messagesData.map(m => m.id);
       const [{ data: profiles }, { data: reactions }] = await Promise.all([
-        supabase.from('profiles').select('user_id, full_name, avatar_url').in('user_id', userIds),
+        supabase.from('public_profiles').select('user_id, full_name, avatar_url').in('user_id', userIds),
         msgIds.length > 0 ? supabase.from('group_message_reactions').select('message_id, reaction, user_id').in('message_id', msgIds) : { data: [] as any[] },
       ]);
       setMessages(messagesData.map(msg => ({

@@ -62,7 +62,7 @@ export const MentionInput = ({
 
       if (query.length > 0) {
         const { data } = await supabase
-          .from('profiles')
+          .from('public_profiles')
           .select('user_id, full_name, avatar_url')
           .eq('is_approved', true)
           .ilike('full_name', `%${query}%`)

@@ -52,7 +52,7 @@ export function PostLikersDialog({
       const userIds = likesData.map(l => l.user_id);
       
       const { data: profiles } = await supabase
-        .from('profiles')
+        .from('public_profiles')
         .select('user_id, full_name, avatar_url')
         .in('user_id', userIds);
 

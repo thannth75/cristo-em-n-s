@@ -15,7 +15,7 @@ export function UserLevelBadge({ userId, size = "sm", showTitle = false, classNa
   useEffect(() => {
     const fetchLevel = async () => {
       const { data } = await supabase
-        .from("profiles")
+        .from("public_profiles")
         .select("current_level")
         .eq("user_id", userId)
         .maybeSingle();

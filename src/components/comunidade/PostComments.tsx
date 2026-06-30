@@ -91,7 +91,7 @@ const PostComments = ({ postId, commentsCount, onCommentsChange }: PostCommentsP
     const commentIds = commentsData.map((comment) => comment.id);
 
     const [{ data: profiles }, { data: reactions }] = await Promise.all([
-      supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", userIds),
+      supabase.from("public_profiles").select("user_id, full_name, avatar_url").in("user_id", userIds),
       supabase
         .from("comment_reactions")
         .select("comment_id, user_id, reaction_type")

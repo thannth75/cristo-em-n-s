@@ -19,6 +19,7 @@ export function usePresence(userId: string | undefined) {
       .from("profiles")
       .update({ last_seen: new Date().toISOString() })
       .eq("user_id", userId);
+
   }, [userId]);
 
   useEffect(() => {

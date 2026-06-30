@@ -22,10 +22,11 @@ import {
 } from "@/components/ui/select";
 
 interface Profile {
-  id: string;
+  id?: string;
   user_id: string;
   full_name: string;
 }
+
 
 interface AddMusicianDialogProps {
   onMusicianAdded: () => void;
@@ -72,8 +73,8 @@ const AddMusicianDialog = ({ onMusicianAdded }: AddMusicianDialogProps) => {
     const existingUserIds = (existingMusicians || []).map((m) => m.user_id);
 
     const { data } = await supabase
-      .from("profiles")
-      .select("id, user_id, full_name")
+      .from("public_profiles")
+      .select("user_id, full_name")
       .eq("is_approved", true)
       .order("full_name");
 

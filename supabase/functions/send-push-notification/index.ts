@@ -200,6 +200,7 @@ Deno.serve(async (req) => {
     const token = authHeader.replace("Bearer ", "");
     const isServiceRole = token === supabaseServiceKey;
 
+    let callerUserId: string | null = null;
     if (!isServiceRole) {
       const userClient = createClient(supabaseUrl, supabaseAnonKey, {
         global: { headers: { Authorization: authHeader } },
@@ -213,7 +214,8 @@ Deno.serve(async (req) => {
           { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      console.log("[send-push-notification] Authenticated user:", userData.user.id);
+      callerUserId = userData.user.id;
+      console.log("[send-push-notification] Authenticated user:", callerUserId);
     } else {
       console.log("[send-push-notification] Service role auth");
     }
@@ -238,6 +240,28 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Authorization: regular users may only notify themselves.
+    // Admins/leaders (or service role) may target any user(s).
+    if (!isServiceRole) {
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", callerUserId);
+      const isAdminOrLeader = (roles || []).some(
+        (r: { role: string }) => r.role === "admin" || r.role === "lider"
+      );
+      if (!isAdminOrLeader) {
+        const onlySelf = targetUserIds.every((id) => id === callerUserId);
+        if (!onlySelf) {
+          return new Response(
+            JSON.stringify({ error: "Forbidden: you may only notify yourself" }),
+            { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+    }
+
 
     // Insert notifications into the notifications table (for in-app display & realtime)
     const notifications = targetUserIds.map((userId) => ({

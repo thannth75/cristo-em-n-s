@@ -94,7 +94,7 @@ export function useGamification(userId: string | undefined) {
         transactionsRes,
       ] = await Promise.all([
         supabase
-          .from("profiles")
+          .from("public_profiles")
           .select("total_xp, current_level")
           .eq("user_id", userId)
           .single(),

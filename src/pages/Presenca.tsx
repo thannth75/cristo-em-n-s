@@ -32,11 +32,13 @@ interface AttendanceRecord {
 }
 
 interface Profile {
-  id: string;
+  id?: string;
   user_id: string;
   full_name: string;
   is_approved: boolean | null;
+  city?: string | null;
 }
+
 
 const Presenca = () => {
   const navigate = useNavigate();
@@ -101,8 +103,8 @@ const Presenca = () => {
   const fetchMembers = async () => {
     // Filtrar membros por cidade se não for admin
     let membersQuery = supabase
-      .from("profiles")
-      .select("id, user_id, full_name, is_approved, city")
+      .from("public_profiles")
+      .select("user_id, full_name, is_approved, city")
       .eq("is_approved", true)
       .order("full_name");
 

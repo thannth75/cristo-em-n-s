@@ -221,7 +221,7 @@ export const EnhancedStoryViewer = ({
     if (data) {
       const userIds = [...new Set(data.map(c => c.user_id))];
       const { data: profiles } = await supabase
-        .from('profiles')
+        .from('public_profiles')
         .select('user_id, full_name')
         .in('user_id', userIds);
       

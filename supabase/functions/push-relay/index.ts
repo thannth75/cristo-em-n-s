@@ -95,7 +95,17 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "*" } });
   }
 
+  // Shared-secret auth — only the DB trigger / service role may call this
+  const cronSecret = Deno.env.get("CRON_SECRET");
+  const providedSecret = req.headers.get("x-cron-secret");
+  const authHeader = req.headers.get("Authorization") || "";
+  const isServiceRole = authHeader === `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`;
+  if (!isServiceRole && (!cronSecret || providedSecret !== cronSecret)) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+  }
+
   try {
+
     const payload: RelayPayload = await req.json();
     if (!payload.user_id || !payload.title) {
       return new Response(JSON.stringify({ error: "Missing user_id or title" }), { status: 400 });

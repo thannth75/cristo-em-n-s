@@ -142,7 +142,7 @@ const Celulas = () => {
         .in("cell_id", cellIds);
 
       const { data: leadersData } = await supabase
-        .from("profiles")
+        .from("public_profiles")
         .select("user_id, full_name")
         .in("user_id", cellsData.map(c => c.leader_id));
 
@@ -173,7 +173,7 @@ const Celulas = () => {
     if (membersData) {
       const userIds = membersData.map(m => m.user_id);
       const { data: profiles } = await supabase
-        .from("profiles")
+        .from("public_profiles")
         .select("user_id, full_name, avatar_url")
         .in("user_id", userIds);
 
