@@ -23,6 +23,7 @@ import { Progress } from "@/components/ui/progress";
 import BottomNavigation from "@/components/BottomNavigation";
 import ResponsiveContainer from "@/components/layout/ResponsiveContainer";
 import { LevelBadge } from "@/components/gamification/LevelBadge";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface PublicProfile {
   user_id: string;

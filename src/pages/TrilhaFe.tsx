@@ -15,6 +15,7 @@ import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import ResponsiveContainer from "@/components/layout/ResponsiveContainer";
 import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { cn, getUserFirstName } from "@/lib/utils";
 
 interface Challenge {

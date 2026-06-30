@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Cake, PartyPopper, User as UserIcon } from "lucide-react";
 import { useAuthRedirect } from "@/hooks/useAuthRedirect";
@@ -12,6 +12,7 @@ import BottomNavigation from "@/components/BottomNavigation";
 import LoadingSpinner from "@/components/LoadingSpinner";
 
 const Aniversariantes = () => {
+  const navigate = useNavigate();
   const { isLoading: authLoading } = useAuthRedirect();
   const { birthdays, isLoading } = useBirthdays();
   const [search, setSearch] = useState("");

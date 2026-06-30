@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import logoVidaEmCristo from "@/assets/logo-vida-em-cristo.png";
 
 const brazilianStates = [

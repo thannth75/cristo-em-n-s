@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, CalendarCog, History, Save, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +36,7 @@ interface AuditRow {
 }
 
 const AdminAniversarios = () => {
+  const navigate = useNavigate();
   const { isAdmin, isLoading: authLoading } = useAuthRedirect({
     extraCheck: (a) => a.isAdmin,
   });

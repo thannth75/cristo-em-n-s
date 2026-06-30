@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useXpAward } from "@/hooks/useXpAward";
 import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const TIMER_PRESETS = [
   { label: "5 min", seconds: 300 },

@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, Send, ArrowLeft, Search, Check, CheckCheck, Plus, Smile, Paperclip, Loader2, Users, X, Forward, Reply } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import BottomNavigation from "@/components/BottomNavigation";
 import { privateMessageSchema, validateInput } from "@/lib/validation";
+import { getInitials } from "@/lib/utils";
 import ChatMediaPicker from "@/components/chat/ChatMediaPicker";
 import { GroupList } from "@/components/comunidade/GroupList";
 import { GroupChat } from "@/components/comunidade/GroupChat";
@@ -18,6 +20,7 @@ import AudioRecorder, { AudioMessagePlayer } from "@/components/chat/AudioRecord
 import FileUploader, { FileMessageBubble } from "@/components/chat/FileUploader";
 import ForwardMessageDialog from "@/components/chat/ForwardMessageDialog";
 import ChatThemeMenu, { ChatTheme, getStoredChatTheme } from "@/components/chat/ChatThemeMenu";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface Profile {
   user_id: string;
@@ -56,6 +59,7 @@ interface ReactionData {
 }
 
 const Mensagens = () => {
+  const navigate = useNavigate();
   const { user, profile, isApproved, isLoading: authLoading } = useAuthRedirect();
   const { toast } = useToast();
   const [conversations, setConversations] = useState<Conversation[]>([]);

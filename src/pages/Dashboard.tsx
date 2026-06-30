@@ -31,6 +31,7 @@ import SpiritualSuggestion from "@/components/dashboard/SpiritualSuggestion";
 import DailyCheckIn from "@/components/dashboard/DailyCheckIn";
 import QuickActionsRow from "@/components/dashboard/QuickActionsRow";
 import WeeklyJourneyCard from "@/components/dashboard/WeeklyJourneyCard";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const dailyVerses = [
   { verse: "Buscai primeiro o Reino de Deus e a sua justiça, e todas as coisas vos serão acrescentadas.", reference: "Mateus 6:33" },
