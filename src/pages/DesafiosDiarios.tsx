@@ -109,7 +109,7 @@ export default function DesafiosDiarios() {
   const loadCompletedChallenges = async () => {
     if (!user) return;
     
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("journal_entries")
       .select("title")
       .eq("user_id", user!.id)
@@ -117,6 +117,9 @@ export default function DesafiosDiarios() {
       .lte("created_at", `${today}T23:59:59`)
       .like("title", "Desafio Diário:%");
 
+    if (error) {
+      console.error("Erro ao carregar desafios concluídos:", error);
+    }
     if (data) {
       const completed = data.map(entry => {
         const match = entry.title?.match(/Desafio Diário: (.+)/);
@@ -131,12 +134,14 @@ export default function DesafiosDiarios() {
     if (!user || completedChallenges.includes(challenge.id)) return;
 
     try {
-      await supabase.from("journal_entries").insert({
+      const { error: insertError } = await supabase.from("journal_entries").insert({
         user_id: user.id,
         title: `Desafio Diário: ${challenge.id}`,
         content: `✅ ${challenge.title}\n\n${challenge.description}`,
         mood: "motivated"
       });
+
+      if (insertError) throw insertError;
 
       await awardXp("rotina", `challenge-${challenge.id}-${today}`, challenge.title);
       

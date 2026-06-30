@@ -98,20 +98,31 @@ export default function Provas() {
         examsQuery = examsQuery.eq("city", userCity);
       }
 
-      const { data: examsData } = await examsQuery;
+      const { data: examsData, error: examsError } = await examsQuery;
 
-      if (examsData) setExams(examsData);
+      if (examsError) {
+        console.error("Erro ao buscar provas:", examsError);
+        toast({ title: "Erro ao carregar provas", variant: "destructive" });
+      } else if (examsData) {
+        setExams(examsData);
+      }
 
       // Buscar minhas notas
-      const { data: gradesData } = await supabase
+      const { data: gradesData, error: gradesError } = await supabase
         .from("exam_grades")
         .select("*, exams(*)")
         .eq("user_id", user!.id)
         .order("graded_at", { ascending: false });
 
-      if (gradesData) setMyGrades(gradesData as unknown as ExamGrade[]);
+      if (gradesError) {
+        console.error("Erro ao buscar notas:", gradesError);
+        toast({ title: "Erro ao carregar notas", variant: "destructive" });
+      } else if (gradesData) {
+        setMyGrades(gradesData as unknown as ExamGrade[]);
+      }
     } catch (error) {
       console.error("Erro ao buscar dados:", error);
+      toast({ title: "Erro ao carregar dados", variant: "destructive" });
     } finally {
       setIsLoading(false);
     }

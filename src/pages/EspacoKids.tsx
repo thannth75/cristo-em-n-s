@@ -113,7 +113,11 @@ const EspacoKids = () => {
   useEffect(() => {
     if (!user) return;
     const loadProgress = async () => {
-      const { data } = await supabase.from("journal_entries").select("title").eq("user_id", user.id).like("title", "KidsV2:%");
+      const { data, error } = await supabase.from("journal_entries").select("title").eq("user_id", user.id).like("title", "KidsV2:%");
+      if (error) {
+        console.error("Error loading kids progress:", error);
+        return;
+      }
       if (!data) return;
       setCompletedStories(data.filter(e => e.title?.startsWith("KidsV2:StoryComplete:")).map(e => e.title!.replace("KidsV2:StoryComplete:", "")));
       setCompletedMissions(data.filter(e => e.title?.startsWith(`KidsV2:Mission:${CURRENT_WEEK}:`)).map(e => e.title!.replace(`KidsV2:Mission:${CURRENT_WEEK}:`, "")));
@@ -194,7 +198,7 @@ const EspacoKids = () => {
   const handleCompleteMission = async (missionId: string) => {
     if (!user || completedMissions.includes(missionId)) return;
     const { error } = await supabase.from("journal_entries").insert({ user_id: user.id, title: `KidsV2:Mission:${CURRENT_WEEK}:${missionId}`, content: `Missão: ${missionId}`, mood: "motivated" });
-    if (error) return;
+    if (error) { toast({ title: "Erro ao salvar missão", variant: "destructive" }); return; }
     setCompletedMissions(prev => [...prev, missionId]);
     await awardXp("rotina", `kids-mission-${CURRENT_WEEK}-${missionId}`, "Missão semanal Kids");
     toast({ title: "Missão concluída! 🌟" });
@@ -203,7 +207,7 @@ const EspacoKids = () => {
   const handleMemorizeVerse = async (verseId: string) => {
     if (!user || memorizedVerses.includes(verseId)) return;
     const { error } = await supabase.from("journal_entries").insert({ user_id: user.id, title: `KidsV2:Verse:${verseId}`, content: `Versículo: ${verseId}`, mood: "grateful" });
-    if (error) return;
+    if (error) { toast({ title: "Erro ao salvar versículo", variant: "destructive" }); return; }
     setMemorizedVerses(prev => [...prev, verseId]);
     await awardXp("rotina", `kids-verse-${verseId}`, "Versículo memorizado");
     toast({ title: "Versículo memorizado! ✨" });
@@ -212,7 +216,7 @@ const EspacoKids = () => {
   const handleCompleteActivity = async (activityId: string) => {
     if (!user || completedActivities.includes(activityId)) return;
     const { error } = await supabase.from("journal_entries").insert({ user_id: user.id, title: `KidsV2:Activity:${CURRENT_WEEK}:${activityId}`, content: `Atividade: ${activityId}`, mood: "creative" });
-    if (error) return;
+    if (error) { toast({ title: "Erro ao salvar atividade", variant: "destructive" }); return; }
     setCompletedActivities(prev => [...prev, activityId]);
     const activity = CREATIVE_ACTIVITIES.find(a => a.id === activityId);
     await awardXp("rotina", `kids-activity-${CURRENT_WEEK}-${activityId}`, "Atividade criativa Kids");

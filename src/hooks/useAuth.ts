@@ -75,6 +75,13 @@ export function useAuth() {
             .eq("user_id", user.id)
         ]);
 
+        if (profileResult.error) {
+          console.error("Error fetching profile:", profileResult.error);
+        }
+        if (rolesResult.error) {
+          console.error("Error fetching roles:", rolesResult.error);
+        }
+
         const profile = profileResult.data as Profile | null;
         const userRoles = (rolesResult.data || []) as UserRole[];
         

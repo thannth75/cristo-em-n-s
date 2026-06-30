@@ -60,10 +60,15 @@ export const GroupChat = ({ group, onClose }: GroupChatProps) => {
   }, [messages]);
 
   const fetchMessages = async () => {
-    const { data: messagesData } = await supabase
+    const { data: messagesData, error: msgError } = await supabase
       .from('group_messages').select('*').eq('group_id', group.id)
       .order('created_at', { ascending: true }).limit(100);
 
+    if (msgError) {
+      console.error('Error fetching messages:', msgError);
+      setIsLoading(false);
+      return;
+    }
     if (messagesData) {
       const userIds = [...new Set(messagesData.map(m => m.user_id))];
       const msgIds = messagesData.map(m => m.id);
@@ -90,13 +95,15 @@ export const GroupChat = ({ group, onClose }: GroupChatProps) => {
 
   const handleSendSticker = async (content: string) => {
     setIsSending(true);
-    await supabase.from('group_messages').insert({ group_id: group.id, user_id: user?.id, content });
+    const { error } = await supabase.from('group_messages').insert({ group_id: group.id, user_id: user?.id, content });
+    if (error) console.error('Error sending sticker:', error);
     setIsSending(false);
   };
 
   const handleSendImage = async (imageUrl: string) => {
     setIsSending(true);
-    await supabase.from('group_messages').insert({ group_id: group.id, user_id: user?.id, content: '📷 Foto', image_url: imageUrl });
+    const { error } = await supabase.from('group_messages').insert({ group_id: group.id, user_id: user?.id, content: '📷 Foto', image_url: imageUrl });
+    if (error) console.error('Error sending image:', error);
     setIsSending(false);
   };
 
@@ -116,7 +123,8 @@ export const GroupChat = ({ group, onClose }: GroupChatProps) => {
     const isVideo = file.type.startsWith('video/');
     const content = isAudio ? '🎵 Áudio' : isImage ? '📷 Foto' : isVideo ? '🎬 Vídeo' : `📎 ${file.name}`;
     
-    await supabase.from('group_messages').insert({ group_id: group.id, user_id: user.id, content, image_url: urlData.publicUrl });
+    const { error: msgErr } = await supabase.from('group_messages').insert({ group_id: group.id, user_id: user.id, content, image_url: urlData.publicUrl });
+    if (msgErr) console.error('Error sending file message:', msgErr);
     setIsSending(false);
     if (fileInputRef.current) fileInputRef.current.value = '';
   };

@@ -60,9 +60,11 @@ export const GroupList = ({ onGroupSelect }: GroupListProps) => {
   const fetchGroups = async () => {
     if (!user?.id) return;
     setIsLoading(true);
-    const { data: memberGroups } = await supabase.from('group_members').select('group_id').eq('user_id', user.id);
+    const { data: memberGroups, error: memberError } = await supabase.from('group_members').select('group_id').eq('user_id', user.id);
+    if (memberError) console.error('Error fetching group memberships:', memberError);
     const memberGroupIds = new Set(memberGroups?.map(m => m.group_id) || []);
-    const { data: allGroups } = await supabase.from('community_groups').select('*').eq('is_active', true).order('created_at', { ascending: false });
+    const { data: allGroups, error: groupsError } = await supabase.from('community_groups').select('*').eq('is_active', true).order('created_at', { ascending: false });
+    if (groupsError) console.error('Error fetching groups:', groupsError);
     if (allGroups) setGroups(allGroups.map(g => ({ ...g, is_member: memberGroupIds.has(g.id) })));
     setIsLoading(false);
   };
@@ -76,7 +78,8 @@ export const GroupList = ({ onGroupSelect }: GroupListProps) => {
     if (error) { toast({ title: 'Erro ao criar grupo', variant: 'destructive' }); }
     else {
       // Auto join as admin
-      await supabase.from('group_members').insert({ group_id: data.id, user_id: user?.id, role: 'admin' });
+      const { error: joinErr } = await supabase.from('group_members').insert({ group_id: data.id, user_id: user?.id, role: 'admin' });
+      if (joinErr) console.error('Error joining group as admin:', joinErr);
       toast({ title: 'Grupo criado! 🎉' });
       setCreateDialogOpen(false);
       setNewGroupName(''); setNewGroupDescription(''); setNewGroupIsPublic(true);

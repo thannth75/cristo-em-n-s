@@ -162,7 +162,10 @@ const Admin = () => {
   const rejectUser = async (profileId: string, userName: string) => {
     const { error } = await supabase.from("profiles").delete().eq("id", profileId);
 
-    if (!error) {
+    if (error) {
+      console.error("Erro ao rejeitar cadastro:", error);
+      toast({ title: "Erro ao rejeitar cadastro", variant: "destructive" });
+    } else {
       toast({ title: "Cadastro rejeitado", description: `${userName} foi removido.` });
       fetchUsers();
     }

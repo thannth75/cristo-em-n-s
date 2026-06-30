@@ -64,20 +64,26 @@ export default function ExamGradesDialog({ exam, open, onOpenChange, onSuccess }
     setIsLoading(true);
     try {
       // Buscar todos os perfis aprovados
-      const { data: profilesData } = await supabase
+      const { data: profilesData, error: profilesError } = await supabase
         .from("profiles")
         .select("user_id, full_name, avatar_url")
         .eq("is_approved", true)
         .order("full_name");
 
+      if (profilesError) {
+        console.error("Erro ao buscar perfis:", profilesError);
+      }
       if (profilesData) setProfiles(profilesData);
 
       // Buscar notas existentes para esta prova
-      const { data: gradesData } = await supabase
+      const { data: gradesData, error: gradesError } = await supabase
         .from("exam_grades")
         .select("user_id, score, notes")
         .eq("exam_id", exam.id);
 
+      if (gradesError) {
+        console.error("Erro ao buscar notas:", gradesError);
+      }
       if (gradesData) {
         const gradesMap: Record<string, Grade> = {};
         gradesData.forEach((g) => {

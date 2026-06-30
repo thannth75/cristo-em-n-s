@@ -88,30 +88,39 @@ const Devocional = () => {
     const today = new Date().toISOString().split("T")[0];
     
     // Fetch today's devotional
-    const { data: todayData } = await supabase
+    const { data: todayData, error: todayError } = await supabase
       .from("daily_devotionals")
       .select("*")
       .eq("devotional_date", today)
       .maybeSingle();
     
+    if (todayError) {
+      console.error("Error fetching today's devotional:", todayError);
+    }
     setTodayDevotional(todayData);
 
     // Fetch recent devotionals
-    const { data: recentData } = await supabase
+    const { data: recentData, error: recentError } = await supabase
       .from("daily_devotionals")
       .select("*")
       .lte("devotional_date", today)
       .order("devotional_date", { ascending: false })
       .limit(7);
-    
+
+    if (recentError) {
+      console.error("Error fetching recent devotionals:", recentError);
+    }
     setRecentDevotionals(recentData || []);
 
     // Fetch user progress
-    const { data: progressData } = await supabase
+    const { data: progressData, error: progressError } = await supabase
       .from("devotional_progress")
       .select("devotional_id, completed_at, personal_reflection")
       .eq("user_id", user?.id);
-    
+
+    if (progressError) {
+      console.error("Error fetching devotional progress:", progressError);
+    }
     setUserProgress(progressData || []);
     setIsLoading(false);
   };

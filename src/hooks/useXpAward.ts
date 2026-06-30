@@ -39,6 +39,12 @@ export function useXpAward(userId: string | undefined) {
         supabase.from("xp_activities").select("*").eq("is_active", true),
         supabase.from("level_definitions").select("*").order("level_number"),
       ]);
+      if (activitiesRes.error) {
+        console.error("Error fetching XP activities:", activitiesRes.error);
+      }
+      if (levelsRes.error) {
+        console.error("Error fetching level definitions:", levelsRes.error);
+      }
       setActivities(activitiesRes.data || []);
       setLevels(levelsRes.data || []);
     };
@@ -58,12 +64,17 @@ export function useXpAward(userId: string | undefined) {
       // Check daily limit
       if (activity.daily_limit) {
         const today = new Date().toISOString().split("T")[0];
-        const { count } = await supabase
+        const { count, error: countError } = await supabase
           .from("xp_transactions")
           .select("*", { count: "exact", head: true })
           .eq("user_id", userId)
           .eq("activity_type", activityKey)
           .gte("created_at", today);
+
+        if (countError) {
+          console.error("Error checking daily limit:", countError);
+          return null;
+        }
 
         if ((count || 0) >= activity.daily_limit) {
           return null; // Daily limit reached
