@@ -22,10 +22,11 @@ import {
 } from "@/components/ui/select";
 
 interface Profile {
-  id: string;
+  id?: string;
   user_id: string;
   full_name: string;
 }
+
 
 interface AddMusicianDialogProps {
   onMusicianAdded: () => void;

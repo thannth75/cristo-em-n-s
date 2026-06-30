@@ -32,11 +32,13 @@ interface AttendanceRecord {
 }
 
 interface Profile {
-  id: string;
+  id?: string;
   user_id: string;
   full_name: string;
   is_approved: boolean | null;
+  city?: string | null;
 }
+
 
 const Presenca = () => {
   const navigate = useNavigate();
