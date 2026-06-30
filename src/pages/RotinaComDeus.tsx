@@ -245,6 +245,8 @@ const RotinaComDeus = () => {
 
       if (completeError) {
         console.error("Error completing plan:", completeError);
+        toast({ title: "Erro ao completar plano", variant: "destructive" });
+        return;
       }
 
       await awardXp("rotina", userProgress.plan_id, "Plano de rotina completo!");
@@ -261,6 +263,8 @@ const RotinaComDeus = () => {
 
       if (advanceError) {
         console.error("Error advancing day:", advanceError);
+        toast({ title: "Erro ao avançar dia", variant: "destructive" });
+        return;
       }
 
       toast({

@@ -83,21 +83,33 @@ export default function PollWidget({ postId, userId }: PollWidgetProps) {
       setTotalVotes((prev) => prev - 1);
       setVotes((prev) => prev.map((v) => v.option_index === optionIndex ? { ...v, count: v.count - 1 } : v));
     } else {
+      let removedPrevIdx: number | null = null;
       if (!poll.is_multiple_choice && myVotes.length > 0) {
         // Remove previous vote
         const prevIdx = myVotes[0];
         const { error: delPrevErr } = await supabase.from("poll_votes").delete()
           .eq("poll_id", poll.id).eq("user_id", userId).eq("option_index", prevIdx);
         if (delPrevErr) { console.error("Error removing previous vote:", delPrevErr); return; }
-        setVotes((prev) => prev.map((v) => v.option_index === prevIdx ? { ...v, count: Math.max(0, v.count - 1) } : v));
-        setTotalVotes((prev) => prev - 1);
+        removedPrevIdx = prevIdx;
       }
 
       const { error: insertErr } = await supabase.from("poll_votes").insert({
         poll_id: poll.id, user_id: userId, option_index: optionIndex,
       });
-      if (insertErr) { console.error("Error inserting vote:", insertErr); return; }
+      if (insertErr) {
+        console.error("Error inserting vote:", insertErr);
+        // Re-insert the previously removed vote to keep DB consistent
+        if (removedPrevIdx !== null) {
+          await supabase.from("poll_votes").insert({ poll_id: poll.id, user_id: userId, option_index: removedPrevIdx });
+        }
+        return;
+      }
 
+      // All DB ops succeeded — update local state atomically
+      if (removedPrevIdx !== null) {
+        setVotes((prev) => prev.map((v) => v.option_index === removedPrevIdx ? { ...v, count: Math.max(0, v.count - 1) } : v));
+        setTotalVotes((prev) => prev - 1);
+      }
       setMyVotes((prev) => poll.is_multiple_choice ? [...prev, optionIndex] : [optionIndex]);
       setTotalVotes((prev) => prev + 1);
       setVotes((prev) => {
