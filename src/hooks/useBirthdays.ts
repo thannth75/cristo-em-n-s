@@ -30,36 +30,35 @@ export function useBirthdays() {
     setIsLoading(true);
     const currentMonth = new Date().getMonth() + 1;
 
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("user_id, full_name, avatar_url, birth_date")
-      .eq("is_approved", true)
-      .not("birth_date", "is", null);
+    const { data, error } = await (supabase as any).rpc("get_community_birthdays");
 
     if (error || !data) {
       setIsLoading(false);
       return;
     }
 
-    const monthBirthdays = data
-      .map((profile) => {
-        const parsed = parseBirthDate(profile.birth_date);
-        if (!parsed) return null;
-        return {
-          user_id: profile.user_id,
-          full_name: profile.full_name,
-          avatar_url: profile.avatar_url,
-          birth_date: profile.birth_date!,
-          day: parsed.day,
-          month: parsed.month,
-        } as BirthdayProfile;
-      })
-      .filter((p): p is BirthdayProfile => p !== null && p.month === currentMonth)
+    const monthBirthdays = (data as Array<{
+      user_id: string;
+      full_name: string;
+      avatar_url: string | null;
+      birth_day: number;
+      birth_month: number;
+    }>)
+      .filter((p) => p.birth_month === currentMonth)
+      .map((p) => ({
+        user_id: p.user_id,
+        full_name: p.full_name,
+        avatar_url: p.avatar_url,
+        birth_date: "",
+        day: p.birth_day,
+        month: p.birth_month,
+      }) as BirthdayProfile)
       .sort((a, b) => a.day - b.day);
 
     setBirthdays(monthBirthdays);
     setIsLoading(false);
   }, []);
+
 
   useEffect(() => {
     fetchBirthdays();
