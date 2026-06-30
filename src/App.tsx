@@ -135,7 +135,50 @@ function AnimatedRoutes() {
       >
         <Suspense fallback={<PageLoader />}>
           <Routes location={location}>
-...
+            <Route path="/" element={<Index />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/pending-approval" element={<PendingApproval />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/estudos" element={<Estudos />} />
+            <Route path="/agenda" element={<Agenda />} />
+            <Route path="/musicos" element={<Musicos />} />
+            <Route path="/perfil" element={<Perfil />} />
+            <Route path="/perfil/:userId" element={<PerfilPublico />} />
+            <Route path="/admin" element={<Admin />} />
+            <Route path="/admin/aniversarios" element={<AdminAniversarios />} />
+            <Route path="/presenca" element={<Presenca />} />
+            <Route path="/diario" element={<Diario />} />
+            <Route path="/conquistas" element={<Conquistas />} />
+            <Route path="/oracoes" element={<Oracoes />} />
+            <Route path="/ranking" element={<Ranking />} />
+            <Route path="/comunidade" element={<Comunidade />} />
+            <Route path="/plano-leitura" element={<PlanoLeitura />} />
+            <Route path="/quiz" element={<Quiz />} />
+            <Route path="/install" element={<Install />} />
+            <Route path="/devocional" element={<Devocional />} />
+            <Route path="/testemunhos" element={<Testemunhos />} />
+            <Route path="/lembretes-oracao" element={<LembretesOracao />} />
+            <Route path="/versiculos" element={<Versiculos />} />
+            <Route path="/celulas" element={<Celulas />} />
+            <Route path="/dashboard-lider" element={<DashboardLider />} />
+            <Route path="/mensagens" element={<Mensagens />} />
+            <Route path="/mensagens/:conversationId" element={<Mensagens />} />
+            <Route path="/rotina-com-deus" element={<RotinaComDeus />} />
+            <Route path="/trilha-fe" element={<TrilhaFe />} />
+            <Route path="/provas" element={<Provas />} />
+            <Route path="/momento-com-deus" element={<MomentoComDeus />} />
+            <Route path="/radio" element={<Radio />} />
+            <Route path="/jogos-espirituais" element={<JogosEspirituais />} />
+            <Route path="/desafios-diarios" element={<DesafiosDiarios />} />
+            <Route path="/roleta-desafios" element={<RoletaDesafios />} />
+            <Route path="/memoria-biblica" element={<MemoriaBiblica />} />
+            <Route path="/espaco-kids" element={<EspacoKids />} />
+            <Route path="/biblia" element={<Biblia />} />
+            <Route path="/modo-devocional" element={<ModoDevocional />} />
+            <Route path="/cursos" element={<Cursos />} />
+            <Route path="/biblioteca-crista" element={<BibliotecaCrista />} />
+            <Route path="/aniversariantes" element={<Aniversariantes />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
