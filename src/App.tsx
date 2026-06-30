@@ -75,64 +75,67 @@ const PushInitializer = () => {
   return null;
 };
 
-const pageTransition = {
-  initial: { opacity: 0, y: 8 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -8 },
-  transition: { duration: 0.2, ease: "easeOut" as const },
-};
+// iOS-style horizontal page transitions with direction tracking
+const ROOT_PATHS = new Set(["/", "/dashboard", "/comunidade", "/agenda", "/perfil", "/mensagens"]);
+
+function useNavDirection(pathname: string) {
+  const stackRef = (useNavDirection as any)._stack ?? ((useNavDirection as any)._stack = [] as string[]);
+  const stack: string[] = stackRef;
+  let direction: 1 | -1 | 0 = 0;
+  const prev = stack[stack.length - 1];
+  if (!prev) {
+    stack.push(pathname);
+    direction = 0;
+  } else if (prev === pathname) {
+    direction = 0;
+  } else {
+    const prevIdx = stack.lastIndexOf(pathname);
+    if (prevIdx >= 0) {
+      // going back
+      stack.length = prevIdx + 1;
+      direction = -1;
+    } else {
+      stack.push(pathname);
+      direction = ROOT_PATHS.has(pathname) && ROOT_PATHS.has(prev) ? 0 : 1;
+    }
+  }
+  return direction;
+}
 
 function AnimatedRoutes() {
   const location = useLocation();
+  const direction = useNavDirection(location.pathname);
+
+  const variants = {
+    initial: (dir: number) => ({
+      opacity: dir === 0 ? 0 : 1,
+      x: dir === 0 ? 0 : dir > 0 ? "20%" : "-12%",
+      scale: dir === 0 ? 0.99 : 1,
+    }),
+    animate: { opacity: 1, x: 0, scale: 1 },
+    exit: (dir: number) => ({
+      opacity: dir === 0 ? 0 : 1,
+      x: dir === 0 ? 0 : dir > 0 ? "-12%" : "20%",
+      scale: dir === 0 ? 0.99 : 1,
+    }),
+  };
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div key={location.pathname} {...pageTransition} className="min-h-screen">
+    <AnimatePresence mode="sync" custom={direction} initial={false}>
+      <motion.div
+        key={location.pathname}
+        custom={direction}
+        variants={variants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        transition={{ duration: 0.32, ease: [0.32, 0.72, 0, 1] }}
+        className="min-h-screen will-change-transform"
+        style={{ position: "relative" }}
+      >
         <Suspense fallback={<PageLoader />}>
           <Routes location={location}>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/pending" element={<PendingApproval />} />
-            <Route path="/onboarding" element={<Onboarding />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/estudos" element={<Estudos />} />
-            <Route path="/agenda" element={<Agenda />} />
-            <Route path="/musicos" element={<Musicos />} />
-            <Route path="/perfil" element={<Perfil />} />
-            <Route path="/perfil/:userId" element={<PerfilPublico />} />
-            <Route path="/admin" element={<Admin />} />
-            <Route path="/admin/aniversarios" element={<AdminAniversarios />} />
-            <Route path="/aniversariantes" element={<Aniversariantes />} />
-            <Route path="/presenca" element={<Presenca />} />
-            <Route path="/diario" element={<Diario />} />
-            <Route path="/conquistas" element={<Conquistas />} />
-            <Route path="/oracoes" element={<Oracoes />} />
-            <Route path="/ranking" element={<Ranking />} />
-            <Route path="/comunidade" element={<Comunidade />} />
-            <Route path="/plano-leitura" element={<PlanoLeitura />} />
-            <Route path="/quiz" element={<Quiz />} />
-            <Route path="/install" element={<Install />} />
-            <Route path="/devocional" element={<Devocional />} />
-            <Route path="/testemunhos" element={<Testemunhos />} />
-            <Route path="/lembretes-oracao" element={<LembretesOracao />} />
-            <Route path="/versiculos" element={<Versiculos />} />
-            <Route path="/celulas" element={<Celulas />} />
-            <Route path="/dashboard-lider" element={<DashboardLider />} />
-            <Route path="/mensagens" element={<Mensagens />} />
-            <Route path="/rotina-com-deus" element={<RotinaComDeus />} />
-            <Route path="/provas" element={<Provas />} />
-            <Route path="/momento-com-deus" element={<MomentoComDeus />} />
-            <Route path="/radio" element={<Radio />} />
-            <Route path="/trilha-fe" element={<TrilhaFe />} />
-            <Route path="/jogos" element={<JogosEspirituais />} />
-            <Route path="/desafios-diarios" element={<DesafiosDiarios />} />
-            <Route path="/roleta-desafios" element={<RoletaDesafios />} />
-            <Route path="/memoria-biblica" element={<MemoriaBiblica />} />
-            <Route path="/espaco-kids" element={<EspacoKids />} />
-            <Route path="/biblia" element={<Biblia />} />
-            <Route path="/modo-devocional" element={<ModoDevocional />} />
-            <Route path="/cursos" element={<Cursos />} />
-            <Route path="/biblioteca" element={<BibliotecaCrista />} />
+...
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
