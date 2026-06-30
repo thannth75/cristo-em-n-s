@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { MessageSquare, Plus, Send, Check, Trash2, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useToast } from "@/hooks/use-toast";
 import { useXpAward } from "@/hooks/useXpAward";
 import { Button } from "@/components/ui/button";
@@ -22,7 +21,9 @@ import {
 } from "@/components/ui/dialog";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
+import { getInitials, getUserFirstName, formatDateBR } from "@/lib/utils";
 
 interface PrayerRequest {
   id: string;
@@ -39,8 +40,7 @@ interface PrayerRequest {
 }
 
 const Oracoes = () => {
-  const navigate = useNavigate();
-  const { user, profile, isApproved, isAdmin, isLeader, isLoading: authLoading } = useAuth();
+  const { user, profile, isApproved, isAdmin, isLeader, isLoading: authLoading } = useAuthRedirect();
   const { toast } = useToast();
   const { awardXp, showLevelUp, levelUpData, closeLevelUp } = useXpAward(user?.id);
   const [prayers, setPrayers] = useState<PrayerRequest[]>([]);
@@ -49,13 +49,6 @@ const Oracoes = () => {
   const [newPrayer, setNewPrayer] = useState({ title: "", content: "" });
 
   const canManage = isAdmin || isLeader;
-
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) navigate("/auth");
-      else if (!isApproved) navigate("/pending");
-    }
-  }, [user, isApproved, authLoading, navigate]);
 
   useEffect(() => {
     if (isApproved && user) fetchPrayers();
@@ -141,22 +134,9 @@ const Oracoes = () => {
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
-  };
+  const userName = getUserFirstName(profile);
 
-  const getInitials = (name: string) => name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
-
-  const userName = profile?.full_name?.split(" ")[0] || "Jovem";
-
-  if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (authLoading) return <LoadingSpinner fullPage />;
 
   return (
     <div className="min-h-screen bg-background" style={{ paddingBottom: 'calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))' }}>
@@ -275,6 +255,7 @@ const Oracoes = () => {
                     <AvatarImage src={prayer.profiles?.avatar_url || ""} />
                     <AvatarFallback className="bg-primary/10 text-primary text-xs">
                       {getInitials(prayer.profiles?.full_name || "U")}
+
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
@@ -282,7 +263,7 @@ const Oracoes = () => {
                       {prayer.profiles?.full_name || "Irmão(ã)"}
                     </p>
                     <p className="text-[10px] text-muted-foreground">
-                      {formatDate(prayer.created_at)}
+                      {formatDateBR(prayer.created_at)}
                     </p>
                   </div>
                   {prayer.is_answered && (

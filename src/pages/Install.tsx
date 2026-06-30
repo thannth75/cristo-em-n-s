@@ -3,37 +3,20 @@ import { Download, Smartphone, CheckCircle, Share, Plus, MoreVertical } from "lu
 import { Button } from "@/components/ui/button";
 import { usePWA } from "@/hooks/usePWA";
 import AppHeader from "@/components/AppHeader";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import BottomNavigation from "@/components/BottomNavigation";
-import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useEffect } from "react";
 
 const Install = () => {
-  const navigate = useNavigate();
-  const { user, isApproved, isLoading: authLoading } = useAuth();
+  const { user, isApproved, isLoading: authLoading } = useAuthRedirect();
   const { isInstallable, isInstalled, isIOS, install } = usePWA();
-
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate("/auth");
-      } else if (!isApproved) {
-        navigate("/pending");
-      }
-    }
-  }, [user, isApproved, authLoading, navigate]);
 
   const handleInstall = async () => {
     await install();
   };
 
-  if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (authLoading) return <LoadingSpinner fullPage />;
 
   return (
     <div className="min-h-screen bg-background" style={{ paddingBottom: 'calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))' }}>

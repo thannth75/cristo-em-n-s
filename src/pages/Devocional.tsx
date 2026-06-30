@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   Sun, 
@@ -16,7 +15,7 @@ import {
   ChevronUp,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useToast } from "@/hooks/use-toast";
 import { useXpAward } from "@/hooks/useXpAward";
 import { Button } from "@/components/ui/button";
@@ -30,7 +29,9 @@ import {
 } from "@/components/ui/dialog";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
+import { getUserFirstName, formatDateBR } from "@/lib/utils";
 
 interface Devotional {
   id: string;
@@ -50,8 +51,7 @@ interface DevotionalProgress {
 }
 
 const Devocional = () => {
-  const navigate = useNavigate();
-  const { user, profile, isApproved, isLoading: authLoading } = useAuth();
+  const { user, profile, isApproved, isLoading: authLoading } = useAuthRedirect();
   const { toast } = useToast();
   const { awardXp, showLevelUp, levelUpData, closeLevelUp } = useXpAward(user?.id);
   
@@ -66,16 +66,6 @@ const Devocional = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [historyPage, setHistoryPage] = useState(1);
   const HISTORY_PER_PAGE = 10;
-
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate("/auth");
-      } else if (!isApproved) {
-        navigate("/pending");
-      }
-    }
-  }, [user, isApproved, authLoading, navigate]);
 
   useEffect(() => {
     if (isApproved && user) {
@@ -162,14 +152,7 @@ const Devocional = () => {
     setIsCompleting(false);
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr + "T00:00:00");
-    return date.toLocaleDateString("pt-BR", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-    });
-  };
+  const formatDate = (dateStr: string) => formatDateBR(dateStr + "T00:00:00", { weekday: "long", day: "numeric", month: "long" });
 
   const handleShare = async (devotional: Devotional) => {
     const text = `📖 ${devotional.title}\n\n"${devotional.bible_verse}"\n— ${devotional.bible_reference}\n\nVida em Cristo`;
@@ -192,7 +175,7 @@ const Devocional = () => {
       completedAt: userProgress.find(p => p.devotional_id === d.id)?.completed_at,
     }));
 
-  const userName = profile?.full_name?.split(" ")[0] || "Jovem";
+  const userName = getUserFirstName(profile);
   const completedCount = userProgress.length;
   const streakDays = calculateStreak();
 
@@ -221,13 +204,7 @@ const Devocional = () => {
     return streak;
   }
 
-  if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (authLoading) return <LoadingSpinner fullPage />;
 
   return (
     <div className="min-h-screen bg-background" style={{ paddingBottom: 'calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))' }}>

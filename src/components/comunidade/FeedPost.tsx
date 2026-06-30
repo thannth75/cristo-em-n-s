@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { getInitials } from "@/lib/utils";
 import { 
   Heart, 
   MessageCircle, 
@@ -77,10 +78,6 @@ export function FeedPost({
     if (hours < 24) return `${hours}h`;
     if (days < 7) return `${days}d`;
     return date.toLocaleDateString("pt-BR");
-  };
-
-  const getInitials = (name: string) => {
-    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
   };
 
   const shouldTruncate = post.content.length > 280;

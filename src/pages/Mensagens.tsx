@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { MessageCircle, Send, ArrowLeft, Search, Check, CheckCheck, Plus, Smile, Paperclip, Loader2, Users, X, Forward, Reply } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useToast } from "@/hooks/use-toast";
 import OnlineStatusBadge from "@/components/comunidade/OnlineStatusBadge";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import BottomNavigation from "@/components/BottomNavigation";
 import { privateMessageSchema, validateInput } from "@/lib/validation";
+import { getInitials } from "@/lib/utils";
 import ChatMediaPicker from "@/components/chat/ChatMediaPicker";
 import { GroupList } from "@/components/comunidade/GroupList";
 import { GroupChat } from "@/components/comunidade/GroupChat";
@@ -19,6 +20,7 @@ import AudioRecorder, { AudioMessagePlayer } from "@/components/chat/AudioRecord
 import FileUploader, { FileMessageBubble } from "@/components/chat/FileUploader";
 import ForwardMessageDialog from "@/components/chat/ForwardMessageDialog";
 import ChatThemeMenu, { ChatTheme, getStoredChatTheme } from "@/components/chat/ChatThemeMenu";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface Profile {
   user_id: string;
@@ -58,7 +60,7 @@ interface ReactionData {
 
 const Mensagens = () => {
   const navigate = useNavigate();
-  const { user, profile, isApproved, isLoading: authLoading } = useAuth();
+  const { user, profile, isApproved, isLoading: authLoading } = useAuthRedirect();
   const { toast } = useToast();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
@@ -85,13 +87,6 @@ const Mensagens = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const typingChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
-
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) navigate("/auth");
-      else if (!isApproved) navigate("/pending");
-    }
-  }, [user, isApproved, authLoading, navigate]);
 
   useEffect(() => {
     if (isApproved && user) {
@@ -395,7 +390,6 @@ const Mensagens = () => {
 
   const formatMessageTime = (dateStr: string) => new Date(dateStr).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
-  const getInitials = (name: string) => name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 
   const filteredProfiles = allProfiles.filter((p) => p.full_name.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -451,9 +445,7 @@ const Mensagens = () => {
     return <p className="text-sm break-words whitespace-pre-wrap leading-relaxed">{msg.content}</p>;
   };
 
-  if (authLoading) {
-    return <div className="flex min-h-screen items-center justify-center bg-background"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
-  }
+  if (authLoading) return <LoadingSpinner fullPage />;
 
   const selectedPartnerProfile = selectedConversation ? profiles[selectedConversation] || allProfiles.find(p => p.user_id === selectedConversation) : null;
   const filteredMessages = chatSearch

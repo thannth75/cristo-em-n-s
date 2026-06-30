@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, BookOpen, Heart, Radio, PenLine, Moon, Sun, Timer, Volume2, VolumeX, Play, Pause, RefreshCw } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { cn } from "@/lib/utils";
 
 const DEVOTIONAL_VERSES = [
@@ -24,20 +25,13 @@ const TIMER_OPTIONS = [5, 10, 15, 20, 30];
 
 const ModoDevocional = () => {
   const navigate = useNavigate();
-  const { user, isApproved, isLoading } = useAuth();
+  const { isLoading } = useAuthRedirect();
   const [verseIndex, setVerseIndex] = useState(() => Math.floor(Math.random() * DEVOTIONAL_VERSES.length));
   const [timerActive, setTimerActive] = useState(false);
   const [timerMinutes, setTimerMinutes] = useState(10);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [showTimer, setShowTimer] = useState(false);
   const [ambientPlaying, setAmbientPlaying] = useState(false);
-
-  useEffect(() => {
-    if (!isLoading) {
-      if (!user) navigate("/auth");
-      else if (!isApproved) navigate("/pending");
-    }
-  }, [user, isApproved, isLoading, navigate]);
 
   // Timer countdown
   useEffect(() => {
@@ -69,13 +63,7 @@ const ModoDevocional = () => {
   const nextVerse = () => setVerseIndex(i => (i + 1) % DEVOTIONAL_VERSES.length);
   const verse = DEVOTIONAL_VERSES[verseIndex];
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (isLoading) return <LoadingSpinner fullPage />;
 
   const features = [
     { title: "Leitura Bíblica", description: "Leia a Palavra com calma e atenção", icon: BookOpen, href: "/biblia", color: "from-emerald-500/20 to-emerald-600/10" },

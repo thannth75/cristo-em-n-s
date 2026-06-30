@@ -6,10 +6,12 @@ import {
   Target, Clock, Flame, Award, RotateCcw 
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useToast } from "@/hooks/use-toast";
 import { useXpAward } from "@/hooks/useXpAward";
 import AppHeader from "@/components/AppHeader";
+import { getUserFirstName } from "@/lib/utils";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import BottomNavigation from "@/components/BottomNavigation";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -60,7 +62,7 @@ interface DailyCheckin {
 
 const RotinaComDeus = () => {
   const navigate = useNavigate();
-  const { user, profile, isApproved, isLoading: authLoading, isProfileComplete } = useAuth();
+  const { user, profile, isApproved, isLoading: authLoading, isProfileComplete } = useAuthRedirect();
   const { toast } = useToast();
   const { awardXp, showLevelUp, levelUpData, closeLevelUp } = useXpAward(user?.id);
 
@@ -76,16 +78,10 @@ const RotinaComDeus = () => {
   const [reflectionNotes, setReflectionNotes] = useState("");
 
   useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate("/auth");
-      } else if (!isApproved) {
-        navigate("/pending");
-      } else if (!isProfileComplete) {
-        navigate("/onboarding");
-      }
+    if (!authLoading && isApproved && !isProfileComplete) {
+      navigate("/onboarding");
     }
-  }, [user, isApproved, authLoading, isProfileComplete, navigate]);
+  }, [authLoading, isApproved, isProfileComplete, navigate]);
 
   useEffect(() => {
     if (isApproved && user) {
@@ -270,15 +266,9 @@ const RotinaComDeus = () => {
     }
   };
 
-  const userName = profile?.full_name?.split(" ")[0] || "Jovem";
+  const userName = getUserFirstName(profile);
 
-  if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (authLoading) return <LoadingSpinner fullPage />;
 
   return (
     <div className="min-h-screen bg-background" style={{ paddingBottom: 'calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))' }}>

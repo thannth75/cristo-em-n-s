@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, CalendarCog, History, Save, Search } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BottomNavigation from "@/components/BottomNavigation";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface MemberRow {
   user_id: string;
@@ -36,7 +37,9 @@ interface AuditRow {
 
 const AdminAniversarios = () => {
   const navigate = useNavigate();
-  const { isAdmin, isLoading: authLoading } = useAuth();
+  const { isAdmin, isLoading: authLoading } = useAuthRedirect({
+    extraCheck: (a) => a.isAdmin,
+  });
   const { toast } = useToast();
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [audit, setAudit] = useState<AuditRow[]>([]);
@@ -46,12 +49,6 @@ const AdminAniversarios = () => {
   const [newDate, setNewDate] = useState("");
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (!authLoading && !isAdmin) {
-      navigate("/dashboard");
-    }
-  }, [authLoading, isAdmin, navigate]);
 
   const load = async () => {
     setLoading(true);
@@ -128,13 +125,7 @@ const AdminAniversarios = () => {
     load();
   };
 
-  if (authLoading || !isAdmin) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (authLoading || !isAdmin) return <LoadingSpinner fullPage />;
 
   return (
     <div

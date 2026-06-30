@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
@@ -15,7 +14,7 @@ import {
   BookOpen
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +35,8 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AppHeader from "@/components/AppHeader";
+import { getUserFirstName } from "@/lib/utils";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import BottomNavigation from "@/components/BottomNavigation";
 
 interface Cell {
@@ -80,8 +81,7 @@ const DAYS_OF_WEEK = [
 ];
 
 const Celulas = () => {
-  const navigate = useNavigate();
-  const { user, profile, isApproved, isAdmin, isLeader, isLoading: authLoading } = useAuth();
+  const { user, profile, isApproved, isAdmin, isLeader, isLoading: authLoading } = useAuthRedirect();
   const { toast } = useToast();
   
   const [cells, setCells] = useState<Cell[]>([]);
@@ -106,16 +106,6 @@ const Celulas = () => {
     topic: "",
     notes: "",
   });
-
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate("/auth");
-      } else if (!isApproved) {
-        navigate("/pending");
-      }
-    }
-  }, [user, isApproved, authLoading, navigate]);
 
   useEffect(() => {
     if (isApproved && user) {
@@ -296,16 +286,10 @@ const Celulas = () => {
     });
   };
 
-  const userName = profile?.full_name?.split(" ")[0] || "Jovem";
+  const userName = getUserFirstName(profile);
   const canManageCells = isAdmin || isLeader;
 
-  if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (authLoading) return <LoadingSpinner fullPage />;
 
   return (
     <div className="min-h-screen bg-background" style={{ paddingBottom: 'calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))' }}>

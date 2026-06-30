@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import PageHeader from "@/components/PageHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import ResponsiveContainer from "@/components/layout/ResponsiveContainer";
@@ -56,8 +55,9 @@ interface ExamGrade {
 }
 
 export default function Provas() {
-  const navigate = useNavigate();
-  const { user, isLoading: authLoading, isApproved, isLeader, isAdmin, canAccessYouthContent, userCity } = useAuth();
+  const { user, isLoading: authLoading, isApproved, isLeader, isAdmin, canAccessYouthContent, userCity } = useAuthRedirect({
+    extraCheck: (a) => a.canAccessYouthContent,
+  });
   const { toast } = useToast();
   const [exams, setExams] = useState<Exam[]>([]);
   const [myGrades, setMyGrades] = useState<ExamGrade[]>([]);
@@ -66,17 +66,6 @@ export default function Provas() {
   const [selectedExam, setSelectedExam] = useState<Exam | null>(null);
   const [editingExam, setEditingExam] = useState<Exam | null>(null);
   const [deletingExam, setDeletingExam] = useState<Exam | null>(null);
-
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate("/auth");
-    } else if (!authLoading && user && !isApproved) {
-      navigate("/pending");
-    } else if (!authLoading && user && isApproved && !canAccessYouthContent) {
-      // Redirecionar se não tem acesso a conteúdo de jovens
-      navigate("/dashboard");
-    }
-  }, [user, authLoading, isApproved, canAccessYouthContent, navigate]);
 
   useEffect(() => {
     if (user && isApproved) {

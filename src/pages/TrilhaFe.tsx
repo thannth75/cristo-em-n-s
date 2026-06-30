@@ -6,7 +6,7 @@ import {
   Heart, BookOpen, MessageCircle, Sun, Sparkles, Trophy,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useToast } from "@/hooks/use-toast";
 import { useXpAward } from "@/hooks/useXpAward";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,8 @@ import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import ResponsiveContainer from "@/components/layout/ResponsiveContainer";
 import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
-import { cn } from "@/lib/utils";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { cn, getUserFirstName } from "@/lib/utils";
 
 interface Challenge {
   id: string;
@@ -39,20 +40,13 @@ const faithChallenges: Challenge[] = [
 
 const TrilhaFe = () => {
   const navigate = useNavigate();
-  const { user, profile, isApproved, isLoading: authLoading } = useAuth();
+  const { user, profile, isApproved, isLoading: authLoading } = useAuthRedirect();
   const { toast } = useToast();
   const { awardXp, showLevelUp, levelUpData, closeLevelUp } = useXpAward(user?.id);
 
   const [completedDays, setCompletedDays] = useState<Set<number>>(new Set());
   const [currentDay, setCurrentDay] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) navigate("/auth");
-      else if (!isApproved) navigate("/pending");
-    }
-  }, [user, isApproved, authLoading, navigate]);
 
   useEffect(() => {
     if (user) loadProgress();
@@ -99,15 +93,9 @@ const TrilhaFe = () => {
   };
 
   const progress = (completedDays.size / 7) * 100;
-  const userName = profile?.full_name?.split(" ")[0] || "Jovem";
+  const userName = getUserFirstName(profile);
 
-  if (authLoading || isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (authLoading || isLoading) return <LoadingSpinner fullPage />;
 
   return (
     <div

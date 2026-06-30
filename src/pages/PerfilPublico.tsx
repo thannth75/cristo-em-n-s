@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
+import { getInitials } from "@/lib/utils";
 import { 
   ArrowLeft, 
   MapPin, 
@@ -14,7 +15,7 @@ import {
   Eye
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,6 +23,7 @@ import { Progress } from "@/components/ui/progress";
 import BottomNavigation from "@/components/BottomNavigation";
 import ResponsiveContainer from "@/components/layout/ResponsiveContainer";
 import { LevelBadge } from "@/components/gamification/LevelBadge";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 interface PublicProfile {
   user_id: string;
@@ -64,7 +66,7 @@ interface Post {
 const PerfilPublico = () => {
   const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
-  const { user: currentUser, isApproved, isLoading: authLoading } = useAuth();
+  const { user: currentUser, isApproved, isLoading: authLoading } = useAuthRedirect();
   
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [stats, setStats] = useState<UserStats>({ posts: 0, achievements: 0, attendance: 0, devotionals: 0, profileViews: 0 });
@@ -72,14 +74,6 @@ const PerfilPublico = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [levelInfo, setLevelInfo] = useState<{ title: string; icon: string; xpRequired: number; nextXp: number } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (!authLoading && !currentUser) {
-      navigate("/auth");
-    } else if (!authLoading && !isApproved) {
-      navigate("/pending");
-    }
-  }, [currentUser, isApproved, authLoading, navigate]);
 
   useEffect(() => {
     if (userId && currentUser) {
@@ -179,21 +173,11 @@ const PerfilPublico = () => {
     return new Date(dateStr).toLocaleDateString("pt-BR", { month: "short", year: "numeric" });
   };
 
-  const getInitials = (name: string) => {
-    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
-  };
-
   const xpProgress = levelInfo 
     ? ((profile?.total_xp || 0) - levelInfo.xpRequired) / (levelInfo.nextXp - levelInfo.xpRequired) * 100
     : 0;
 
-  if (authLoading || isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (authLoading || isLoading) return <LoadingSpinner fullPage />;
 
   if (!profile) {
     return (

@@ -1,20 +1,19 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Award, Star, Lock, Sparkles, TrendingUp, History } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useGamification } from "@/hooks/useGamification";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { XpProgressCard } from "@/components/gamification/XpProgressCard";
 import { MilestoneCard } from "@/components/gamification/MilestoneCard";
 import { XpActivityList } from "@/components/gamification/XpActivityList";
 import { LevelProgressList } from "@/components/gamification/LevelProgressList";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { getUserFirstName, formatDateBR } from "@/lib/utils";
 
 const Conquistas = () => {
-  const navigate = useNavigate();
-  const { user, profile, isApproved, isLoading: authLoading } = useAuth();
+  const { user, profile, isLoading: authLoading } = useAuthRedirect();
   const {
     totalXp,
     currentLevel,
@@ -30,26 +29,10 @@ const Conquistas = () => {
     isLoading,
   } = useGamification(user?.id);
 
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate("/auth");
-      } else if (!isApproved) {
-        navigate("/pending");
-      }
-    }
-  }, [user, isApproved, authLoading, navigate]);
-
-  const userName = profile?.full_name?.split(" ")[0] || "Jovem";
+  const userName = getUserFirstName(profile);
   const unlockedMilestoneIds = new Set(unlockedMilestones.map((um) => um.milestone_id));
 
-  if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (authLoading) return <LoadingSpinner fullPage />;
 
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -59,7 +42,7 @@ const Conquistas = () => {
     if (diff < 60000) return "Agora";
     if (diff < 3600000) return `${Math.floor(diff / 60000)}min`;
     if (diff < 86400000) return `${Math.floor(diff / 3600000)}h`;
-    return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+    return formatDateBR(dateStr, "numeric");
   };
 
   return (

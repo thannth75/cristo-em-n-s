@@ -5,7 +5,7 @@ import {
   ArrowLeft, BookOpen, Brain, Gamepad2, GraduationCap, Heart,
   Music2, Sparkles, Star, Target, Trophy, Palette, Lightbulb, Shield,
 } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useXpAward } from "@/hooks/useXpAward";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import BottomNavigation from "@/components/BottomNavigation";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { KidsStoryReaderDialog } from "@/components/kids/KidsStoryReaderDialog";
 import {
   KIDS_MEMORY_VERSES, KIDS_QUIZ_QUESTIONS, KIDS_STORIES,
@@ -70,7 +71,7 @@ const CREATIVE_ACTIVITIES = [
 
 const EspacoKids = () => {
   const navigate = useNavigate();
-  const { user, isApproved, isLoading: authLoading, isKids, isKidsLeader, isLeader, isAdmin } = useAuth();
+  const { user, isApproved, isLoading: authLoading, isKids, isKidsLeader, isLeader, isAdmin } = useAuthRedirect();
   const { awardXp } = useXpAward(user?.id);
   const { toast } = useToast();
 
@@ -98,17 +99,7 @@ const EspacoKids = () => {
   const canAccess = isApproved;
   const isManager = isKidsLeader || isLeader || isAdmin;
 
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) { navigate("/auth"); return; }
-      if (!isApproved) { navigate("/pending"); return; }
-      // Block non-kids users (jovem, membro, musico without kids role)
-      if (!canAccess) {
-        navigate("/dashboard");
-        return;
-      }
-    }
-  }, [user, isApproved, authLoading, navigate, canAccess]);
+
 
   useEffect(() => {
     if (!user) return;
@@ -235,7 +226,7 @@ const EspacoKids = () => {
     }, 800);
   };
 
-  if (authLoading) return <div className="flex min-h-screen items-center justify-center bg-background"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
+  if (authLoading) return <LoadingSpinner fullPage />;
 
   const tabs = [
     { id: "home" as KidsTab, label: "Início", emoji: "🏠" },

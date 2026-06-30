@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Music, Calendar, CheckCircle, Plus, Youtube, FileText, ExternalLink } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +25,8 @@ import {
 } from "@/components/ui/select";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { getUserFirstName } from "@/lib/utils";
 import CreateScaleDialog from "@/components/musicos/CreateScaleDialog";
 import AddMusicianDialog from "@/components/musicos/AddMusicianDialog";
 import ScaleActions from "@/components/musicos/ScaleActions";
@@ -55,8 +56,9 @@ interface Song {
 
 
 const Musicos = () => {
-  const navigate = useNavigate();
-  const { user, profile, isApproved, isAdmin, isLeader, isLoading: authLoading, canAccessMusicianContent } = useAuth();
+  const { user, profile, isApproved, isAdmin, isLeader, isLoading: authLoading } = useAuthRedirect({
+    extraCheck: (a) => a.canAccessMusicianContent,
+  });
   const { toast } = useToast();
   const [scales, setScales] = useState<MusicScale[]>([]);
   const [songs, setSongs] = useState<Song[]>([]);
@@ -70,19 +72,6 @@ const Musicos = () => {
   });
 
   const canManage = isAdmin || isLeader;
-
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        navigate("/auth");
-      } else if (!isApproved) {
-        navigate("/pending");
-      } else if (!canAccessMusicianContent) {
-        // Redirecionar se não tem acesso à área de músicos
-        navigate("/dashboard");
-      }
-    }
-  }, [user, isApproved, authLoading, canAccessMusicianContent, navigate]);
 
   useEffect(() => {
     if (isApproved) {
@@ -164,15 +153,9 @@ const Musicos = () => {
     return `${days[date.getDay()]}, ${date.getDate()}/${date.getMonth() + 1}`;
   };
 
-  const userName = profile?.full_name?.split(" ")[0] || "Jovem";
+  const userName = getUserFirstName(profile);
 
-  if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (authLoading) return <LoadingSpinner fullPage />;
 
   return (
     <div className="min-h-screen bg-background" style={{ paddingBottom: 'calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))' }}>

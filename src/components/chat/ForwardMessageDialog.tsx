@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { getInitials } from "@/lib/utils";
 
 interface Profile {
   user_id: string;
@@ -56,9 +57,6 @@ export default function ForwardMessageDialog({
     }
     setSending(null);
   };
-
-  const getInitials = (name: string) =>
-    name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2);
 
   return (
     <Dialog open={isOpen} onOpenChange={(o) => !o && onClose()}>

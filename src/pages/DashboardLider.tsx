@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Users,
@@ -14,7 +13,7 @@ import {
   Filter,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -28,6 +27,8 @@ import {
 } from "@/components/ui/select";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import LoadingSpinner from "@/components/LoadingSpinner";
+import { getUserFirstName, formatDateBR } from "@/lib/utils";
 
 interface AttendanceData {
   user_id: string;
@@ -63,8 +64,9 @@ interface MemberProfile {
 }
 
 const DashboardLider = () => {
-  const navigate = useNavigate();
-  const { user, profile, isAdmin, isLeader, isApproved, isLoading: authLoading } = useAuth();
+  const { user, profile, isAdmin, isLeader, isApproved, isLoading: authLoading } = useAuthRedirect({
+    extraCheck: (a) => a.isAdmin || a.isLeader,
+  });
   
   const [members, setMembers] = useState<MemberProfile[]>([]);
   const [attendanceStats, setAttendanceStats] = useState<AttendanceData[]>([]);
@@ -76,25 +78,10 @@ const DashboardLider = () => {
   const [cityFilter, setCityFilter] = useState<string>("all");
 
   useEffect(() => {
-    if (authLoading) return;
-    
-    if (!user) {
-      navigate("/auth");
-      return;
+    if (isApproved && (isAdmin || isLeader)) {
+      fetchAllData();
     }
-    
-    if (!isApproved) {
-      navigate("/pending");
-      return;
-    }
-    
-    if (!isAdmin && !isLeader) {
-      navigate("/dashboard");
-      return;
-    }
-    
-    fetchAllData();
-  }, [authLoading, user, isApproved, isAdmin, isLeader, navigate]);
+  }, [isApproved, isAdmin, isLeader]);
 
   const fetchAllData = async () => {
     setIsLoading(true);
@@ -218,18 +205,12 @@ const DashboardLider = () => {
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "Nunca";
     const date = new Date(dateStr);
-    return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+    return formatDateBR(dateStr);
   };
 
-  const userName = profile?.full_name?.split(" ")[0] || "Líder";
+  const userName = getUserFirstName(profile, "Líder");
 
-  if (authLoading || isLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (authLoading || isLoading) return <LoadingSpinner fullPage />;
 
   return (
     <div className="min-h-screen bg-background" style={{ paddingBottom: 'calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))' }}>

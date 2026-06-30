@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { 
   BookOpen, 
@@ -14,7 +13,7 @@ import {
   ChevronUp
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useToast } from "@/hooks/use-toast";
 import { useXpAward } from "@/hooks/useXpAward";
 import { Button } from "@/components/ui/button";
@@ -38,7 +37,9 @@ import {
 } from "@/components/ui/alert-dialog";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
+import LoadingSpinner from "@/components/LoadingSpinner";
 import { LevelUpCelebration } from "@/components/gamification/LevelUpCelebration";
+import { getUserFirstName } from "@/lib/utils";
 import { BIBLE_BOOKS } from "@/data/bibleReadingPlans";
 
 interface ReadingPlan {
@@ -75,8 +76,7 @@ interface CompletedDay {
 }
 
 const PlanoLeitura = () => {
-  const navigate = useNavigate();
-  const { user, profile, isApproved, isLoading: authLoading } = useAuth();
+  const { user, profile, isApproved, isLoading: authLoading } = useAuthRedirect();
   const { toast } = useToast();
   const { awardXp, showLevelUp, levelUpData, closeLevelUp } = useXpAward(user?.id);
   
@@ -91,13 +91,6 @@ const PlanoLeitura = () => {
   const [allDays, setAllDays] = useState<DailyReading[]>([]);
   const [showAllDays, setShowAllDays] = useState(false);
   const [pastProgressList, setPastProgressList] = useState<Array<{ id: string; plan_name: string; started_at: string; completed_at: string | null; current_day: number; total_days: number }>>([]);
-
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) navigate("/auth");
-      else if (!isApproved) navigate("/pending");
-    }
-  }, [user, isApproved, authLoading, navigate]);
 
   useEffect(() => {
     if (isApproved && user) fetchData();
@@ -287,18 +280,12 @@ const PlanoLeitura = () => {
 
   const isDayCompleted = (dayId: string) => completedDays.some(c => c.plan_day_id === dayId);
 
-  const userName = profile?.full_name?.split(" ")[0] || "Jovem";
+  const userName = getUserFirstName(profile);
   const currentPlan = plans.find(p => p.id === userProgress?.plan_id);
   const completedCount = completedDays.length;
   const visibleDays = showAllDays ? allDays : allDays.slice(0, 14);
 
-  if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
+  if (authLoading) return <LoadingSpinner fullPage />;
 
   return (
     <div className="min-h-screen bg-background" style={{ paddingBottom: 'calc(5rem + max(1rem, env(safe-area-inset-bottom, 16px)))' }}>

@@ -6,7 +6,7 @@ import {
   Edit, BarChart3, Eye, Image as ImageIcon, MessageSquare
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import AppHeader from "@/components/AppHeader";
 import BottomNavigation from "@/components/BottomNavigation";
 import { Button } from "@/components/ui/button";
@@ -25,11 +25,12 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const Perfil = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, profile, roles, isAdmin, isLeader, isApproved, signOut, isLoading } = useAuth();
+  const { user, profile, roles, isAdmin, isLeader, isApproved, signOut, isLoading } = useAuthRedirect();
   const [stats, setStats] = useState({ presencas: 0, estudos: 0, conquistas: 0, views: 0, posts: 0 });
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
@@ -37,13 +38,6 @@ const Perfil = () => {
   const [levelInfo, setLevelInfo] = useState<{ title: string; icon: string; xpRequired: number; nextXp: number } | null>(null);
   const [mediaGallery, setMediaGallery] = useState<{ id: string; image_url: string; created_at: string }[]>([]);
   const [editForm, setEditForm] = useState({ full_name: "", phone: "", birth_date: "", bio: "" });
-
-  useEffect(() => {
-    if (!isLoading) {
-      if (!user) navigate("/auth");
-      else if (!isApproved) navigate("/pending");
-    }
-  }, [user, isApproved, isLoading, navigate]);
 
   useEffect(() => {
     if (profile) {
@@ -113,11 +107,7 @@ const Perfil = () => {
   const getRoleLabel = () => { if (isAdmin) return "Administrador"; if (isLeader) return "Líder"; return "Jovem"; };
   const getRoleBadgeClass = () => { if (isAdmin) return "bg-destructive/10 text-destructive"; if (isLeader) return "bg-gold/20 text-gold"; return "bg-primary/10 text-primary"; };
 
-  if (isLoading) return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-    </div>
-  );
+  if (isLoading) return <LoadingSpinner fullPage />;
 
   const userName = profile?.full_name || user?.user_metadata?.full_name || "Jovem";
   const userEmail = profile?.email || user?.email || "";

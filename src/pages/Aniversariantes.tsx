@@ -2,17 +2,18 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Cake, PartyPopper, User as UserIcon } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuthRedirect } from "@/hooks/useAuthRedirect";
 import { useBirthdays, type BirthdayProfile } from "@/hooks/useBirthdays";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import BottomNavigation from "@/components/BottomNavigation";
+import LoadingSpinner from "@/components/LoadingSpinner";
 
 const Aniversariantes = () => {
   const navigate = useNavigate();
-  const { isApproved, isLoading: authLoading } = useAuth();
+  const { isLoading: authLoading } = useAuthRedirect();
   const { birthdays, isLoading } = useBirthdays();
   const [search, setSearch] = useState("");
 
@@ -30,17 +31,7 @@ const Aniversariantes = () => {
   const upcoming = filtered.filter((b) => b.day > today);
   const past = filtered.filter((b) => b.day < today);
 
-  if (authLoading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
-  }
-  if (!isApproved) {
-    navigate("/pending");
-    return null;
-  }
+  if (authLoading) return <LoadingSpinner fullPage />;
 
   const renderRow = (p: BirthdayProfile, highlight = false) => (
     <motion.div

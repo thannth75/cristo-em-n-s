@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LevelBadge } from "@/components/gamification/LevelBadge";
 import OnlineStatusBadge from "./OnlineStatusBadge";
+import { getInitials } from "@/lib/utils";
 
 interface UserProfileCardProps {
   userId: string;
@@ -45,10 +46,6 @@ export function UserProfileCard({
     } else {
       navigate(`/perfil/${userId}`);
     }
-  };
-
-  const getInitials = (name: string) => {
-    return name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2);
   };
 
   return (
