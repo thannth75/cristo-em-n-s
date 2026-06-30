@@ -258,6 +258,8 @@
   .gradient-card { background: var(--gradient-card); }
   .gradient-gold { background: var(--gradient-gold); }
   .gradient-spiritual { background: var(--gradient-spiritual); }
+  .gradient-altar { background: var(--gradient-altar); }
+  .shadow-altar { box-shadow: var(--shadow-altar); }
 
   .text-gradient-hope {
     background: var(--gradient-hope);

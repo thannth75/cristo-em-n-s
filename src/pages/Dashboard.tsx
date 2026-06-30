@@ -198,19 +198,20 @@ const Dashboard = () => {
           animate={{ opacity: 1 }}
           className="space-y-4"
         >
-          {/* Greeting */}
+          {/* Greeting — altar card */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl bg-card/80 border border-border/40 p-3.5"
+            className="relative overflow-hidden rounded-3xl border border-border/50 p-4 gradient-altar shadow-altar"
           >
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 shrink-0">
+            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-card/70 backdrop-blur-sm shadow-sm shrink-0">
                 <Star className="h-4 w-4 text-primary" />
               </div>
               <div className="min-w-0">
-                <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Mensagem do dia</p>
-                <p className="text-sm font-medium text-foreground">{spiritualMessage}</p>
+                <p className="text-[10px] font-medium text-primary/70 uppercase tracking-[0.18em]">Palavra do dia</p>
+                <p className="font-serif text-[15px] leading-snug text-foreground italic">{spiritualMessage}</p>
               </div>
             </div>
           </motion.div>
