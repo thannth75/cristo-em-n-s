@@ -12,8 +12,8 @@ dist
 dist-ssr
 *.local
 
-# Environment variables
-.env
+# Environment variables (keep .env tracked — it only has public Supabase anon keys;
+# NEVER add service-role keys, API secrets, or private credentials to .env)
 .env.local
 .env.*.local
 
