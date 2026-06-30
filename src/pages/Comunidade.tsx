@@ -138,12 +138,16 @@ const Comunidade = () => {
   };
 
   const fetchStories = async () => {
-    const { data: storiesData } = await supabase
+    const { data: storiesData, error: storiesError } = await supabase
       .from("user_stories")
       .select("*")
       .gt("expires_at", new Date().toISOString())
       .order("created_at", { ascending: false })
       .limit(100);
+    if (storiesError) {
+      console.error("Error fetching stories:", storiesError);
+      return;
+    }
     if (storiesData) {
       const userIds = [...new Set(storiesData.map(s => s.user_id))];
       const { data: profiles } = await supabase.from("profiles").select("user_id, full_name, avatar_url").in("user_id", userIds);
@@ -156,12 +160,16 @@ const Comunidade = () => {
   const fetchPosts = async (reset = false) => {
     const from = reset ? 0 : posts.length;
     const to = from + PAGE_SIZE - 1;
-    const { data: postsData } = await supabase
+    const { data: postsData, error: postsError } = await supabase
       .from("community_posts")
       .select("*")
       .order("is_pinned", { ascending: false })
       .order("created_at", { ascending: false })
       .range(from, to);
+    if (postsError) {
+      console.error("Error fetching posts:", postsError);
+      return;
+    }
     if (!postsData) return;
     const userIds = [...new Set(postsData.map(p => p.user_id))];
     const postIds = postsData.map(p => p.id);
@@ -194,7 +202,14 @@ const Comunidade = () => {
       ? { ...p, user_liked: !currentlyLiked, likes_count: Math.max(0, p.likes_count + (currentlyLiked ? -1 : 1)) }
       : p));
     if (currentlyLiked) {
-      await supabase.from("post_likes").delete().eq("post_id", postId).eq("user_id", user?.id);
+      const { error: deleteErr } = await supabase.from("post_likes").delete().eq("post_id", postId).eq("user_id", user?.id);
+      if (deleteErr) {
+        console.error("Error removing like:", deleteErr);
+        // Rollback
+        setPosts(prev => prev.map(p => p.id === postId
+          ? { ...p, user_liked: currentlyLiked, likes_count: Math.max(0, p.likes_count + (currentlyLiked ? 1 : -1)) }
+          : p));
+      }
     } else {
       const { error } = await supabase.from("post_likes").insert({ post_id: postId, user_id: user?.id });
       if (error) {
@@ -225,7 +240,10 @@ const Comunidade = () => {
   };
 
   const handleMarkStoryViewed = async (storyId: string) => {
-    await supabase.from("story_views").upsert({ story_id: storyId, viewer_id: user?.id }, { onConflict: 'story_id,viewer_id' });
+    const { error } = await supabase.from("story_views").upsert({ story_id: storyId, viewer_id: user?.id }, { onConflict: 'story_id,viewer_id' });
+    if (error) {
+      console.error("Error marking story as viewed:", error);
+    }
   };
 
   const openStories = (userId: string) => {

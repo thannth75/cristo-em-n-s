@@ -170,6 +170,11 @@ export function useGamification(userId: string | undefined) {
       });
     } catch (error) {
       console.error("Error fetching gamification data:", error);
+      toast({
+        title: "Erro ao carregar dados de gamificação",
+        description: "Tente novamente mais tarde.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -193,15 +198,20 @@ export function useGamification(userId: string | undefined) {
       // Check daily limit
       if (activity.daily_limit) {
         const today = new Date().toISOString().split("T")[0];
-        const { count } = await supabase
+        const { count, error: countError } = await supabase
           .from("xp_transactions")
           .select("*", { count: "exact", head: true })
           .eq("user_id", userId)
           .eq("activity_type", activityKey)
           .gte("created_at", today);
 
+        if (countError) {
+          console.error("Error checking daily limit:", countError);
+          return null;
+        }
+
         if ((count || 0) >= activity.daily_limit) {
-          return null; // Daily limit reached, silently skip
+          return null; // Daily limit reached
         }
       }
 
@@ -266,12 +276,16 @@ export function useGamification(userId: string | undefined) {
           break;
         case "activity_count":
           if (milestone.requirement_activity === activityType) {
-            const { count } = await supabase
+            const { count, error: countErr } = await supabase
               .from("xp_transactions")
               .select("*", { count: "exact", head: true })
               .eq("user_id", userId)
               .eq("activity_type", milestone.requirement_activity);
 
+            if (countErr) {
+              console.error("Error checking milestone activity count:", countErr);
+              continue;
+            }
             shouldUnlock = (count || 0) >= milestone.requirement_value;
           }
           break;
@@ -287,12 +301,15 @@ export function useGamification(userId: string | undefined) {
         if (!error) {
           // Award bonus XP for milestone
           if (milestone.xp_reward > 0) {
-            await supabase.rpc("add_user_xp", {
+            const { error: xpErr } = await supabase.rpc("add_user_xp", {
               p_user_id: userId,
               p_xp_amount: milestone.xp_reward,
               p_activity_type: "milestone_reward",
               p_description: `Marco: ${milestone.name}`,
             });
+            if (xpErr) {
+              console.error("Error awarding milestone XP:", xpErr);
+            }
           }
 
           toast({

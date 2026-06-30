@@ -20,6 +20,11 @@ export function useAchievements() {
           },
         });
 
+        if (response.error) {
+          console.error("Error invoking grant-achievements:", response.error);
+          return;
+        }
+
         if (response.data?.granted > 0) {
           console.log(`🏆 ${response.data.granted} conquista(s) desbloqueada(s)!`);
         }

@@ -97,20 +97,30 @@ const RotinaComDeus = () => {
     setIsLoading(true);
 
     // Fetch available plans
-    const { data: plansData } = await supabase
+    const { data: plansData, error: plansError } = await supabase
       .from("spiritual_routine_plans")
       .select("*")
       .eq("is_active", true);
 
+    if (plansError) {
+      console.error("Error fetching routine plans:", plansError);
+      toast({ title: "Erro ao carregar planos", variant: "destructive" });
+      setIsLoading(false);
+      return;
+    }
     setPlans(plansData || []);
 
     // Fetch user's active progress
-    const { data: progressData } = await supabase
+    const { data: progressData, error: progressError } = await supabase
       .from("user_routine_progress")
       .select("*")
       .eq("user_id", user?.id)
       .eq("is_active", true)
       .maybeSingle();
+
+    if (progressError) {
+      console.error("Error fetching routine progress:", progressError);
+    }
 
     if (progressData) {
       setUserProgress(progressData);
@@ -120,11 +130,15 @@ const RotinaComDeus = () => {
       setCurrentPlan(plan || null);
 
       // Fetch plan days
-      const { data: daysData } = await supabase
+      const { data: daysData, error: daysError } = await supabase
         .from("spiritual_routine_days")
         .select("*")
         .eq("plan_id", progressData.plan_id)
         .order("day_number");
+
+      if (daysError) {
+        console.error("Error fetching plan days:", daysError);
+      }
 
       setPlanDays(daysData || []);
 
@@ -135,12 +149,15 @@ const RotinaComDeus = () => {
       // Fetch user's checkins for this plan
       if (daysData) {
         const dayIds = daysData.map(d => d.id);
-        const { data: checkinsData } = await supabase
+        const { data: checkinsData, error: checkinsError } = await supabase
           .from("routine_daily_checkins")
           .select("*")
           .eq("user_id", user?.id)
           .in("routine_day_id", dayIds);
 
+        if (checkinsError) {
+          console.error("Error fetching checkins:", checkinsError);
+        }
         setCheckins(checkinsData || []);
       }
     } else {
@@ -156,11 +173,17 @@ const RotinaComDeus = () => {
 
   const handleStartPlan = async (plan: RoutinePlan) => {
     // Deactivate any current progress
-    await supabase
+    const { error: deactivateError } = await supabase
       .from("user_routine_progress")
       .update({ is_active: false })
       .eq("user_id", user?.id)
       .eq("is_active", true);
+
+    if (deactivateError) {
+      console.error("Error deactivating current progress:", deactivateError);
+      toast({ title: "Erro", description: "Não foi possível trocar o plano.", variant: "destructive" });
+      return;
+    }
 
     // Start new plan
     const { error } = await supabase.from("user_routine_progress").insert({
@@ -212,13 +235,19 @@ const RotinaComDeus = () => {
 
     if (currentPlan && nextDay > currentPlan.duration_days) {
       // Plan completed!
-      await supabase
+      const { error: completeError } = await supabase
         .from("user_routine_progress")
         .update({
           completed_at: new Date().toISOString(),
           is_active: false,
         })
         .eq("id", userProgress.id);
+
+      if (completeError) {
+        console.error("Error completing plan:", completeError);
+        toast({ title: "Erro ao completar plano", variant: "destructive" });
+        return;
+      }
 
       await awardXp("rotina", userProgress.plan_id, "Plano de rotina completo!");
 
@@ -227,10 +256,16 @@ const RotinaComDeus = () => {
         description: `Você completou ${currentPlan.name}!`,
       });
     } else {
-      await supabase
+      const { error: advanceError } = await supabase
         .from("user_routine_progress")
         .update({ current_day: nextDay })
         .eq("id", userProgress.id);
+
+      if (advanceError) {
+        console.error("Error advancing day:", advanceError);
+        toast({ title: "Erro ao avançar dia", variant: "destructive" });
+        return;
+      }
 
       toast({
         title: "Dia concluído! ✅",
@@ -447,16 +482,22 @@ const RotinaComDeus = () => {
                 variant="outline"
                 onClick={async () => {
                   if (!userProgress) return;
-                  await supabase
+                  const { error: deactErr } = await supabase
                     .from("user_routine_progress")
                     .update({ is_active: false })
                     .eq("id", userProgress.id);
+                  if (deactErr) {
+                    toast({ title: "Erro ao recomeçar plano", variant: "destructive" });
+                    return;
+                  }
                   const { error } = await supabase.from("user_routine_progress").insert({
                     user_id: user?.id,
                     plan_id: userProgress.plan_id,
                     current_day: 1,
                   });
-                  if (!error) {
+                  if (error) {
+                    toast({ title: "Erro ao recomeçar plano", variant: "destructive" });
+                  } else {
                     toast({ title: "Plano recomeçado! 🔄" });
                     fetchData();
                   }

@@ -93,11 +93,15 @@ const PerfilPublico = () => {
     setIsLoading(true);
 
     try {
-      const { data: profileData } = await supabase
+      const { data: profileData, error: profileError } = await supabase
         .from("public_profiles" as any)
         .select("user_id, full_name, avatar_url, cover_url, bio, city, state, current_level, total_xp, created_at")
         .eq("user_id", userId)
         .single();
+
+      if (profileError) {
+        console.error("Error fetching profile:", profileError);
+      }
 
       if (profileData) {
         setProfile(profileData as unknown as PublicProfile);
@@ -130,13 +134,16 @@ const PerfilPublico = () => {
         })));
       }
 
-      const { data: postsData } = await supabase
+      const { data: postsData, error: postsError } = await supabase
         .from("community_posts")
         .select("id, content, image_url, likes_count, comments_count, created_at")
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(6);
 
+      if (postsError) {
+        console.error("Error fetching posts:", postsError);
+      }
       if (postsData) setPosts(postsData);
 
       // Fetch level info
@@ -155,10 +162,10 @@ const PerfilPublico = () => {
         });
       }
     } catch (error) {
-      console.error("Error fetching profile:", error);
+      console.error("Error fetching profile data:", error);
+    } finally {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   };
 
   const recordProfileView = async () => {
@@ -168,11 +175,16 @@ const PerfilPublico = () => {
       const key = `pv:${userId}`;
       if (sessionStorage.getItem(key)) return;
       sessionStorage.setItem(key, '1');
-    } catch {}
-    await supabase.from("profile_views").insert({
+    } catch {
+      // sessionStorage may be unavailable (e.g. private browsing)
+    }
+    const { error } = await supabase.from("profile_views").insert({
       profile_user_id: userId,
       viewer_id: currentUser.id,
     });
+    if (error) {
+      console.error("Error recording profile view:", error);
+    }
   };
 
   const formatDate = (dateStr: string) => {

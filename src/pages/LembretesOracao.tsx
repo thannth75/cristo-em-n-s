@@ -98,7 +98,10 @@ const LembretesOracao = () => {
       .eq("user_id", user?.id)
       .order("reminder_time", { ascending: true });
 
-    if (!error) {
+    if (error) {
+      console.error("Erro ao carregar lembretes:", error);
+      toast({ title: "Erro ao carregar lembretes", variant: "destructive" });
+    } else {
       setReminders(data || []);
     }
     setIsLoading(false);
@@ -172,7 +175,10 @@ const LembretesOracao = () => {
       .update({ is_active: !currentActive })
       .eq("id", id);
 
-    if (!error) {
+    if (error) {
+      console.error("Erro ao atualizar lembrete:", error);
+      toast({ title: "Erro ao atualizar lembrete", variant: "destructive" });
+    } else {
       setReminders(reminders.map(r => 
         r.id === id ? { ...r, is_active: !currentActive } : r
       ));
@@ -188,7 +194,10 @@ const LembretesOracao = () => {
       .delete()
       .eq("id", id);
 
-    if (!error) {
+    if (error) {
+      console.error("Erro ao excluir lembrete:", error);
+      toast({ title: "Erro ao excluir lembrete", variant: "destructive" });
+    } else {
       toast({ title: "Lembrete excluído" });
       fetchReminders();
     }
@@ -210,7 +219,10 @@ const LembretesOracao = () => {
       reminder_time: type.defaultTime + ":00",
     });
 
-    if (!error) {
+    if (error) {
+      console.error("Erro ao criar lembrete rápido:", error);
+      toast({ title: "Erro ao criar lembrete", variant: "destructive" });
+    } else {
       toast({
         title: "Lembrete criado! 🔔",
         description: `${type.label} às ${type.defaultTime}.`,

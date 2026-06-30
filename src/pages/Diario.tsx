@@ -126,7 +126,10 @@ const Diario = () => {
       .eq("user_id", user?.id)
       .order("created_at", { ascending: false });
 
-    if (!error) {
+    if (error) {
+      console.error("Erro ao carregar reflexões:", error);
+      toast({ title: "Erro ao carregar reflexões", variant: "destructive" });
+    } else {
       setEntries(data || []);
     }
     setIsLoading(false);
@@ -203,7 +206,10 @@ const Diario = () => {
   const handleDeleteEntry = async (entryId: string) => {
     const { error } = await supabase.from("journal_entries").delete().eq("id", entryId);
 
-    if (!error) {
+    if (error) {
+      console.error("Erro ao excluir reflexão:", error);
+      toast({ title: "Erro ao excluir reflexão", variant: "destructive" });
+    } else {
       toast({ title: "Reflexão excluída" });
       fetchEntries();
     }
