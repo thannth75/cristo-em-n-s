@@ -96,6 +96,12 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get("Authorization");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    if (!authHeader || authHeader !== `Bearer ${supabaseServiceKey}`) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    }
+
     const payload: RelayPayload = await req.json();
     if (!payload.user_id || !payload.title) {
       return new Response(JSON.stringify({ error: "Missing user_id or title" }), { status: 400 });

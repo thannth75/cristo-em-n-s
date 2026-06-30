@@ -119,7 +119,7 @@ const InAppNotificationToast = () => {
 
   const handleClick = (notification: InAppNotification) => {
     dismissNotification(notification.id);
-    if (notification.action_url) {
+    if (notification.action_url && notification.action_url.startsWith('/')) {
       window.location.href = notification.action_url;
     }
   };

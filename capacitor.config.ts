@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   server: {
     url: 'https://106ec547-198a-4536-bba2-9c5948d32e02.lovableproject.com?forceHideBadge=true',
-    cleartext: true
+    cleartext: false
   },
   plugins: {
     PushNotifications: {
@@ -43,7 +43,7 @@ const config: CapacitorConfig = {
     backgroundColor: '#1a472a'
   },
   android: {
-    allowMixedContent: true,
+    allowMixedContent: false,
     captureInput: true,
     backgroundColor: '#1a472a',
     webContentsDebuggingEnabled: false

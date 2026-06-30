@@ -88,7 +88,7 @@ export function useNativePushNotifications() {
 
     // Registration success listener
     const registrationListener = PushNotifications.addListener('registration', (token: Token) => {
-      console.log('[NativePush] Registration token:', token.value);
+      console.log('[NativePush] Registration token received');
       setState(prev => ({ ...prev, token: token.value }));
       saveToken(token.value);
     });
@@ -118,7 +118,7 @@ export function useNativePushNotifications() {
       console.log('[NativePush] Action performed:', notification);
       // Handle navigation based on notification data
       const data = notification.notification.data;
-      if (data?.url) {
+      if (data?.url && typeof data.url === 'string' && data.url.startsWith('/')) {
         window.location.href = data.url;
       }
     });

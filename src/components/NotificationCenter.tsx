@@ -153,7 +153,7 @@ const NotificationCenter = () => {
                   className={`p-4 cursor-pointer transition-colors hover:bg-muted/30 ${!notification.is_read ? "bg-primary/5" : ""}`}
                   onClick={() => {
                     if (!notification.is_read) markAsRead(notification.id);
-                    if (notification.action_url) window.location.href = notification.action_url;
+                    if (notification.action_url && notification.action_url.startsWith('/')) window.location.href = notification.action_url;
                   }}>
                   <div className="flex gap-3">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
